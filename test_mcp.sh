@@ -25,26 +25,26 @@ fi
 
 echo -e "${GREEN}Build successful!${NC}"
 
-# Test 1: List available tools
-echo -e "\n${YELLOW}Test 1: Listing available tools${NC}"
-echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}' | ./spacetraders-mcp | jq .
+# Test 1: List available resources
+echo -e "\n${YELLOW}Test 1: Listing available resources${NC}"
+echo '{"jsonrpc": "2.0", "id": 1, "method": "resources/list"}' | ./spacetraders-mcp | jq .
 
-# Test 2: Call get_agent_info tool
-echo -e "\n${YELLOW}Test 2: Getting agent info${NC}"
-RESULT=$(echo '{"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "get_agent_info", "arguments": {}}}' | ./spacetraders-mcp)
+# Test 2: Read agent info resource
+echo -e "\n${YELLOW}Test 2: Reading agent info resource${NC}"
+RESULT=$(echo '{"jsonrpc": "2.0", "id": 2, "method": "resources/read", "params": {"uri": "spacetraders://agent/info"}}' | ./spacetraders-mcp)
 
 # Check if the result contains an error
-if echo "$RESULT" | jq -e '.result.isError' > /dev/null 2>&1; then
-    echo -e "${RED}Tool call failed:${NC}"
+if echo "$RESULT" | jq -e '.error' > /dev/null 2>&1; then
+    echo -e "${RED}Resource read failed:${NC}"
     echo "$RESULT" | jq .
 else
-    echo -e "${GREEN}Tool call successful:${NC}"
+    echo -e "${GREEN}Resource read successful:${NC}"
     echo "$RESULT" | jq .
 fi
 
-# Test 3: Test with invalid tool name
-echo -e "\n${YELLOW}Test 3: Testing invalid tool name (should fail gracefully)${NC}"
-echo '{"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "invalid_tool", "arguments": {}}}' | ./spacetraders-mcp | jq .
+# Test 3: Test with invalid resource URI
+echo -e "\n${YELLOW}Test 3: Testing invalid resource URI (should fail gracefully)${NC}"
+echo '{"jsonrpc": "2.0", "id": 3, "method": "resources/read", "params": {"uri": "spacetraders://invalid/resource"}}' | ./spacetraders-mcp | jq .
 
 echo -e "\n${GREEN}All tests completed!${NC}"
 
@@ -55,4 +55,5 @@ echo -e "\n${YELLOW}Tips:${NC}"
 echo "- Make sure your .env file contains SPACETRADERS_API_TOKEN"
 echo "- The API token should be valid and not expired"
 echo "- If you get authentication errors, check your token in .env"
+echo "- Agent info is now available as a resource at 'spacetraders://agent/info'"
 echo "- Use 'jq' for better JSON formatting (install with: brew install jq or apt install jq)"

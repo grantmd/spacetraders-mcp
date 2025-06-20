@@ -22,7 +22,10 @@
 //   }
 // }
 //
-// Note: The server will automatically use either:
+// Note: The server provides MCP resources (like agent info) and will automatically use either:
 // 1. A .env file in the same directory as the binary (recommended)
 // 2. Environment variables set in the Claude Desktop config
 // 3. System environment variables
+//
+// Available resources:
+// - spacetraders://agent/info - Current agent information (credits, ships, etc.)

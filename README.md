@@ -4,13 +4,13 @@ A Model Context Protocol (MCP) server for interacting with the SpaceTraders API.
 
 ## Features
 
-- **get_agent_info**: Retrieves your agent's current information including credits, headquarters, faction, and ship count
+- **Agent Information Resource**: Access your agent's current information including credits, headquarters, faction, and ship count via the resource `spacetraders://agent/info`
 
 ## Prerequisites
 
 - Go 1.24.4 or later
 - A SpaceTraders API token (get one by registering at [SpaceTraders](https://spacetraders.io/))
-- An MCP-compatible client (like Claude Desktop)
+- An MCP-compatible client (like Claude Desktop) that supports resources
 
 ## Setup
 
@@ -54,15 +54,17 @@ The MCP server communicates via stdin/stdout:
 ./spacetraders-mcp
 ```
 
-### Available Tools
+### Available Resources
 
-#### `get_agent_info`
+#### `spacetraders://agent/info`
 
-Retrieves comprehensive information about your SpaceTraders agent.
+Provides comprehensive information about your SpaceTraders agent as a readable resource.
 
-**Parameters:** None
+**URI:** `spacetraders://agent/info`  
+**MIME Type:** `application/json`  
+**Description:** Current agent information including credits, headquarters, faction, and ship count
 
-**Returns:**
+**Content:**
 ```json
 {
   "agent": {
@@ -80,14 +82,14 @@ Retrieves comprehensive information about your SpaceTraders agent.
 
 You can test the server manually using JSON-RPC 2.0 messages:
 
-1. **List available tools:**
+1. **List available resources:**
    ```bash
-   echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}' | ./spacetraders-mcp
+   echo '{"jsonrpc": "2.0", "id": 1, "method": "resources/list"}' | ./spacetraders-mcp
    ```
 
-2. **Call get_agent_info:**
+2. **Read agent info resource:**
    ```bash
-   echo '{"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "get_agent_info", "arguments": {}}}' | ./spacetraders-mcp
+   echo '{"jsonrpc": "2.0", "id": 2, "method": "resources/read", "params": {"uri": "spacetraders://agent/info"}}' | ./spacetraders-mcp
    ```
 
 ## Integration with Claude Desktop
@@ -126,12 +128,22 @@ spacetraders-mcp/
 └── README.md                         # This file
 ```
 
-### Adding New Tools
+### Adding New Resources
 
-To add new SpaceTraders API tools:
+To add new SpaceTraders API resources:
 
 1. Add the API endpoint method to `SpaceTradersClient`
 2. Define the response struct if needed
+3. Create a new `mcp.Resource` definition in `main()`
+4. Add the resource handler function
+5. Test your new resource
+
+### Adding Tools
+
+For interactive SpaceTraders API actions (like trading, navigation), you can also add tools:
+
+1. Enable tool capabilities in the server configuration
+2. Add the API endpoint method to `SpaceTradersClient`
 3. Create a new `mcp.Tool` definition in `main()`
 4. Add the tool handler function
 5. Test your new tool
@@ -139,9 +151,10 @@ To add new SpaceTraders API tools:
 ### Error Handling
 
 The server uses proper MCP error handling:
-- API errors are returned as tool results with `isError: true`
+- API errors are returned as resource contents with error messages
 - Network errors are handled gracefully
-- Invalid requests return appropriate error responses
+- Invalid resource URIs return appropriate error responses
+- Tools (when implemented) use proper tool error handling
 
 ## API Reference
 

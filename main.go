@@ -116,32 +116,40 @@ func main() {
 	// Create SpaceTraders client
 	client := NewSpaceTradersClient()
 
-	// Create a new MCP server
+	// Create a new MCP server with resource capabilities
 	s := server.NewMCPServer(
 		"SpaceTraders MCP Server",
 		"1.0.0",
-		server.WithToolCapabilities(true),
+		server.WithResourceCapabilities(false, false),
 	)
 
-	// Add the get_agent_info tool
-	getAgentInfoTool := mcp.Tool{
-		Name:        "get_agent_info",
-		Description: "Retrieves the current agent's information from SpaceTraders API, including credits, headquarters, faction, and ship count.",
-		InputSchema: mcp.ToolInputSchema{
-			Type:       "object",
-			Properties: map[string]interface{}{},
-			Required:   []string{},
-		},
+	// Add the agent info resource
+	agentResource := mcp.Resource{
+		URI:         "spacetraders://agent/info",
+		Name:        "Agent Information",
+		Description: "Current agent information including credits, headquarters, faction, and ship count",
+		MIMEType:    "application/json",
 	}
 
-	s.AddTool(getAgentInfoTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.AddResource(agentResource, func(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
+		// Validate the resource URI
+		if request.Params.URI != "spacetraders://agent/info" {
+			return nil, fmt.Errorf("unknown resource URI: %s", request.Params.URI)
+		}
+
 		// Get agent information from the API
 		agent, err := client.GetAgent()
 		if err != nil {
-			return mcp.NewToolResultErrorFromErr("Failed to get agent info", err), nil
+			return []mcp.ResourceContents{
+				&mcp.TextResourceContents{
+					URI:      request.Params.URI,
+					MIMEType: "text/plain",
+					Text:     fmt.Sprintf("Error fetching agent info: %v", err),
+				},
+			}, nil
 		}
 
-		// Format the response as structured data
+		// Format the response as structured JSON
 		result := map[string]interface{}{
 			"agent": map[string]interface{}{
 				"accountId":       agent.AccountID,
@@ -153,13 +161,25 @@ func main() {
 			},
 		}
 
-		// Convert to JSON for pretty formatting
+		// Convert to JSON for response
 		jsonData, err := json.MarshalIndent(result, "", "  ")
 		if err != nil {
-			return mcp.NewToolResultError("Failed to format response"), nil
+			return []mcp.ResourceContents{
+				&mcp.TextResourceContents{
+					URI:      request.Params.URI,
+					MIMEType: "text/plain",
+					Text:     "Error formatting agent information",
+				},
+			}, nil
 		}
 
-		return mcp.NewToolResultText(string(jsonData)), nil
+		return []mcp.ResourceContents{
+			&mcp.TextResourceContents{
+				URI:      request.Params.URI,
+				MIMEType: "application/json",
+				Text:     string(jsonData),
+			},
+		}, nil
 	})
 
 	// Start the stdio server

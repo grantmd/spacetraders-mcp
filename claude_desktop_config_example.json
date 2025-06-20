@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "spacetraders": {
+      "command": "/absolute/path/to/your/spacetraders-mcp/spacetraders-mcp",
+      "args": [],
+      "env": {
+        "SPACETRADERS_API_TOKEN": "your_api_token_here"
+      }
+    }
+  }
+}

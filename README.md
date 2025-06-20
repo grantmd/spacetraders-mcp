@@ -23,9 +23,16 @@ A Model Context Protocol (MCP) server for interacting with the SpaceTraders API.
    ```
 
 2. **Configure your API token:**
-   Create a `.env` file in the project root:
+   The server uses Viper for configuration management. You can configure your API token in multiple ways:
+   
+   **Option 1: Create a `.env` file (recommended):**
    ```
    SPACETRADERS_API_TOKEN="your_api_token_here"
+   ```
+   
+   **Option 2: Set environment variable:**
+   ```bash
+   export SPACETRADERS_API_TOKEN="your_api_token_here"
    ```
 
    You can get your API token by:
@@ -110,12 +117,13 @@ Edit `%APPDATA%\Claude\claude_desktop_config.json` with the same structure, usin
 
 ```
 spacetraders-mcp/
-├── main.go              # Main server implementation
-├── .env                 # API token configuration (not in git)
-├── test_mcp.sh         # Test script
-├── go.mod              # Go module definition
-├── go.sum              # Go module checksums
-└── README.md           # This file
+├── main.go                           # Main server implementation
+├── .env                              # API token configuration (not in git)
+├── test_mcp.sh                       # Test script
+├── claude_desktop_config_example.json # Claude Desktop config example
+├── go.mod                            # Go module definition
+├── go.sum                            # Go module checksums
+└── README.md                         # This file
 ```
 
 ### Adding New Tools
@@ -153,9 +161,10 @@ This server uses the SpaceTraders v2 API. For full API documentation, visit:
 
 ### Common Issues
 
-1. **"SPACETRADERS_API_TOKEN not found"**
-   - Make sure your `.env` file exists and contains the token
+1. **"SPACETRADERS_API_TOKEN not found in configuration"**
+   - Make sure your `.env` file exists and contains the token, or set the environment variable
    - Check that the token is properly quoted in the `.env` file
+   - Verify that Viper can read your configuration (check file permissions)
 
 2. **"API request failed with status 401"**
    - Your API token is invalid or expired
@@ -168,6 +177,12 @@ This server uses the SpaceTraders v2 API. For full API documentation, visit:
 4. **Build errors**
    - Ensure you have Go 1.24.4 or later
    - Run `go mod tidy` to resolve dependencies
+   - Check that all required packages (including Viper) are properly installed
+
+5. **Configuration file issues**
+   - Viper supports multiple configuration formats (.env, .yaml, .json, etc.)
+   - If using environment variables, make sure they're properly exported
+   - The server will work with environment variables even if no .env file exists
 
 ### Getting Help
 

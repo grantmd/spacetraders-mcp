@@ -7,10 +7,10 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"github.com/spf13/viper"
 )
 
 // Agent represents the SpaceTraders agent data structure
@@ -36,9 +36,9 @@ type SpaceTradersClient struct {
 
 // NewSpaceTradersClient creates a new client instance
 func NewSpaceTradersClient() *SpaceTradersClient {
-	token := os.Getenv("SPACETRADERS_API_TOKEN")
+	token := viper.GetString("SPACETRADERS_API_TOKEN")
 	if token == "" {
-		fmt.Println("Warning: SPACETRADERS_API_TOKEN not found in environment")
+		fmt.Fprintln(os.Stderr, "Warning: SPACETRADERS_API_TOKEN not found in configuration")
 	}
 
 	return &SpaceTradersClient{
@@ -84,50 +84,34 @@ func (c *SpaceTradersClient) GetAgent() (*Agent, error) {
 	return &agentResp.Data, nil
 }
 
-// loadEnvFile loads environment variables from .env file
-func loadEnvFile() {
-	if _, err := os.Stat(".env"); err != nil {
-		return // .env file doesn't exist
-	}
+// initConfig initializes Viper configuration
+func initConfig() {
+	// Set config name and type
+	viper.SetConfigName(".env")
+	viper.SetConfigType("env")
 
-	data, err := os.ReadFile(".env")
-	if err != nil {
-		return
-	}
+	// Add current directory to search path
+	viper.AddConfigPath(".")
 
-	lines := strings.Split(string(data), "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
+	// Enable automatic environment variable binding
+	viper.AutomaticEnv()
 
-		// Skip empty lines and comments
-		if len(line) == 0 || strings.HasPrefix(line, "#") {
-			continue
+	// Try to read the config file (silently)
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			// Config file not found; ignore error since we can use env vars
+			// Silent - no logging needed for normal operation
+		} else {
+			// Config file was found but another error was produced
+			fmt.Fprintf(os.Stderr, "Error reading config file: %v\n", err)
 		}
-
-		// Find the first = character
-		eqIndex := strings.Index(line, "=")
-		if eqIndex == -1 {
-			continue
-		}
-
-		key := strings.TrimSpace(line[:eqIndex])
-		value := strings.TrimSpace(line[eqIndex+1:])
-
-		// Remove surrounding quotes if present
-		if len(value) >= 2 {
-			if (value[0] == '"' && value[len(value)-1] == '"') ||
-				(value[0] == '\'' && value[len(value)-1] == '\'') {
-				value = value[1 : len(value)-1]
-			}
-		}
-
-		os.Setenv(key, value)
 	}
+	// Silent success - no logging needed for normal operation
 }
 
 func main() {
-	// Load environment variables from .env file if it exists
-	loadEnvFile()
+	// Initialize configuration with Viper
+	initConfig()
 
 	// Create SpaceTraders client
 	client := NewSpaceTradersClient()

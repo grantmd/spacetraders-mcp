@@ -2,10 +2,27 @@
   "mcpServers": {
     "spacetraders": {
       "command": "/absolute/path/to/your/spacetraders-mcp/spacetraders-mcp",
-      "args": [],
-      "env": {
-        "SPACETRADERS_API_TOKEN": "your_api_token_here"
-      }
+      "args": []
     }
   }
 }
+
+// Alternative: If you prefer to set the API token via environment variable
+// instead of using a .env file, use this configuration:
+//
+// {
+//   "mcpServers": {
+//     "spacetraders": {
+//       "command": "/absolute/path/to/your/spacetraders-mcp/spacetraders-mcp",
+//       "args": [],
+//       "env": {
+//         "SPACETRADERS_API_TOKEN": "your_api_token_here"
+//       }
+//     }
+//   }
+// }
+//
+// Note: The server will automatically use either:
+// 1. A .env file in the same directory as the binary (recommended)
+// 2. Environment variables set in the Claude Desktop config
+// 3. System environment variables

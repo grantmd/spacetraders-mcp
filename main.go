@@ -182,8 +182,8 @@ func main() {
 		}, nil
 	})
 
-	// Start the stdio server
-	if err := server.ServeStdio(s); err != nil {
-		fmt.Printf("Server error: %v\n", err)
+	// Start the stdio server (ServeStdio already handles signals gracefully)
+	if err := server.ServeStdio(s); err != nil && err != context.Canceled {
+		fmt.Fprintf(os.Stderr, "Server error: %v\n", err)
 	}
 }

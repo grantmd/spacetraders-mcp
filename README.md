@@ -155,6 +155,7 @@ The server uses proper MCP error handling:
 - Network errors are handled gracefully
 - Invalid resource URIs return appropriate error responses
 - Tools (when implemented) use proper tool error handling
+- Graceful shutdown on Ctrl+C with no error messages
 
 ## API Reference
 
@@ -196,6 +197,13 @@ This server uses the SpaceTraders v2 API. For full API documentation, visit:
    - Viper supports multiple configuration formats (.env, .yaml, .json, etc.)
    - If using environment variables, make sure they're properly exported
    - The server will work with environment variables even if no .env file exists
+
+### Server Management
+
+The server supports graceful shutdown:
+- Press `Ctrl+C` to stop the server cleanly
+- No error messages are displayed on normal shutdown
+- The server automatically handles signal cleanup
 
 ### Getting Help
 

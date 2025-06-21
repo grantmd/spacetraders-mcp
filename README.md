@@ -6,6 +6,8 @@ A Model Context Protocol (MCP) server for interacting with the SpaceTraders API.
 
 - **Agent Information Resource**: Access your agent's current information including credits, headquarters, faction, and ship count via the resource `spacetraders://agent/info`
 - **Ships List Resource**: View all your ships with detailed information including location, status, cargo, and equipment via the resource `spacetraders://ships/list`
+- **Contracts List Resource**: View available contracts with terms, payments, and delivery requirements via the resource `spacetraders://contracts/list`
+- **Comprehensive Logging**: Built-in structured logging with API call timing, performance metrics, and component-specific debugging
 - **Modular Architecture**: Clean, extensible codebase that makes it easy to add new SpaceTraders API resources and tools
 
 ## Prerequisites
@@ -168,12 +170,15 @@ spacetraders-mcp/
 ├── pkg/                              # Package directory
 │   ├── config/                       # Configuration management
 │   │   └── config.go                 # Viper-based config loading
+│   ├── logging/                      # Structured logging system
+│   │   └── logger.go                 # Logger with MCP integration
 │   ├── spacetraders/                 # SpaceTraders API client
 │   │   └── client.go                 # API client and data types
 │   ├── resources/                    # MCP resource handlers
 │   │   ├── registry.go               # Resource registry
 │   │   ├── agent.go                  # Agent info resource
-│   │   └── ships.go                  # Ships list resource
+│   │   ├── ships.go                  # Ships list resource
+│   │   └── contracts.go              # Contracts list resource
 │   └── tools/                        # MCP tool handlers (future)
 │       └── registry.go               # Tool registry placeholder
 ├── test_mcp.sh                       # Test script
@@ -195,22 +200,49 @@ To add new SpaceTraders API resources:
 
 **Example structure for a new resource:**
 ```go
-// pkg/resources/contracts.go
-type ContractsResource struct {
+// pkg/resources/systems.go
+type SystemsResource struct {
     client *spacetraders.Client
+    logger *logging.Logger
 }
 
-func (r *ContractsResource) Resource() mcp.Resource {
+func NewSystemsResource(client *spacetraders.Client, logger *logging.Logger) *SystemsResource {
+    return &SystemsResource{
+        client: client,
+        logger: logger,
+    }
+}
+
+func (r *SystemsResource) Resource() mcp.Resource {
     return mcp.Resource{
-        URI:         "spacetraders://contracts/list",
-        Name:        "Contracts List",
-        Description: "List of all available contracts",
+        URI:         "spacetraders://systems/list",
+        Name:        "Systems List",
+        Description: "List of all star systems",
         MIMEType:    "application/json",
     }
 }
 
-func (r *ContractsResource) Handler() func(...) (...) {
-    // Implementation here
+func (r *SystemsResource) Handler() func(...) (...) {
+    return func(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
+        ctxLogger := r.logger.WithContext(ctx, "systems-resource")
+        ctxLogger.Debug("Fetching systems from API")
+        
+        start := time.Now()
+        systems, err := r.client.GetSystems()
+        duration := time.Since(start)
+        
+        if err != nil {
+            ctxLogger.Error("Failed to fetch systems: %v", err)
+            ctxLogger.APICall("/systems", 0, duration.String())
+            // Handle error...
+        }
+        
+        ctxLogger.APICall("/systems", 200, duration.String())
+        ctxLogger.Info("Successfully retrieved %d systems", len(systems))
+        ctxLogger.ResourceRead(request.Params.URI, true)
+        
+        // Format and return response...
+    }
 }
 ```
 
@@ -232,6 +264,8 @@ The modular structure provides:
 - **Scalability**: Adding new resources/tools is straightforward
 - **Maintainability**: Code is organized and easy to navigate
 - **Reusability**: SpaceTraders client can be used independently
+- **Comprehensive logging**: Built-in structured logging with performance metrics
+- **Debugging support**: Component-specific logging with context and timing information
 
 ### Error Handling
 
@@ -241,6 +275,8 @@ The server uses proper MCP error handling:
 - Invalid resource URIs return appropriate error responses
 - Tools (when implemented) use proper tool error handling
 - Graceful shutdown on Ctrl+C with no error messages
+- Comprehensive logging for debugging and monitoring
+- Performance tracking for all API calls
 
 ## API Reference
 
@@ -289,6 +325,41 @@ The server supports graceful shutdown:
 - Press `Ctrl+C` to stop the server cleanly
 - No error messages are displayed on normal shutdown
 - The server automatically handles signal cleanup
+
+### Logging
+
+The server provides comprehensive logging capabilities:
+
+#### Built-in Logging Levels
+- **ERROR**: Server errors, API failures, configuration issues
+- **INFO**: Server startup, API call timing, successful operations, resource metrics
+- **DEBUG**: Detailed operation tracing, response sizes, component-specific debugging
+
+#### Log Output Examples
+```
+[INFO] 2025/06/20 18:00:16 Starting SpaceTraders MCP Server
+[DEBUG] 2025/06/20 18:00:16 [agent-resource] Fetching agent information from API
+[INFO] 2025/06/20 18:00:16 [agent-resource] API call: /my/agent -> 200 (513ms)
+[INFO] 2025/06/20 18:00:16 [agent-resource] Successfully retrieved agent info for: CORNTAB
+[DEBUG] 2025/06/20 18:00:16 [agent-resource] Agent resource response size: 199 bytes
+```
+
+#### Log Features
+- **Component Identification**: Each log shows which resource/component generated it
+- **API Performance Tracking**: HTTP status codes and response times for all SpaceTraders API calls
+- **Resource Metrics**: Response sizes, item counts, and operation success rates
+- **Context Awareness**: Logs include relevant context like agent symbols, ship counts, etc.
+
+#### MCP Client Logging
+The server supports MCP logging notifications that can be sent to compatible clients:
+- Configurable log levels via MCP `logging/setLevel` requests
+- Structured log messages sent as MCP notifications
+- Integration with Claude Desktop and other MCP clients that support logging
+
+#### Viewing Logs
+- **stderr**: All logs are written to stderr for easy redirection
+- **Silent JSON**: stdout only contains clean JSON-RPC responses
+- **Log Filtering**: Redirect stderr to `/dev/null` to suppress logs: `./spacetraders-mcp 2>/dev/null`
 
 ### Getting Help
 

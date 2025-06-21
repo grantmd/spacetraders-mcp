@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"spacetraders-mcp/pkg/logging"
 	"spacetraders-mcp/pkg/spacetraders"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -17,13 +18,15 @@ type ResourceHandler interface {
 // Registry manages all MCP resources
 type Registry struct {
 	client   *spacetraders.Client
+	logger   *logging.Logger
 	handlers []ResourceHandler
 }
 
 // NewRegistry creates a new resource registry
-func NewRegistry(client *spacetraders.Client) *Registry {
+func NewRegistry(client *spacetraders.Client, logger *logging.Logger) *Registry {
 	registry := &Registry{
 		client:   client,
+		logger:   logger,
 		handlers: make([]ResourceHandler, 0),
 	}
 
@@ -36,13 +39,13 @@ func NewRegistry(client *spacetraders.Client) *Registry {
 // registerResources registers all available resource handlers
 func (r *Registry) registerResources() {
 	// Agent information resource
-	r.handlers = append(r.handlers, NewAgentResource(r.client))
+	r.handlers = append(r.handlers, NewAgentResource(r.client, r.logger))
 
 	// Ships list resource
-	r.handlers = append(r.handlers, NewShipsResource(r.client))
+	r.handlers = append(r.handlers, NewShipsResource(r.client, r.logger))
 
 	// Contracts list resource
-	r.handlers = append(r.handlers, NewContractsResource(r.client))
+	r.handlers = append(r.handlers, NewContractsResource(r.client, r.logger))
 
 	// TODO: Add more resources here as we implement them:
 	// - Systems resource

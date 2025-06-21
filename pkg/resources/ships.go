@@ -3,7 +3,9 @@ package resources
 import (
 	"context"
 	"encoding/json"
+	"time"
 
+	"spacetraders-mcp/pkg/logging"
 	"spacetraders-mcp/pkg/spacetraders"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -12,12 +14,14 @@ import (
 // ShipsResource handles the ships information resource
 type ShipsResource struct {
 	client *spacetraders.Client
+	logger *logging.Logger
 }
 
 // NewShipsResource creates a new ships resource handler
-func NewShipsResource(client *spacetraders.Client) *ShipsResource {
+func NewShipsResource(client *spacetraders.Client, logger *logging.Logger) *ShipsResource {
 	return &ShipsResource{
 		client: client,
+		logger: logger,
 	}
 }
 
@@ -45,9 +49,18 @@ func (r *ShipsResource) Handler() func(ctx context.Context, request mcp.ReadReso
 			}, nil
 		}
 
+		// Set up context logger
+		ctxLogger := r.logger.WithContext(ctx, "ships-resource")
+		ctxLogger.Debug("Fetching ships list from API")
+
 		// Get ships information from the API
+		start := time.Now()
 		ships, err := r.client.GetShips()
+		duration := time.Since(start)
+
 		if err != nil {
+			ctxLogger.Error("Failed to fetch ships info: %v", err)
+			ctxLogger.APICall("/my/ships", 0, duration.String())
 			return []mcp.ResourceContents{
 				&mcp.TextResourceContents{
 					URI:      request.Params.URI,
@@ -56,6 +69,9 @@ func (r *ShipsResource) Handler() func(ctx context.Context, request mcp.ReadReso
 				},
 			}, nil
 		}
+
+		ctxLogger.APICall("/my/ships", 200, duration.String())
+		ctxLogger.Info("Successfully retrieved %d ships", len(ships))
 
 		// Format the response as structured JSON
 		result := map[string]interface{}{
@@ -68,6 +84,7 @@ func (r *ShipsResource) Handler() func(ctx context.Context, request mcp.ReadReso
 		// Convert to JSON for response
 		jsonData, err := json.MarshalIndent(result, "", "  ")
 		if err != nil {
+			ctxLogger.Error("Failed to marshal ships data to JSON: %v", err)
 			return []mcp.ResourceContents{
 				&mcp.TextResourceContents{
 					URI:      request.Params.URI,
@@ -76,6 +93,9 @@ func (r *ShipsResource) Handler() func(ctx context.Context, request mcp.ReadReso
 				},
 			}, nil
 		}
+
+		ctxLogger.ResourceRead(request.Params.URI, true)
+		ctxLogger.Debug("Ships resource response size: %d bytes", len(jsonData))
 
 		return []mcp.ResourceContents{
 			&mcp.TextResourceContents{

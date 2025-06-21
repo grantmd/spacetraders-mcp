@@ -77,7 +77,7 @@ jobs:
 
       - name: Upload integration test report
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: integration-test-report-${{ github.run_number }}
           path: integration-report.md

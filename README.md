@@ -124,9 +124,44 @@ Provides detailed information about all ships owned by your agent.
 }
 ```
 
+## Testing
+
+The project includes comprehensive tests covering both unit tests and integration tests. Tests have been converted from shell scripts to native Go tests for better reliability and maintainability.
+
+### Running Tests
+
+The easiest way to run tests is using the provided test runner or Makefile:
+
+```bash
+# Run all tests (unit + integration tests that don't require API access)
+make test
+
+# Run unit tests only
+make test-unit
+
+# Run integration tests only  
+make test-integration
+
+# Run full integration tests with real API calls (requires SPACETRADERS_API_TOKEN)
+make test-full
+
+# Or use the Go test runner directly
+go run ./cmd/test_runner.go
+go run ./cmd/test_runner.go --integration  # For full API integration tests
+```
+
+### Test Categories
+
+1. **Unit Tests** (`./pkg/...`): Test individual packages and functions without external dependencies
+2. **Integration Tests** (`./test/...`): Test the complete MCP server functionality
+   - Protocol compliance tests (no API token required)
+   - Resource structure validation (no API token required)
+   - Server startup/shutdown tests (no API token required)
+   - API-dependent tests (require `SPACETRADERS_API_TOKEN`, will be skipped if not provided)
+
 ### Manual Testing
 
-You can test the server manually using JSON-RPC 2.0 messages:
+You can also test the server manually using JSON-RPC 2.0 messages:
 
 1. **List available resources:**
    ```bash
@@ -137,6 +172,17 @@ You can test the server manually using JSON-RPC 2.0 messages:
    ```bash
    echo '{"jsonrpc": "2.0", "id": 2, "method": "resources/read", "params": {"uri": "spacetraders://agent/info"}}' | ./spacetraders-mcp
    ```
+
+### Test Coverage
+
+Tests cover:
+- MCP protocol compliance (JSON-RPC 2.0)
+- Resource listing and reading
+- Error handling for invalid resources
+- API authentication error handling
+- Server graceful shutdown
+- Multiple request handling
+- All package functionality
 
 ## Integration with Claude Desktop
 

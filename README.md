@@ -5,6 +5,8 @@ A Model Context Protocol (MCP) server for interacting with the SpaceTraders API.
 ## Features
 
 - **Agent Information Resource**: Access your agent's current information including credits, headquarters, faction, and ship count via the resource `spacetraders://agent/info`
+- **Ships List Resource**: View all your ships with detailed information including location, status, cargo, and equipment via the resource `spacetraders://ships/list`
+- **Modular Architecture**: Clean, extensible codebase that makes it easy to add new SpaceTraders API resources and tools
 
 ## Prerequisites
 
@@ -78,6 +80,48 @@ Provides comprehensive information about your SpaceTraders agent as a readable r
 }
 ```
 
+#### `spacetraders://ships/list`
+
+Provides detailed information about all ships owned by your agent.
+
+**URI:** `spacetraders://ships/list`  
+**MIME Type:** `application/json`  
+**Description:** List of all ships with their status, location, cargo, crew, and equipment information
+
+**Content:**
+```json
+{
+  "ships": [
+    {
+      "symbol": "YOUR_SHIP-1",
+      "registration": {
+        "name": "YOUR_SHIP-1",
+        "factionSymbol": "ASTRO",
+        "role": "COMMAND"
+      },
+      "nav": {
+        "systemSymbol": "X1-FM66",
+        "waypointSymbol": "X1-FM66-A1",
+        "status": "DOCKED",
+        "flightMode": "CRUISE"
+      },
+      "cargo": {
+        "capacity": 40,
+        "units": 0,
+        "inventory": []
+      },
+      "fuel": {
+        "current": 400,
+        "capacity": 400
+      }
+    }
+  ],
+  "meta": {
+    "count": 2
+  }
+}
+```
+
 ### Manual Testing
 
 You can test the server manually using JSON-RPC 2.0 messages:
@@ -119,9 +163,21 @@ Edit `%APPDATA%\Claude\claude_desktop_config.json` with the same structure, usin
 
 ```
 spacetraders-mcp/
-├── main.go                           # Main server implementation
-├── .env                              # API token configuration (not in git)
+├── main.go                           # Application entry point
+├── .env                              # API token configuration (not in git)  
+├── pkg/                              # Package directory
+│   ├── config/                       # Configuration management
+│   │   └── config.go                 # Viper-based config loading
+│   ├── spacetraders/                 # SpaceTraders API client
+│   │   └── client.go                 # API client and data types
+│   ├── resources/                    # MCP resource handlers
+│   │   ├── registry.go               # Resource registry
+│   │   ├── agent.go                  # Agent info resource
+│   │   └── ships.go                  # Ships list resource
+│   └── tools/                        # MCP tool handlers (future)
+│       └── registry.go               # Tool registry placeholder
 ├── test_mcp.sh                       # Test script
+├── test_shutdown.sh                  # Shutdown test script
 ├── claude_desktop_config_example.json # Claude Desktop config example
 ├── go.mod                            # Go module definition
 ├── go.sum                            # Go module checksums
@@ -132,21 +188,50 @@ spacetraders-mcp/
 
 To add new SpaceTraders API resources:
 
-1. Add the API endpoint method to `SpaceTradersClient`
-2. Define the response struct if needed
-3. Create a new `mcp.Resource` definition in `main()`
-4. Add the resource handler function
-5. Test your new resource
+1. **Add API method**: Extend `pkg/spacetraders/client.go` with the new API endpoint method and response types
+2. **Create resource handler**: Add a new file in `pkg/resources/` (e.g., `contracts.go`) implementing the `ResourceHandler` interface
+3. **Register resource**: Add your new resource to the `registerResources()` function in `pkg/resources/registry.go`
+4. **Test**: Run the test script to verify your new resource works
+
+**Example structure for a new resource:**
+```go
+// pkg/resources/contracts.go
+type ContractsResource struct {
+    client *spacetraders.Client
+}
+
+func (r *ContractsResource) Resource() mcp.Resource {
+    return mcp.Resource{
+        URI:         "spacetraders://contracts/list",
+        Name:        "Contracts List",
+        Description: "List of all available contracts",
+        MIMEType:    "application/json",
+    }
+}
+
+func (r *ContractsResource) Handler() func(...) (...) {
+    // Implementation here
+}
+```
 
 ### Adding Tools
 
-For interactive SpaceTraders API actions (like trading, navigation), you can also add tools:
+For interactive SpaceTraders API actions (like trading, navigation):
 
-1. Enable tool capabilities in the server configuration
-2. Add the API endpoint method to `SpaceTradersClient`
-3. Create a new `mcp.Tool` definition in `main()`
-4. Add the tool handler function
-5. Test your new tool
+1. **Add API method**: Extend `pkg/spacetraders/client.go` with the action method
+2. **Create tool handler**: Add a new file in `pkg/tools/` implementing the `ToolHandler` interface  
+3. **Register tool**: Add your new tool to the `registerTools()` function in `pkg/tools/registry.go`
+4. **Enable tools**: Update `main.go` to enable tool capabilities: `server.WithToolCapabilities(true, false)`
+5. **Test**: Verify your new tool works correctly
+
+### Architecture Benefits
+
+The modular structure provides:
+- **Separation of concerns**: Each package has a clear responsibility
+- **Easy testing**: Individual components can be tested in isolation
+- **Scalability**: Adding new resources/tools is straightforward
+- **Maintainability**: Code is organized and easy to navigate
+- **Reusability**: SpaceTraders client can be used independently
 
 ### Error Handling
 

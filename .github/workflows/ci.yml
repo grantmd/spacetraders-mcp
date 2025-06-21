@@ -100,7 +100,7 @@ jobs:
         echo "Binary test completed"
 
     - name: Upload build artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: spacetraders-mcp-${{ runner.os }}-${{ github.sha }}
         path: spacetraders-mcp
@@ -192,7 +192,7 @@ jobs:
         fi
 
     - name: Upload cross-platform artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: spacetraders-mcp-${{ matrix.goos }}-${{ matrix.goarch }}
         path: spacetraders-mcp-*

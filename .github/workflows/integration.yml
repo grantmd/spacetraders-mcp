@@ -1,0 +1,169 @@
+name: Integration Tests
+
+on:
+  schedule:
+    # Run integration tests daily at 2 AM UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    # Allow manual triggering
+    inputs:
+      run_full_tests:
+        description: "Run full API integration tests"
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  integration-test:
+    name: Integration Tests with Real API
+    runs-on: ubuntu-latest
+    # Only run if we have API token available
+    if: ${{ secrets.SPACETRADERS_API_TOKEN != '' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.22
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-1.22-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-1.22-
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run integration tests with real API
+        env:
+          SPACETRADERS_API_TOKEN: ${{ secrets.SPACETRADERS_API_TOKEN }}
+        run: |
+          echo "Running integration tests with real SpaceTraders API..."
+          go run ./cmd/test_runner.go --integration
+
+      - name: Run manual API validation
+        env:
+          SPACETRADERS_API_TOKEN: ${{ secrets.SPACETRADERS_API_TOKEN }}
+        run: |
+          echo "Building server..."
+          go build -o spacetraders-mcp .
+
+          echo "Testing resources/list endpoint..."
+          echo '{"jsonrpc": "2.0", "id": 1, "method": "resources/list"}' | timeout 10s ./spacetraders-mcp | head -50
+
+          echo "Testing agent info resource..."
+          echo '{"jsonrpc": "2.0", "id": 2, "method": "resources/read", "params": {"uri": "spacetraders://agent/info"}}' | timeout 10s ./spacetraders-mcp | head -50
+
+      - name: Create integration test report
+        if: always()
+        run: |
+          echo "# Integration Test Report" > integration-report.md
+          echo "Date: $(date)" >> integration-report.md
+          echo "Commit: ${{ github.sha }}" >> integration-report.md
+          echo "" >> integration-report.md
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ All integration tests passed successfully" >> integration-report.md
+          else
+            echo "❌ Some integration tests failed" >> integration-report.md
+          fi
+
+      - name: Upload integration test report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: integration-test-report-${{ github.run_number }}
+          path: integration-report.md
+          retention-days: 30
+
+  # Fallback job when no API token is available
+  integration-test-fallback:
+    name: Integration Tests (No API Token)
+    runs-on: ubuntu-latest
+    if: ${{ secrets.SPACETRADERS_API_TOKEN == '' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.22
+
+      - name: Run integration tests without API
+        run: |
+          echo "⚠️  SPACETRADERS_API_TOKEN secret not available"
+          echo "Running integration tests without real API calls..."
+          go run ./cmd/test_runner.go
+
+      - name: Reminder about API token
+        run: |
+          echo "💡 To enable full integration testing:"
+          echo "1. Get a SpaceTraders API token from https://spacetraders.io/"
+          echo "2. Add it as a repository secret named 'SPACETRADERS_API_TOKEN'"
+          echo "3. Re-run this workflow to test with real API calls"
+
+  notify:
+    name: Notify Results
+    runs-on: ubuntu-latest
+    needs: [integration-test, integration-test-fallback]
+    if: always() && (needs.integration-test.result == 'failure' || needs.integration-test-fallback.result == 'failure')
+
+    steps:
+      - name: Create issue on failure
+        if: github.event_name == 'schedule'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const title = `🚨 Scheduled Integration Tests Failed - ${new Date().toISOString().split('T')[0]}`;
+            const body = `
+            ## Integration Test Failure Report
+
+            **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            **Commit:** ${{ github.sha }}
+            **Date:** ${new Date().toISOString()}
+
+            The scheduled integration tests have failed. This could indicate:
+            - Issues with the SpaceTraders API
+            - Problems with our API integration code
+            - Network connectivity issues
+            - API token expiration or permission changes
+
+            Please investigate and resolve the issues.
+
+            ### Next Steps
+            1. Check the workflow logs for specific error messages
+            2. Verify the API token is still valid
+            3. Test manually with the SpaceTraders API
+            4. Fix any identified issues
+            5. Close this issue once resolved
+
+            ---
+            *This issue was automatically created by the integration test workflow.*
+            `;
+
+            // Check if similar issue already exists
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['integration-test-failure', 'automated']
+            });
+
+            if (existingIssues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['bug', 'integration-test-failure', 'automated']
+              });
+            }

@@ -1,0 +1,167 @@
+name: Feature Request
+description: Suggest an idea for this project
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to suggest a new feature! 🚀
+
+  - type: dropdown
+    id: feature-type
+    attributes:
+      label: Feature Type
+      description: What type of feature are you requesting?
+      options:
+        - New MCP Resource
+        - New MCP Tool
+        - API Enhancement
+        - Configuration Option
+        - Performance Improvement
+        - Documentation
+        - Developer Experience
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Is your feature request related to a problem?
+      description: A clear and concise description of what the problem is.
+      placeholder: "I'm always frustrated when..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe the solution you'd like
+      description: A clear and concise description of what you want to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Describe alternatives you've considered
+      description: A clear and concise description of any alternative solutions or features you've considered.
+    validations:
+      required: false
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: |
+        Describe how this feature would be used. Include specific examples if possible.
+        For SpaceTraders resources/tools, describe what API endpoints or game mechanics this would expose.
+      placeholder: |
+        Example use cases:
+        - As a Claude user, I want to...
+        - This would help with SpaceTraders gameplay by...
+        - This would make development easier by...
+    validations:
+      required: true
+
+  - type: textarea
+    id: spacetraders-api
+    attributes:
+      label: SpaceTraders API Reference (if applicable)
+      description: |
+        If this feature relates to SpaceTraders API functionality, please provide:
+        - API endpoint(s) involved
+        - Links to SpaceTraders API documentation
+        - Example API responses
+      render: json
+    validations:
+      required: false
+
+  - type: textarea
+    id: mcp-spec
+    attributes:
+      label: MCP Specification (if applicable)
+      description: |
+        If this feature relates to MCP protocol functionality, please provide:
+        - MCP method names
+        - Expected request/response formats
+        - Links to MCP specification
+      render: json
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - Low - Nice to have
+        - Medium - Would improve workflow
+        - High - Critical for my use case
+    validations:
+      required: true
+
+  - type: dropdown
+    id: complexity
+    attributes:
+      label: Estimated Complexity
+      description: How complex do you think this feature would be to implement?
+      options:
+        - Simple - Small change or addition
+        - Medium - Moderate development effort
+        - Complex - Significant development effort
+        - Unknown - Not sure
+    validations:
+      required: false
+
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Implementation Ideas
+      description: |
+        If you have ideas about how this could be implemented, please share them.
+        This is optional but can help speed up development.
+      placeholder: |
+        - Could add a new resource handler in pkg/resources/
+        - Might need to extend the SpaceTraders client
+        - Could use existing MCP patterns from...
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      description: Would you be interested in contributing to this feature?
+      options:
+        - label: I would be willing to implement this feature
+        - label: I would be willing to help test this feature
+        - label: I would be willing to help with documentation
+        - label: I would be willing to provide feedback during development
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: |
+        Add any other context, screenshots, mockups, or examples about the feature request here.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission checklist
+      description: Please check all that apply
+      options:
+        - label: I have searched existing issues to make sure this is not a duplicate
+          required: true
+        - label: I have provided a clear description of the feature
+          required: true
+        - label: I have explained the use case and benefits
+          required: true
+        - label: I have considered how this fits with the project's goals
+          required: true

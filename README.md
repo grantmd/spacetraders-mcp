@@ -227,9 +227,19 @@ spacetraders-mcp/
 │   │   └── contracts.go              # Contracts list resource
 │   └── tools/                        # MCP tool handlers (future)
 │       └── registry.go               # Tool registry placeholder
-├── test_mcp.sh                       # Test script
-├── test_shutdown.sh                  # Shutdown test script
+├── test/                             # Integration tests
+│   └── integration_test.go           # Comprehensive integration tests
+├── cmd/                              # Command line tools
+│   └── test_runner.go                # Go test runner (replaces shell scripts)
+├── .github/                          # GitHub Actions workflows
+│   ├── workflows/                    # CI/CD pipelines
+│   │   ├── ci.yml                    # Main CI workflow
+│   │   ├── integration.yml           # Integration tests with real API
+│   │   └── release.yml               # Release automation
+│   ├── ISSUE_TEMPLATE/               # Issue templates
+│   └── dependabot.yml               # Dependency updates
 ├── claude_desktop_config_example.json # Claude Desktop config example
+├── Dockerfile                        # Container image for deployment
 ├── go.mod                            # Go module definition
 ├── go.sum                            # Go module checksums
 └── README.md                         # This file
@@ -242,7 +252,104 @@ To add new SpaceTraders API resources:
 1. **Add API method**: Extend `pkg/spacetraders/client.go` with the new API endpoint method and response types
 2. **Create resource handler**: Add a new file in `pkg/resources/` (e.g., `contracts.go`) implementing the `ResourceHandler` interface
 3. **Register resource**: Add your new resource to the `registerResources()` function in `pkg/resources/registry.go`
-4. **Test**: Run the test script to verify your new resource works
+4. **Add tests**: Create unit tests for your resource handler
+5. **Test**: Run `make test` to verify your new resource works
+
+## CI/CD and Automation
+
+This project uses GitHub Actions for comprehensive CI/CD automation:
+
+### Workflows
+
+#### 1. **Main CI Pipeline** (`.github/workflows/ci.yml`)
+Runs on every push and pull request:
+- **Multi-version testing**: Tests against Go 1.21 and 1.22
+- **Code quality**: `go vet`, `gofmt`, linting with `golangci-lint`
+- **Comprehensive testing**: Unit tests, integration tests, and test runner
+- **Security scanning**: `gosec` and `govulncheck`
+- **Cross-platform builds**: Linux, macOS, Windows (AMD64, ARM64)
+- **Coverage reporting**: Uploads to Codecov
+
+#### 2. **Integration Tests** (`.github/workflows/integration.yml`)
+Scheduled daily and manually triggered:
+- **Real API testing**: Uses `SPACETRADERS_API_TOKEN` secret for live API tests
+- **Automated issue creation**: Creates GitHub issues on test failures
+- **Fallback testing**: Runs protocol tests when no API token is available
+- **Test reporting**: Generates comprehensive test reports
+
+#### 3. **Release Automation** (`.github/workflows/release.yml`)
+Triggered on version tags:
+- **Pre-release testing**: Full test suite before building release
+- **Multi-platform binaries**: Builds for all supported platforms
+- **Docker images**: Pushes to Docker Hub and GitHub Container Registry
+- **GitHub releases**: Automatic release creation with changelog
+- **Checksums**: SHA256 checksums for all binaries
+
+### Secrets Configuration
+
+Configure these secrets in your GitHub repository:
+
+```bash
+# Required for integration tests
+SPACETRADERS_API_TOKEN=your_spacetraders_token_here
+
+# Optional for Docker releases
+DOCKER_USERNAME=your_dockerhub_username
+DOCKER_PASSWORD=your_dockerhub_password
+
+# Optional for notifications
+SLACK_WEBHOOK_URL=your_slack_webhook_url
+```
+
+### Automated Dependency Updates
+
+**Dependabot** automatically:
+- Updates Go modules weekly
+- Updates GitHub Actions weekly
+- Updates Docker base images weekly
+- Groups minor/patch updates
+- Prioritizes security updates
+
+### Quality Gates
+
+All pull requests must pass:
+- [ ] Unit tests (all packages)
+- [ ] Integration tests (protocol compliance)
+- [ ] Security scans (gosec, govulncheck)
+- [ ] Code formatting (gofmt)
+- [ ] Linting (golangci-lint)
+- [ ] Cross-platform builds
+
+### Release Process
+
+1. **Create a version tag**: `git tag v1.0.0 && git push origin v1.0.0`
+2. **Automated release**: GitHub Actions will:
+   - Run full test suite
+   - Build multi-platform binaries
+   - Create GitHub release with changelog
+   - Push Docker images
+   - Generate checksums
+
+### Development Workflow
+
+```bash
+# Run tests locally
+make test
+
+# Run with real API (requires token)
+make test-full
+
+# Run specific test categories
+make test-unit
+make test-integration
+
+# Format and lint code
+make fmt
+make lint
+
+# Security scan
+make security
+```
 
 **Example structure for a new resource:**
 ```go

@@ -28,7 +28,11 @@ func TestLoad_WithEnvFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to get working directory: %v", err)
 	}
-	defer os.Chdir(originalWd)
+	defer func() {
+		if err := os.Chdir(originalWd); err != nil {
+			t.Errorf("Failed to restore working directory: %v", err)
+		}
+	}()
 
 	err = os.Chdir(tmpDir)
 	if err != nil {
@@ -36,7 +40,9 @@ func TestLoad_WithEnvFile(t *testing.T) {
 	}
 
 	// Clear any existing environment variable
-	os.Unsetenv("SPACETRADERS_API_TOKEN")
+	if err := os.Unsetenv("SPACETRADERS_API_TOKEN"); err != nil {
+		t.Errorf("Failed to unset environment variable: %v", err)
+	}
 
 	// Test Load
 	config, err := Load()
@@ -62,7 +68,11 @@ func TestLoad_WithEnvironmentVariable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to get working directory: %v", err)
 	}
-	defer os.Chdir(originalWd)
+	defer func() {
+		if err := os.Chdir(originalWd); err != nil {
+			t.Errorf("Failed to restore working directory: %v", err)
+		}
+	}()
 
 	err = os.Chdir(tmpDir)
 	if err != nil {
@@ -71,8 +81,14 @@ func TestLoad_WithEnvironmentVariable(t *testing.T) {
 
 	// Set environment variable
 	testToken := "test-token-from-env"
-	os.Setenv("SPACETRADERS_API_TOKEN", testToken)
-	defer os.Unsetenv("SPACETRADERS_API_TOKEN")
+	if err := os.Setenv("SPACETRADERS_API_TOKEN", testToken); err != nil {
+		t.Fatalf("Failed to set environment variable: %v", err)
+	}
+	defer func() {
+		if err := os.Unsetenv("SPACETRADERS_API_TOKEN"); err != nil {
+			t.Errorf("Failed to unset environment variable: %v", err)
+		}
+	}()
 
 	// Test Load
 	config, err := Load()
@@ -97,7 +113,11 @@ func TestLoad_MissingToken(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to get working directory: %v", err)
 	}
-	defer os.Chdir(originalWd)
+	defer func() {
+		if err := os.Chdir(originalWd); err != nil {
+			t.Errorf("Failed to restore working directory: %v", err)
+		}
+	}()
 
 	err = os.Chdir(tmpDir)
 	if err != nil {
@@ -105,7 +125,9 @@ func TestLoad_MissingToken(t *testing.T) {
 	}
 
 	// Clear environment variable
-	os.Unsetenv("SPACETRADERS_API_TOKEN")
+	if err := os.Unsetenv("SPACETRADERS_API_TOKEN"); err != nil {
+		t.Errorf("Failed to unset environment variable: %v", err)
+	}
 
 	// Test Load
 	config, err := Load()
@@ -143,7 +165,11 @@ func TestLoad_EmptyToken(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to get working directory: %v", err)
 	}
-	defer os.Chdir(originalWd)
+	defer func() {
+		if err := os.Chdir(originalWd); err != nil {
+			t.Errorf("Failed to restore working directory: %v", err)
+		}
+	}()
 
 	err = os.Chdir(tmpDir)
 	if err != nil {
@@ -151,7 +177,9 @@ func TestLoad_EmptyToken(t *testing.T) {
 	}
 
 	// Clear any existing environment variable
-	os.Unsetenv("SPACETRADERS_API_TOKEN")
+	if err := os.Unsetenv("SPACETRADERS_API_TOKEN"); err != nil {
+		t.Errorf("Failed to unset environment variable: %v", err)
+	}
 
 	// Test Load
 	config, err := Load()
@@ -184,7 +212,11 @@ func TestLoad_EnvironmentOverridesFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to get working directory: %v", err)
 	}
-	defer os.Chdir(originalWd)
+	defer func() {
+		if err := os.Chdir(originalWd); err != nil {
+			t.Errorf("Failed to restore working directory: %v", err)
+		}
+	}()
 
 	err = os.Chdir(tmpDir)
 	if err != nil {
@@ -193,8 +225,14 @@ func TestLoad_EnvironmentOverridesFile(t *testing.T) {
 
 	// Set environment variable (should override file)
 	envToken := "token-from-env"
-	os.Setenv("SPACETRADERS_API_TOKEN", envToken)
-	defer os.Unsetenv("SPACETRADERS_API_TOKEN")
+	if err := os.Setenv("SPACETRADERS_API_TOKEN", envToken); err != nil {
+		t.Fatalf("Failed to set environment variable: %v", err)
+	}
+	defer func() {
+		if err := os.Unsetenv("SPACETRADERS_API_TOKEN"); err != nil {
+			t.Errorf("Failed to unset environment variable: %v", err)
+		}
+	}()
 
 	// Test Load
 	config, err := Load()
@@ -227,7 +265,11 @@ func TestLoad_InvalidEnvFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to get working directory: %v", err)
 	}
-	defer os.Chdir(originalWd)
+	defer func() {
+		if err := os.Chdir(originalWd); err != nil {
+			t.Errorf("Failed to restore working directory: %v", err)
+		}
+	}()
 
 	err = os.Chdir(tmpDir)
 	if err != nil {
@@ -235,8 +277,14 @@ func TestLoad_InvalidEnvFile(t *testing.T) {
 	}
 
 	// Set environment variable so we don't fail on missing token
-	os.Setenv("SPACETRADERS_API_TOKEN", "test-token")
-	defer os.Unsetenv("SPACETRADERS_API_TOKEN")
+	if err := os.Setenv("SPACETRADERS_API_TOKEN", "test-token"); err != nil {
+		t.Fatalf("Failed to set environment variable: %v", err)
+	}
+	defer func() {
+		if err := os.Unsetenv("SPACETRADERS_API_TOKEN"); err != nil {
+			t.Errorf("Failed to unset environment variable: %v", err)
+		}
+	}()
 
 	// Test Load - should handle invalid config file gracefully
 	config, err := Load()

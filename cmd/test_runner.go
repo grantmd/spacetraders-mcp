@@ -19,10 +19,7 @@ func main() {
 	fmt.Println("======================================")
 
 	// Check if we should run integration tests
-	runIntegration := false
-	if len(os.Args) > 1 && os.Args[1] == "--integration" {
-		runIntegration = true
-	}
+	runIntegration := len(os.Args) > 1 && os.Args[1] == "--integration"
 
 	// Run unit tests first
 	fmt.Printf("\n%sRunning unit tests...%s\n", colorYellow, colorNC)

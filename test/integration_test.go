@@ -60,7 +60,11 @@ func TestIntegration_ServerBuild(t *testing.T) {
 	}
 
 	// Clean up the test binary
-	defer os.Remove("../spacetraders-mcp-test")
+	defer func() {
+		if err := os.Remove("../spacetraders-mcp-test"); err != nil {
+			t.Logf("Failed to remove test binary: %v", err)
+		}
+	}()
 
 	// Verify the binary exists
 	if _, err := os.Stat("../spacetraders-mcp-test"); os.IsNotExist(err) {
@@ -80,7 +84,11 @@ func TestIntegration_ServerStartup(t *testing.T) {
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("Failed to build server: %v", err)
 	}
-	defer os.Remove("../spacetraders-mcp-test")
+	defer func() {
+		if err := os.Remove("../spacetraders-mcp-test"); err != nil {
+			t.Logf("Failed to remove test binary: %v", err)
+		}
+	}()
 
 	// Start the server
 	serverCmd := exec.Command("./spacetraders-mcp-test")
@@ -98,9 +106,15 @@ func TestIntegration_ServerStartup(t *testing.T) {
 		t.Fatalf("Failed to start server: %v", err)
 	}
 	defer func() {
-		stdin.Close()
-		serverCmd.Process.Kill()
-		serverCmd.Wait()
+		if err := stdin.Close(); err != nil {
+			t.Logf("Failed to close stdin: %v", err)
+		}
+		if err := serverCmd.Process.Kill(); err != nil {
+			t.Logf("Failed to kill process: %v", err)
+		}
+		if err := serverCmd.Wait(); err != nil {
+			t.Logf("Failed to wait for process: %v", err)
+		}
 	}()
 
 	// Give the server a moment to start
@@ -505,7 +519,11 @@ func TestIntegration_ServerShutdownGraceful(t *testing.T) {
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("Failed to build server: %v", err)
 	}
-	defer os.Remove("../spacetraders-mcp-test")
+	defer func() {
+		if err := os.Remove("../spacetraders-mcp-test"); err != nil {
+			t.Logf("Failed to remove test binary: %v", err)
+		}
+	}()
 
 	// Start the server
 	serverCmd := exec.Command("./spacetraders-mcp-test")
@@ -544,11 +562,15 @@ func TestIntegration_ServerShutdownGraceful(t *testing.T) {
 		}
 	case <-time.After(5 * time.Second):
 		// Force kill if it doesn't exit gracefully
-		serverCmd.Process.Kill()
+		if err := serverCmd.Process.Kill(); err != nil {
+			t.Errorf("Failed to force kill server process: %v", err)
+		}
 		t.Fatal("Server did not exit gracefully within 5 seconds")
 	}
 
-	stdin.Close()
+	if err := stdin.Close(); err != nil {
+		t.Logf("Failed to close stdin: %v", err)
+	}
 }
 
 // Helper function to call the MCP server with a request
@@ -559,7 +581,11 @@ func callMCPServer(t *testing.T, request string) []byte {
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("Failed to build server: %v", err)
 	}
-	defer os.Remove("../spacetraders-mcp-test")
+	defer func() {
+		if err := os.Remove("../spacetraders-mcp-test"); err != nil {
+			t.Logf("Failed to remove test binary: %v", err)
+		}
+	}()
 
 	// Start the server
 	serverCmd := exec.Command("./spacetraders-mcp-test")
@@ -577,9 +603,15 @@ func callMCPServer(t *testing.T, request string) []byte {
 		t.Fatalf("Failed to start server: %v", err)
 	}
 	defer func() {
-		stdin.Close()
-		serverCmd.Process.Kill()
-		serverCmd.Wait()
+		if err := stdin.Close(); err != nil {
+			t.Logf("Failed to close stdin: %v", err)
+		}
+		if err := serverCmd.Process.Kill(); err != nil {
+			t.Logf("Failed to kill process: %v", err)
+		}
+		if err := serverCmd.Wait(); err != nil {
+			t.Logf("Failed to wait for process: %v", err)
+		}
 	}()
 
 	// Give the server a moment to start

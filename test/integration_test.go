@@ -824,3 +824,236 @@ func readJSONResponse(stdout io.Reader) ([]byte, error) {
 
 	return nil, fmt.Errorf("no JSON response received within %v", timeout)
 }
+
+func TestIntegration_AcceptContractTool(t *testing.T) {
+	// Skip if no API token is available
+	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
+		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
+	}
+
+	// First, let's list the tools to make sure accept_contract is available
+	response := callMCPServer(t, `{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}`)
+
+	var mcpResponse MCPResponse
+	if err := json.Unmarshal(response, &mcpResponse); err != nil {
+		t.Fatalf("Failed to parse tools/list response: %v", err)
+	}
+
+	if mcpResponse.Error != nil {
+		t.Fatalf("Error in tools/list: %v", mcpResponse.Error)
+	}
+
+	// Check that the result contains tools
+	result, ok := mcpResponse.Result.(map[string]interface{})
+	if !ok {
+		t.Fatalf("Expected tools/list result to be an object, got %T", mcpResponse.Result)
+	}
+
+	tools, ok := result["tools"].([]interface{})
+	if !ok {
+		t.Fatalf("Expected tools to be an array, got %T", result["tools"])
+	}
+
+	// Look for the accept_contract tool
+	var acceptContractTool map[string]interface{}
+	for _, tool := range tools {
+		toolMap, ok := tool.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if toolMap["name"] == "accept_contract" {
+			acceptContractTool = toolMap
+			break
+		}
+	}
+
+	if acceptContractTool == nil {
+		t.Fatal("accept_contract tool not found in tools list")
+	}
+
+	// Verify the tool has the expected structure
+	if acceptContractTool["description"] == "" {
+		t.Error("accept_contract tool should have a description")
+	}
+
+	inputSchema, ok := acceptContractTool["inputSchema"].(map[string]interface{})
+	if !ok {
+		t.Fatal("accept_contract tool should have an inputSchema")
+	}
+
+	properties, ok := inputSchema["properties"].(map[string]interface{})
+	if !ok {
+		t.Fatal("inputSchema should have properties")
+	}
+
+	contractIdProp, ok := properties["contract_id"].(map[string]interface{})
+	if !ok {
+		t.Fatal("inputSchema should have contract_id property")
+	}
+
+	if contractIdProp["type"] != "string" {
+		t.Error("contract_id property should be of type string")
+	}
+
+	// Test calling the tool with invalid contract ID (should return error but not crash)
+	toolCallRequest := `{"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "accept_contract", "arguments": {"contract_id": "invalid-contract-id-12345"}}}`
+	response = callMCPServer(t, toolCallRequest)
+
+	if err := json.Unmarshal(response, &mcpResponse); err != nil {
+		t.Fatalf("Failed to parse tools/call response: %v", err)
+	}
+
+	// The call should succeed at the protocol level, but the tool should return an error
+	if mcpResponse.Error != nil {
+		t.Fatalf("Unexpected JSON-RPC error in tools/call: %v", mcpResponse.Error)
+	}
+
+	// Check the tool result
+	toolResult, ok := mcpResponse.Result.(map[string]interface{})
+	if !ok {
+		t.Fatalf("Expected tools/call result to be an object, got %T", mcpResponse.Result)
+	}
+
+	// The tool should indicate an error since the contract doesn't exist
+	isError, ok := toolResult["isError"].(bool)
+	if !ok || !isError {
+		t.Error("Expected tool to return isError: true for invalid contract ID")
+	}
+
+	content, ok := toolResult["content"].([]interface{})
+	if !ok || len(content) == 0 {
+		t.Fatal("Expected tool result to have content")
+	}
+
+	// Test with missing contract_id parameter
+	toolCallRequest = `{"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "accept_contract", "arguments": {}}}`
+	response = callMCPServer(t, toolCallRequest)
+
+	if err := json.Unmarshal(response, &mcpResponse); err != nil {
+		t.Fatalf("Failed to parse tools/call response for missing parameter: %v", err)
+	}
+
+	if mcpResponse.Error != nil {
+		t.Fatalf("Unexpected JSON-RPC error for missing parameter: %v", mcpResponse.Error)
+	}
+
+	toolResult, ok = mcpResponse.Result.(map[string]interface{})
+	if !ok {
+		t.Fatalf("Expected tools/call result to be an object, got %T", mcpResponse.Result)
+	}
+
+	isError, ok = toolResult["isError"].(bool)
+	if !ok || !isError {
+		t.Error("Expected tool to return isError: true for missing contract_id")
+	}
+
+	// Test with empty contract_id
+	toolCallRequest = `{"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "accept_contract", "arguments": {"contract_id": ""}}}`
+	response = callMCPServer(t, toolCallRequest)
+
+	if err := json.Unmarshal(response, &mcpResponse); err != nil {
+		t.Fatalf("Failed to parse tools/call response for empty contract_id: %v", err)
+	}
+
+	if mcpResponse.Error != nil {
+		t.Fatalf("Unexpected JSON-RPC error for empty contract_id: %v", mcpResponse.Error)
+	}
+
+	toolResult, ok = mcpResponse.Result.(map[string]interface{})
+	if !ok {
+		t.Fatalf("Expected tools/call result to be an object, got %T", mcpResponse.Result)
+	}
+
+	isError, ok = toolResult["isError"].(bool)
+	if !ok || !isError {
+		t.Error("Expected tool to return isError: true for empty contract_id")
+	}
+
+	t.Log("AcceptContract tool integration tests passed - tool is properly registered and handles error cases correctly")
+}
+
+func TestIntegration_AcceptContractToolRegistration(t *testing.T) {
+	// Test that the accept_contract tool is properly registered (no API token needed)
+	response := callMCPServer(t, `{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}`)
+
+	var mcpResponse MCPResponse
+	if err := json.Unmarshal(response, &mcpResponse); err != nil {
+		t.Fatalf("Failed to parse tools/list response: %v", err)
+	}
+
+	if mcpResponse.Error != nil {
+		t.Fatalf("Error in tools/list: %v", mcpResponse.Error)
+	}
+
+	// Check that the result contains tools
+	result, ok := mcpResponse.Result.(map[string]interface{})
+	if !ok {
+		t.Fatalf("Expected tools/list result to be an object, got %T", mcpResponse.Result)
+	}
+
+	tools, ok := result["tools"].([]interface{})
+	if !ok {
+		t.Fatalf("Expected tools to be an array, got %T", result["tools"])
+	}
+
+	// Look for the accept_contract tool
+	var acceptContractTool map[string]interface{}
+	for _, tool := range tools {
+		toolMap, ok := tool.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if toolMap["name"] == "accept_contract" {
+			acceptContractTool = toolMap
+			break
+		}
+	}
+
+	if acceptContractTool == nil {
+		t.Fatal("accept_contract tool not found in tools list")
+	}
+
+	// Verify the tool has the expected structure
+	if acceptContractTool["description"] == "" {
+		t.Error("accept_contract tool should have a description")
+	}
+
+	inputSchema, ok := acceptContractTool["inputSchema"].(map[string]interface{})
+	if !ok {
+		t.Fatal("accept_contract tool should have an inputSchema")
+	}
+
+	properties, ok := inputSchema["properties"].(map[string]interface{})
+	if !ok {
+		t.Fatal("inputSchema should have properties")
+	}
+
+	contractIdProp, ok := properties["contract_id"].(map[string]interface{})
+	if !ok {
+		t.Fatal("inputSchema should have contract_id property")
+	}
+
+	if contractIdProp["type"] != "string" {
+		t.Error("contract_id property should be of type string")
+	}
+
+	// Verify required fields
+	required, ok := inputSchema["required"].([]interface{})
+	if !ok {
+		t.Fatal("inputSchema should have required array")
+	}
+
+	hasContractIdRequired := false
+	for _, req := range required {
+		if req == "contract_id" {
+			hasContractIdRequired = true
+			break
+		}
+	}
+
+	if !hasContractIdRequired {
+		t.Error("contract_id should be required in inputSchema")
+	}
+
+	t.Log("AcceptContract tool is properly registered with correct schema")
+}

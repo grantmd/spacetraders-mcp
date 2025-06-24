@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/tools/contract"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -35,9 +36,11 @@ func NewRegistry(client *spacetraders.Client) *Registry {
 
 // registerTools registers all available tool handlers
 func (r *Registry) registerTools() {
-	// TODO: Add tool handlers here as we implement them:
+	// Register AcceptContract tool
+	r.handlers = append(r.handlers, contract.NewAcceptContractTool(r.client))
+
+	// TODO: Add more tool handlers here as we implement them:
 	// - NavigateShip tool
-	// - AcceptContract tool
 	// - FulfillContract tool
 	// - PurchaseShip tool
 	// - SellCargo tool

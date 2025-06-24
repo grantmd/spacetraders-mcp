@@ -124,6 +124,32 @@ Provides detailed information about all ships owned by your agent.
 }
 ```
 
+### Available Tools
+
+#### `accept_contract`
+
+Accept a contract by its ID. This commits the agent to fulfilling the contract terms and provides an upfront payment.
+
+**Parameters:**
+- `contract_id` (string, required): The unique identifier of the contract to accept
+
+**Example:**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "accept_contract",
+    "arguments": {
+      "contract_id": "clm0n4k8q0001js08g2h1k9v8"
+    }
+  }
+}
+```
+
+**Response:** Returns contract details and updated agent information including the acceptance payment.
+
 ## Testing
 
 The project includes comprehensive tests covering both unit tests and integration tests. Tests have been converted from shell scripts to native Go tests for better reliability and maintainability.

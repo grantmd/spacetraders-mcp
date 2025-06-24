@@ -222,6 +222,14 @@ type ContractDeliverGood struct {
 	UnitsFulfilled    int    `json:"unitsFulfilled"`
 }
 
+// AcceptContractResponse represents the response from accepting a contract
+type AcceptContractResponse struct {
+	Data struct {
+		Contract Contract `json:"contract"`
+		Agent    Agent    `json:"agent"`
+	} `json:"data"`
+}
+
 // API Response wrappers
 type AgentResponse struct {
 	Data Agent `json:"data"`
@@ -243,6 +251,10 @@ type ContractsResponse struct {
 		Page  int `json:"page"`
 		Limit int `json:"limit"`
 	} `json:"meta"`
+}
+
+type ContractResponse struct {
+	Data Contract `json:"data"`
 }
 
 // NewClient creates a new SpaceTraders client
@@ -356,4 +368,34 @@ func (c *Client) GetContracts() ([]Contract, error) {
 	}
 
 	return contractsResp.Data, nil
+}
+
+// AcceptContract accepts a contract by its ID
+func (c *Client) AcceptContract(contractID string) (*Contract, *Agent, error) {
+	endpoint := fmt.Sprintf("/my/contracts/%s/accept", contractID)
+
+	resp, err := c.makeRequest("POST", endpoint, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	var acceptResp AcceptContractResponse
+	if err := json.Unmarshal(body, &acceptResp); err != nil {
+		return nil, nil, fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	return &acceptResp.Data.Contract, &acceptResp.Data.Agent, nil
 }

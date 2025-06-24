@@ -59,6 +59,13 @@ func main() {
 	toolRegistry := tools.NewRegistry(client, appLogger)
 	toolRegistry.RegisterWithServer(s)
 
+	// TODO: Add prompts/list capability when MCP library supports it
+	// Prompts would help guide users to the right resources and tools:
+	// - "Status Check" -> get_status_summary + read key resources
+	// - "Explore System" -> read waypoints + analyze opportunities
+	// - "Contract Strategy" -> analyze contracts + suggest actions
+	// - "Fleet Optimization" -> analyze ships + recommend improvements
+
 	appLogger.Info("Server initialization complete")
 
 	// Start the stdio server with error logging (ServeStdio already handles signals gracefully)

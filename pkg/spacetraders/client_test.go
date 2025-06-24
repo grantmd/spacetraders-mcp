@@ -566,3 +566,295 @@ func indexOfSubstring(s, substr string) int {
 	}
 	return -1
 }
+
+func TestClient_GetSystemWaypoints(t *testing.T) {
+	// Mock waypoints response
+	mockWaypoints := []SystemWaypoint{
+		{
+			Symbol: "X1-TEST-A1",
+			Type:   "PLANET",
+			X:      10,
+			Y:      20,
+			Orbitals: []WaypointOrbital{
+				{Symbol: "X1-TEST-A1-M1"},
+			},
+			Traits: []WaypointTrait{
+				{
+					Symbol:      "MARKETPLACE",
+					Name:        "Marketplace",
+					Description: "A thriving marketplace",
+				},
+			},
+		},
+		{
+			Symbol: "X1-TEST-B2",
+			Type:   "MOON",
+			X:      15,
+			Y:      25,
+			Traits: []WaypointTrait{
+				{
+					Symbol:      "SHIPYARD",
+					Name:        "Shipyard",
+					Description: "Shipyard for purchasing ships",
+				},
+			},
+		},
+	}
+
+	mockResponse := SystemWaypointsResponse{
+		Data: mockWaypoints,
+		Meta: struct {
+			Total int `json:"total"`
+			Page  int `json:"page"`
+			Limit int `json:"limit"`
+		}{
+			Total: 2,
+			Page:  1,
+			Limit: 20,
+		},
+	}
+
+	responseJSON, err := json.Marshal(mockResponse)
+	if err != nil {
+		t.Fatalf("Failed to marshal mock response: %v", err)
+	}
+
+	// Create test server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		expectedPath := "/systems/X1-TEST/waypoints"
+		if r.URL.Path != expectedPath {
+			t.Errorf("Expected path %s, got %s", expectedPath, r.URL.Path)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write(responseJSON); err != nil {
+			t.Errorf("Failed to write response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	client := &Client{
+		APIToken: "test-token",
+		BaseURL:  server.URL,
+	}
+
+	// Test GetSystemWaypoints
+	waypoints, err := client.GetSystemWaypoints("X1-TEST")
+	if err != nil {
+		t.Fatalf("GetSystemWaypoints returned error: %v", err)
+	}
+
+	// Verify response
+	if len(waypoints) != 2 {
+		t.Errorf("Expected 2 waypoints, got %d", len(waypoints))
+	}
+
+	if waypoints[0].Symbol != "X1-TEST-A1" {
+		t.Errorf("Expected first waypoint symbol X1-TEST-A1, got %s", waypoints[0].Symbol)
+	}
+
+	if waypoints[0].Type != "PLANET" {
+		t.Errorf("Expected first waypoint type PLANET, got %s", waypoints[0].Type)
+	}
+
+	if len(waypoints[0].Traits) != 1 {
+		t.Errorf("Expected 1 trait for first waypoint, got %d", len(waypoints[0].Traits))
+	}
+
+	if waypoints[0].Traits[0].Symbol != "MARKETPLACE" {
+		t.Errorf("Expected first waypoint trait MARKETPLACE, got %s", waypoints[0].Traits[0].Symbol)
+	}
+
+	if waypoints[1].Symbol != "X1-TEST-B2" {
+		t.Errorf("Expected second waypoint symbol X1-TEST-B2, got %s", waypoints[1].Symbol)
+	}
+
+	if waypoints[1].Traits[0].Symbol != "SHIPYARD" {
+		t.Errorf("Expected second waypoint trait SHIPYARD, got %s", waypoints[1].Traits[0].Symbol)
+	}
+}
+
+func TestClient_GetSystemWaypoints_Error(t *testing.T) {
+	// Test server that returns error
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		if _, err := w.Write([]byte(`{"error": "System not found"}`)); err != nil {
+			t.Errorf("Failed to write response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	client := &Client{
+		APIToken: "test-token",
+		BaseURL:  server.URL,
+	}
+
+	waypoints, err := client.GetSystemWaypoints("INVALID-SYSTEM")
+	if err == nil {
+		t.Fatal("Expected error for invalid system, got nil")
+	}
+	if waypoints != nil {
+		t.Error("Expected nil waypoints on error, got non-nil")
+	}
+}
+
+func TestClient_GetShipyard(t *testing.T) {
+	// Mock shipyard response
+	mockShipyard := Shipyard{
+		Symbol: "X1-TEST-SHIPYARD",
+		ShipTypes: []ShipyardShipType{
+			{Type: "SHIP_PROBE"},
+			{Type: "SHIP_MINING_DRONE"},
+		},
+		Ships: []ShipyardShip{
+			{
+				Type:          "SHIP_PROBE",
+				Name:          "Probe",
+				Description:   "A small exploration vessel",
+				Supply:        "ABUNDANT",
+				PurchasePrice: 50000,
+				Frame: ShipyardShipFrame{
+					Symbol:         "FRAME_PROBE",
+					Name:           "Probe Frame",
+					Description:    "Small frame for probe ships",
+					ModuleSlots:    2,
+					MountingPoints: 1,
+					FuelCapacity:   400,
+					Condition:      100,
+					Integrity:      100,
+				},
+				Reactor: ShipyardShipReactor{
+					Symbol:      "REACTOR_FISSION_I",
+					Name:        "Fission Reactor I",
+					Description: "Basic fission reactor",
+					Condition:   100,
+					Integrity:   100,
+					PowerOutput: 31,
+				},
+				Engine: ShipyardShipEngine{
+					Symbol:      "ENGINE_IMPULSE_DRIVE_I",
+					Name:        "Impulse Drive I",
+					Description: "Basic impulse drive",
+					Condition:   100,
+					Integrity:   100,
+					Speed:       30,
+				},
+				Modules: []ShipyardShipModule{
+					{
+						Symbol:      "MODULE_CARGO_HOLD_I",
+						Name:        "Cargo Hold I",
+						Description: "Basic cargo storage",
+						Capacity:    30,
+					},
+				},
+				Mounts: []ShipyardShipMount{
+					{
+						Symbol:      "MOUNT_SENSOR_ARRAY_I",
+						Name:        "Sensor Array I",
+						Description: "Basic sensor array",
+						Strength:    1,
+					},
+				},
+				Crew: ShipyardShipCrew{
+					Required: 1,
+					Capacity: 3,
+				},
+			},
+		},
+		ModificationsFee: 1000,
+	}
+
+	mockResponse := ShipyardResponse{
+		Data: mockShipyard,
+	}
+
+	responseJSON, err := json.Marshal(mockResponse)
+	if err != nil {
+		t.Fatalf("Failed to marshal mock response: %v", err)
+	}
+
+	// Create test server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		expectedPath := "/systems/X1-TEST/waypoints/X1-TEST-SHIPYARD/shipyard"
+		if r.URL.Path != expectedPath {
+			t.Errorf("Expected path %s, got %s", expectedPath, r.URL.Path)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write(responseJSON); err != nil {
+			t.Errorf("Failed to write response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	client := &Client{
+		APIToken: "test-token",
+		BaseURL:  server.URL,
+	}
+
+	// Test GetShipyard
+	shipyard, err := client.GetShipyard("X1-TEST", "X1-TEST-SHIPYARD")
+	if err != nil {
+		t.Fatalf("GetShipyard returned error: %v", err)
+	}
+
+	// Verify response
+	if shipyard.Symbol != "X1-TEST-SHIPYARD" {
+		t.Errorf("Expected shipyard symbol X1-TEST-SHIPYARD, got %s", shipyard.Symbol)
+	}
+
+	if len(shipyard.ShipTypes) != 2 {
+		t.Errorf("Expected 2 ship types, got %d", len(shipyard.ShipTypes))
+	}
+
+	if shipyard.ShipTypes[0].Type != "SHIP_PROBE" {
+		t.Errorf("Expected first ship type SHIP_PROBE, got %s", shipyard.ShipTypes[0].Type)
+	}
+
+	if len(shipyard.Ships) != 1 {
+		t.Errorf("Expected 1 ship available, got %d", len(shipyard.Ships))
+	}
+
+	ship := shipyard.Ships[0]
+	if ship.Type != "SHIP_PROBE" {
+		t.Errorf("Expected ship type SHIP_PROBE, got %s", ship.Type)
+	}
+
+	if ship.PurchasePrice != 50000 {
+		t.Errorf("Expected purchase price 50000, got %d", ship.PurchasePrice)
+	}
+
+	if ship.Supply != "ABUNDANT" {
+		t.Errorf("Expected supply ABUNDANT, got %s", ship.Supply)
+	}
+
+	if shipyard.ModificationsFee != 1000 {
+		t.Errorf("Expected modifications fee 1000, got %d", shipyard.ModificationsFee)
+	}
+}
+
+func TestClient_GetShipyard_Error(t *testing.T) {
+	// Test server that returns error
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		if _, err := w.Write([]byte(`{"error": "Shipyard not found"}`)); err != nil {
+			t.Errorf("Failed to write response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	client := &Client{
+		APIToken: "test-token",
+		BaseURL:  server.URL,
+	}
+
+	shipyard, err := client.GetShipyard("INVALID-SYSTEM", "INVALID-WAYPOINT")
+	if err == nil {
+		t.Fatal("Expected error for invalid shipyard, got nil")
+	}
+	if shipyard != nil {
+		t.Error("Expected nil shipyard on error, got non-nil")
+	}
+}

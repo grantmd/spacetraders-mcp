@@ -230,6 +230,184 @@ type AcceptContractResponse struct {
 	} `json:"data"`
 }
 
+// System represents a SpaceTraders system
+type System struct {
+	Symbol       string     `json:"symbol"`
+	SectorSymbol string     `json:"sectorSymbol"`
+	Type         string     `json:"type"`
+	X            int        `json:"x"`
+	Y            int        `json:"y"`
+	Waypoints    []Waypoint `json:"waypoints"`
+	Factions     []struct {
+		Symbol string `json:"symbol"`
+	} `json:"factions"`
+}
+
+// SystemWaypoint represents a waypoint in a system (different from navigation waypoint)
+type SystemWaypoint struct {
+	Symbol    string             `json:"symbol"`
+	Type      string             `json:"type"`
+	X         int                `json:"x"`
+	Y         int                `json:"y"`
+	Orbitals  []WaypointOrbital  `json:"orbitals"`
+	Traits    []WaypointTrait    `json:"traits"`
+	Modifiers []WaypointModifier `json:"modifiers,omitempty"`
+	Chart     *WaypointChart     `json:"chart,omitempty"`
+	Faction   *WaypointFaction   `json:"faction,omitempty"`
+}
+
+// WaypointOrbital represents an orbital around a waypoint
+type WaypointOrbital struct {
+	Symbol string `json:"symbol"`
+}
+
+// WaypointTrait represents a trait of a waypoint
+type WaypointTrait struct {
+	Symbol      string `json:"symbol"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+// WaypointModifier represents a modifier affecting a waypoint
+type WaypointModifier struct {
+	Symbol      string `json:"symbol"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+// WaypointChart represents chart information for a waypoint
+type WaypointChart struct {
+	WaypointSymbol string `json:"waypointSymbol,omitempty"`
+	SubmittedBy    string `json:"submittedBy,omitempty"`
+	SubmittedOn    string `json:"submittedOn,omitempty"`
+}
+
+// WaypointFaction represents faction control of a waypoint
+type WaypointFaction struct {
+	Symbol string `json:"symbol"`
+}
+
+// Shipyard represents a shipyard at a waypoint
+type Shipyard struct {
+	Symbol           string                `json:"symbol"`
+	ShipTypes        []ShipyardShipType    `json:"shipTypes"`
+	Transactions     []ShipyardTransaction `json:"transactions,omitempty"`
+	Ships            []ShipyardShip        `json:"ships,omitempty"`
+	ModificationsFee int                   `json:"modificationsFee"`
+}
+
+// ShipyardShipType represents a type of ship available at a shipyard
+type ShipyardShipType struct {
+	Type string `json:"type"`
+}
+
+// ShipyardTransaction represents a transaction at a shipyard
+type ShipyardTransaction struct {
+	WaypointSymbol string `json:"waypointSymbol"`
+	ShipSymbol     string `json:"shipSymbol"`
+	ShipType       string `json:"shipType"`
+	Price          int    `json:"price"`
+	AgentSymbol    string `json:"agentSymbol"`
+	Timestamp      string `json:"timestamp"`
+}
+
+// ShipyardShip represents a ship available for purchase at a shipyard
+type ShipyardShip struct {
+	Type          string               `json:"type"`
+	Name          string               `json:"name"`
+	Description   string               `json:"description"`
+	Supply        string               `json:"supply"`
+	Activity      string               `json:"activity,omitempty"`
+	PurchasePrice int                  `json:"purchasePrice"`
+	Frame         ShipyardShipFrame    `json:"frame"`
+	Reactor       ShipyardShipReactor  `json:"reactor"`
+	Engine        ShipyardShipEngine   `json:"engine"`
+	Modules       []ShipyardShipModule `json:"modules"`
+	Mounts        []ShipyardShipMount  `json:"mounts"`
+	Crew          ShipyardShipCrew     `json:"crew"`
+}
+
+// ShipyardShipFrame represents frame information for a ship at shipyard
+type ShipyardShipFrame struct {
+	Symbol         string `json:"symbol"`
+	Name           string `json:"name"`
+	Description    string `json:"description"`
+	ModuleSlots    int    `json:"moduleSlots"`
+	MountingPoints int    `json:"mountingPoints"`
+	FuelCapacity   int    `json:"fuelCapacity"`
+	Condition      int    `json:"condition"`
+	Integrity      int    `json:"integrity"`
+	Requirements   struct {
+		Power int `json:"power"`
+		Crew  int `json:"crew"`
+		Slots int `json:"slots"`
+	} `json:"requirements"`
+}
+
+// ShipyardShipReactor represents reactor information for a ship at shipyard
+type ShipyardShipReactor struct {
+	Symbol       string `json:"symbol"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	Condition    int    `json:"condition"`
+	Integrity    int    `json:"integrity"`
+	PowerOutput  int    `json:"powerOutput"`
+	Requirements struct {
+		Power int `json:"power"`
+		Crew  int `json:"crew"`
+		Slots int `json:"slots"`
+	} `json:"requirements"`
+}
+
+// ShipyardShipEngine represents engine information for a ship at shipyard
+type ShipyardShipEngine struct {
+	Symbol       string `json:"symbol"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	Condition    int    `json:"condition"`
+	Integrity    int    `json:"integrity"`
+	Speed        int    `json:"speed"`
+	Requirements struct {
+		Power int `json:"power"`
+		Crew  int `json:"crew"`
+		Slots int `json:"slots"`
+	} `json:"requirements"`
+}
+
+// ShipyardShipModule represents a module for a ship at shipyard
+type ShipyardShipModule struct {
+	Symbol       string `json:"symbol"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	Capacity     int    `json:"capacity,omitempty"`
+	Range        int    `json:"range,omitempty"`
+	Requirements struct {
+		Power int `json:"power"`
+		Crew  int `json:"crew"`
+		Slots int `json:"slots"`
+	} `json:"requirements"`
+}
+
+// ShipyardShipMount represents a mount for a ship at shipyard
+type ShipyardShipMount struct {
+	Symbol       string   `json:"symbol"`
+	Name         string   `json:"name"`
+	Description  string   `json:"description"`
+	Strength     int      `json:"strength,omitempty"`
+	Deposits     []string `json:"deposits,omitempty"`
+	Requirements struct {
+		Power int `json:"power"`
+		Crew  int `json:"crew"`
+		Slots int `json:"slots"`
+	} `json:"requirements"`
+}
+
+// ShipyardShipCrew represents crew requirements for a ship at shipyard
+type ShipyardShipCrew struct {
+	Required int `json:"required"`
+	Capacity int `json:"capacity"`
+}
+
 // API Response wrappers
 type AgentResponse struct {
 	Data Agent `json:"data"`
@@ -255,6 +433,19 @@ type ContractsResponse struct {
 
 type ContractResponse struct {
 	Data Contract `json:"data"`
+}
+
+type SystemWaypointsResponse struct {
+	Data []SystemWaypoint `json:"data"`
+	Meta struct {
+		Total int `json:"total"`
+		Page  int `json:"page"`
+		Limit int `json:"limit"`
+	} `json:"meta"`
+}
+
+type ShipyardResponse struct {
+	Data Shipyard `json:"data"`
 }
 
 // NewClient creates a new SpaceTraders client
@@ -398,4 +589,64 @@ func (c *Client) AcceptContract(contractID string) (*Contract, *Agent, error) {
 	}
 
 	return &acceptResp.Data.Contract, &acceptResp.Data.Agent, nil
+}
+
+// GetSystemWaypoints fetches all waypoints in a system
+func (c *Client) GetSystemWaypoints(systemSymbol string) ([]SystemWaypoint, error) {
+	endpoint := fmt.Sprintf("/systems/%s/waypoints", systemSymbol)
+
+	resp, err := c.makeRequest("GET", endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	var waypointsResp SystemWaypointsResponse
+	if err := json.Unmarshal(body, &waypointsResp); err != nil {
+		return nil, fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	return waypointsResp.Data, nil
+}
+
+// GetShipyard fetches shipyard information for a waypoint
+func (c *Client) GetShipyard(systemSymbol, waypointSymbol string) (*Shipyard, error) {
+	endpoint := fmt.Sprintf("/systems/%s/waypoints/%s/shipyard", systemSymbol, waypointSymbol)
+
+	resp, err := c.makeRequest("GET", endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	var shipyardResp ShipyardResponse
+	if err := json.Unmarshal(body, &shipyardResp); err != nil {
+		return nil, fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	return &shipyardResp.Data, nil
 }

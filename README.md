@@ -124,6 +124,144 @@ Provides detailed information about all ships owned by your agent.
 }
 ```
 
+#### `spacetraders://systems/{systemSymbol}/waypoints`
+
+Provides information about all waypoints in a system, including their types, traits, and orbital relationships.
+
+**URI:** `spacetraders://systems/{systemSymbol}/waypoints`  
+**MIME Type:** `application/json`  
+**Description:** List of all waypoints in a system with detailed information about markets, shipyards, and other facilities
+
+**Example URI:** `spacetraders://systems/X1-FM66/waypoints`
+
+**Content:**
+```json
+{
+  "system": "X1-FM66",
+  "waypoints": [
+    {
+      "symbol": "X1-FM66-A1",
+      "type": "PLANET",
+      "x": 10,
+      "y": 20,
+      "orbitals": [
+        {
+          "symbol": "X1-FM66-A1-M1"
+        }
+      ],
+      "traits": [
+        {
+          "symbol": "MARKETPLACE",
+          "name": "Marketplace",
+          "description": "A thriving center of commerce where traders can buy and sell goods"
+        }
+      ]
+    },
+    {
+      "symbol": "X1-FM66-B2",
+      "type": "MOON",
+      "x": 15,
+      "y": 25,
+      "traits": [
+        {
+          "symbol": "SHIPYARD",
+          "name": "Shipyard",
+          "description": "Facility for constructing and repairing starships"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total": 12,
+    "byType": {
+      "PLANET": 3,
+      "MOON": 5,
+      "ASTEROID": 4
+    },
+    "shipyards": ["X1-FM66-B2", "X1-FM66-C3"],
+    "markets": ["X1-FM66-A1", "X1-FM66-D4"]
+  }
+}
+```
+
+#### `spacetraders://systems/{systemSymbol}/waypoints/{waypointSymbol}/shipyard`
+
+Provides detailed information about a shipyard, including available ships, prices, and recent transactions.
+
+**URI:** `spacetraders://systems/{systemSymbol}/waypoints/{waypointSymbol}/shipyard`  
+**MIME Type:** `application/json`  
+**Description:** Information about ships available for purchase, their specifications, and pricing
+
+**Example URI:** `spacetraders://systems/X1-FM66/waypoints/X1-FM66-B2/shipyard`
+
+**Content:**
+```json
+{
+  "system": "X1-FM66",
+  "waypoint": "X1-FM66-B2",
+  "shipyard": {
+    "symbol": "X1-FM66-B2",
+    "shipTypes": [
+      {
+        "type": "SHIP_PROBE"
+      },
+      {
+        "type": "SHIP_MINING_DRONE"
+      }
+    ],
+    "ships": [
+      {
+        "type": "SHIP_PROBE",
+        "name": "Probe",
+        "description": "A small, fast exploration vessel",
+        "supply": "ABUNDANT",
+        "purchasePrice": 65000,
+        "frame": {
+          "symbol": "FRAME_PROBE",
+          "name": "Probe Frame",
+          "moduleSlots": 2,
+          "mountingPoints": 1,
+          "fuelCapacity": 400
+        },
+        "reactor": {
+          "symbol": "REACTOR_FISSION_I",
+          "name": "Fission Reactor I",
+          "powerOutput": 31
+        },
+        "engine": {
+          "symbol": "ENGINE_IMPULSE_DRIVE_I",
+          "name": "Impulse Drive I",
+          "speed": 30
+        },
+        "crew": {
+          "required": 1,
+          "capacity": 3
+        }
+      }
+    ],
+    "modificationsFee": 5000
+  },
+  "summary": {
+    "availableShipTypes": ["SHIP_PROBE", "SHIP_MINING_DRONE"],
+    "totalShipsAvailable": 3,
+    "priceRange": {
+      "min": 65000,
+      "max": 250000
+    },
+    "shipsByType": {
+      "SHIP_PROBE": 2,
+      "SHIP_MINING_DRONE": 1
+    },
+    "shipsBySupply": {
+      "ABUNDANT": 2,
+      "MODERATE": 1
+    },
+    "modificationsFee": 5000,
+    "recentTransactions": 5
+  }
+}
+```
+
 ### Available Tools
 
 #### `accept_contract`

@@ -2,8 +2,10 @@ package tools
 
 import (
 	"context"
+	"spacetraders-mcp/pkg/logging"
 	"spacetraders-mcp/pkg/spacetraders"
 	"spacetraders-mcp/pkg/tools/contract"
+	"spacetraders-mcp/pkg/tools/status"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -18,13 +20,15 @@ type ToolHandler interface {
 // Registry manages all MCP tools
 type Registry struct {
 	client   *spacetraders.Client
+	logger   *logging.Logger
 	handlers []ToolHandler
 }
 
 // NewRegistry creates a new tool registry
-func NewRegistry(client *spacetraders.Client) *Registry {
+func NewRegistry(client *spacetraders.Client, logger *logging.Logger) *Registry {
 	registry := &Registry{
 		client:   client,
+		logger:   logger,
 		handlers: make([]ToolHandler, 0),
 	}
 
@@ -38,6 +42,9 @@ func NewRegistry(client *spacetraders.Client) *Registry {
 func (r *Registry) registerTools() {
 	// Register AcceptContract tool
 	r.handlers = append(r.handlers, contract.NewAcceptContractTool(r.client))
+
+	// Register Status Summary tool
+	r.handlers = append(r.handlers, status.NewStatusTool(r.client, r.logger))
 
 	// TODO: Add more tool handlers here as we implement them:
 	// - NavigateShip tool

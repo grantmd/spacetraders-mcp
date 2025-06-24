@@ -262,7 +262,65 @@ Provides detailed information about a shipyard, including available ships, price
 }
 ```
 
+## Important: How MCP Resources Work
+
+**Key Understanding:** MCP resources are **NOT automatically loaded** by clients like Claude Desktop. They work like web pages - they exist at specific URIs but are only fetched when explicitly requested.
+
+### What This Means
+
+- ❌ **Claude doesn't automatically know about your agent, ships, contracts, etc.**
+- ✅ **You must explicitly ask Claude to read resources**
+- ✅ **Use the status tool for quick overviews**
+
+### How to Use Resources
+
+Instead of asking "What ships do I have?", try:
+- "Get my status summary"
+- "Read the spacetraders://ships/list resource"
+- "Show me my agent information"
+- "Read my contracts list"
+
 ### Available Tools
+
+#### `get_status_summary`
+
+Provides a comprehensive status overview by automatically fetching and summarizing your agent information, ships, and contracts.
+
+**Parameters:**
+- `include_ships` (boolean, default: true): Include detailed ship information
+- `include_contracts` (boolean, default: true): Include contract information
+
+**Usage Examples:**
+- "Get my status summary"
+- "Show me a status overview"
+- "Get status summary without contracts"
+
+**Sample Output:**
+```
+🚀 SpaceTraders Status Summary
+
+👤 Agent: PLAYER_123
+💰 Credits: 175,000
+🏠 Headquarters: X1-FM66-A1
+🏴 Faction: ASTRO
+🚢 Ships: 3
+
+🚢 Fleet Status:
+  • Total Ships: 3
+  • Cargo Usage: 15/120 (12.5%)
+  • Ship Status:
+    - DOCKED: 2
+    - IN_ORBIT: 1
+  • Ships by System:
+    - X1-FM66: 3
+
+📋 Contracts:
+  • Total: 2
+  • Accepted: 1
+  • Fulfilled: 0
+  • Pending: 1
+  • Total Value: 50,000 credits
+```
 
 #### `accept_contract`
 
@@ -611,7 +669,40 @@ This server uses the SpaceTraders v2 API. For full API documentation, visit:
 
 ## Troubleshooting
 
-### Common Issues
+### MCP Resource Issues
+
+#### Problem: Claude doesn't know about my agent/ships/contracts
+
+**Cause:** MCP resources are not automatically loaded. They're only fetched when explicitly requested.
+
+**Solutions:**
+1. Use the status summary tool: "Get my status summary"
+2. Explicitly request resources:
+   - "Read the spacetraders://agent/info resource"
+   - "Show me the spacetraders://ships/list resource"
+   - "Read my contracts from spacetraders://contracts/list"
+
+#### Problem: "Resource not found" errors
+
+**Cause:** Usually incorrect URI format or missing system/waypoint symbols.
+
+**Solutions:**
+1. Check URI format exactly matches the patterns:
+   - `spacetraders://systems/X1-SYSTEM/waypoints`
+   - `spacetraders://systems/X1-SYSTEM/waypoints/X1-WAYPOINT/shipyard`
+2. Ensure system and waypoint symbols are valid
+3. Use the status tool first to get valid system names
+
+#### Problem: Debug logs show no resource requests
+
+**Cause:** Claude Desktop isn't calling your resources automatically.
+
+**Solutions:**
+1. Ask Claude explicitly: "What MCP resources are available?"
+2. Request specific resources by name or URI
+3. Use the status summary tool for automated data fetching
+
+### Other Common Issues
 
 1. **"SPACETRADERS_API_TOKEN not found in configuration"**
    - Make sure your `.env` file exists and contains the token, or set the environment variable

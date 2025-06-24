@@ -45,6 +45,10 @@ func main() {
 		errorLogger.Printf("Client requested logging level change: %+v", notification)
 	})
 
+	// Note: MCP framework handles resources/list and tools/list automatically
+	// To see these calls, you would need to monitor the stdio communication directly
+	appLogger.Debug("MCP server configured - resources/list and tools/list calls will be handled automatically")
+
 	appLogger.Info("Starting SpaceTraders MCP Server")
 
 	// Register all resources
@@ -52,7 +56,7 @@ func main() {
 	resourceRegistry.RegisterWithServer(s)
 
 	// Register all tools (when we have them)
-	toolRegistry := tools.NewRegistry(client)
+	toolRegistry := tools.NewRegistry(client, appLogger)
 	toolRegistry.RegisterWithServer(s)
 
 	appLogger.Info("Server initialization complete")

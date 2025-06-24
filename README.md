@@ -386,6 +386,53 @@ Provides a comprehensive status overview by automatically fetching and summarizi
   • Fulfilled: 0
   • Pending: 1
   • Total Value: 50,000 credits
+
+  📄 Contract Details:
+    • PROCUREMENT (ID: clq123abc)
+      - Faction: COSMIC
+      - Status: ⏳ Available (Accept by: 2025-12-25T23:59:59.000Z)
+      - Payment: 25000 credits (5000 on accept, 20000 on completion)
+      - Deliveries:
+        * 100 units of IRON_ORE to X1-FM66-B2 (0/100 completed)
+```
+
+#### `get_contract_info`
+
+Get detailed information about contracts, including specific contract analysis and acceptance recommendations.
+
+**Parameters:**
+- `contract_id` (string, optional): Specific contract ID to analyze. If not provided, shows all contracts
+- `include_fulfilled` (boolean, default: false): Include completed contracts in results
+
+**Usage Examples:**
+- "Get contract info"
+- "Get contract info for clq123abc"
+- "Show me contract details with include_fulfilled=true"
+
+**Sample Output:**
+```
+📋 Contract Details: clq123abc
+
+ID: clq123abc
+Status: ⏳ Available
+Type: PROCUREMENT
+Faction: COSMIC
+Payment: 25000 credits total
+  • On Accept: 5000 credits
+  • On Fulfill: 20000 credits
+Accept By: 2025-12-25T23:59:59.000Z
+Complete By: 2025-12-30T23:59:59.000Z
+
+Delivery Requirements:
+1. 🔴 IRON_ORE (0/100 units) → X1-FM66-B2
+   Need 100 more units
+
+Analysis:
+• Profit margin: 80.0% (20000 of 25000 credits on completion)
+• Requires cargo space and delivery logistics
+
+💡 Available Actions:
+• Use accept_contract with contract_id=clq123abc to accept this contract
 ```
 
 #### `accept_contract`

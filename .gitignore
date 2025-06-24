@@ -32,4 +32,4 @@ go.work.sum
 # .vscode/
 
 # go build artifact
-spacetraders-mcp
+spacetraders-mcp*

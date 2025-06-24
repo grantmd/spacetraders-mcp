@@ -5,6 +5,7 @@ import (
 	"spacetraders-mcp/pkg/logging"
 	"spacetraders-mcp/pkg/spacetraders"
 	"spacetraders-mcp/pkg/tools/contract"
+	"spacetraders-mcp/pkg/tools/info"
 	"spacetraders-mcp/pkg/tools/status"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -45,6 +46,9 @@ func (r *Registry) registerTools() {
 
 	// Register Status Summary tool
 	r.handlers = append(r.handlers, status.NewStatusTool(r.client, r.logger))
+
+	// Register Contract Info tool
+	r.handlers = append(r.handlers, info.NewContractInfoTool(r.client, r.logger))
 
 	// TODO: Add more tool handlers here as we implement them:
 	// - NavigateShip tool

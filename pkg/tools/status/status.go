@@ -149,10 +149,11 @@ func (t *StatusTool) Handler() func(ctx context.Context, request mcp.CallToolReq
 					"error": fmt.Sprintf("Failed to fetch contracts: %s", err.Error()),
 				}
 			} else {
-				// Create contract summary
+				// Create contract summary with detailed contract information
 				acceptedCount := 0
 				fulfilledCount := 0
 				totalValue := 0
+				contractDetails := make([]map[string]interface{}, 0)
 
 				for _, contract := range contracts {
 					if contract.Accepted {
@@ -162,6 +163,40 @@ func (t *StatusTool) Handler() func(ctx context.Context, request mcp.CallToolReq
 						fulfilledCount++
 					}
 					totalValue += contract.Terms.Payment.OnAccepted + contract.Terms.Payment.OnFulfilled
+
+					// Add detailed contract information
+					contractInfo := map[string]interface{}{
+						"id":               contract.ID,
+						"factionSymbol":    contract.FactionSymbol,
+						"type":             contract.Type,
+						"accepted":         contract.Accepted,
+						"fulfilled":        contract.Fulfilled,
+						"expiration":       contract.Expiration,
+						"deadlineToAccept": contract.DeadlineToAccept,
+						"payment": map[string]interface{}{
+							"onAccepted":  contract.Terms.Payment.OnAccepted,
+							"onFulfilled": contract.Terms.Payment.OnFulfilled,
+							"total":       contract.Terms.Payment.OnAccepted + contract.Terms.Payment.OnFulfilled,
+						},
+						"deadline": contract.Terms.Deadline,
+					}
+
+					// Add delivery requirements if any
+					if len(contract.Terms.Deliver) > 0 {
+						deliveryInfo := make([]map[string]interface{}, 0)
+						for _, delivery := range contract.Terms.Deliver {
+							deliveryInfo = append(deliveryInfo, map[string]interface{}{
+								"tradeSymbol":       delivery.TradeSymbol,
+								"destinationSymbol": delivery.DestinationSymbol,
+								"unitsRequired":     delivery.UnitsRequired,
+								"unitsFulfilled":    delivery.UnitsFulfilled,
+								"unitsRemaining":    delivery.UnitsRequired - delivery.UnitsFulfilled,
+							})
+						}
+						contractInfo["deliveries"] = deliveryInfo
+					}
+
+					contractDetails = append(contractDetails, contractInfo)
 				}
 
 				summary["contracts"] = map[string]interface{}{
@@ -170,6 +205,7 @@ func (t *StatusTool) Handler() func(ctx context.Context, request mcp.CallToolReq
 					"fulfilled":  fulfilledCount,
 					"pending":    len(contracts) - acceptedCount,
 					"totalValue": totalValue,
+					"details":    contractDetails,
 				}
 
 				ctxLogger.Info("Successfully retrieved %d contracts", len(contracts))
@@ -254,7 +290,48 @@ func (t *StatusTool) formatTextSummary(summary map[string]interface{}) string {
 			text += fmt.Sprintf("  • Accepted: %v\n", contracts["accepted"])
 			text += fmt.Sprintf("  • Fulfilled: %v\n", contracts["fulfilled"])
 			text += fmt.Sprintf("  • Pending: %v\n", contracts["pending"])
-			text += fmt.Sprintf("  • Total Value: %v credits\n\n", contracts["totalValue"])
+			text += fmt.Sprintf("  • Total Value: %v credits\n", contracts["totalValue"])
+
+			// Add detailed contract information
+			if details, hasDetails := contracts["details"].([]map[string]interface{}); hasDetails && len(details) > 0 {
+				text += "\n  📄 **Contract Details:**\n"
+				for _, contract := range details {
+					text += fmt.Sprintf("    • **%s** (ID: %s)\n", contract["type"], contract["id"])
+					text += fmt.Sprintf("      - Faction: %s\n", contract["factionSymbol"])
+					text += fmt.Sprintf("      - Status: %s%s\n",
+						func() string {
+							if contract["accepted"].(bool) {
+								if contract["fulfilled"].(bool) {
+									return "✅ Completed"
+								}
+								return "🔄 In Progress"
+							}
+							return "⏳ Available"
+						}(),
+						func() string {
+							if !contract["accepted"].(bool) {
+								return fmt.Sprintf(" (Accept by: %s)", contract["deadlineToAccept"])
+							}
+							return ""
+						}())
+
+					if payment, ok := contract["payment"].(map[string]interface{}); ok {
+						text += fmt.Sprintf("      - Payment: %v credits (%v on accept, %v on completion)\n",
+							payment["total"], payment["onAccepted"], payment["onFulfilled"])
+					}
+
+					if deliveries, ok := contract["deliveries"].([]map[string]interface{}); ok {
+						text += "      - Deliveries:\n"
+						for _, delivery := range deliveries {
+							text += fmt.Sprintf("        * %v units of %s to %s (%v/%v completed)\n",
+								delivery["unitsRequired"], delivery["tradeSymbol"],
+								delivery["destinationSymbol"], delivery["unitsFulfilled"], delivery["unitsRequired"])
+						}
+					}
+					text += "\n"
+				}
+			}
+			text += "\n"
 		}
 	}
 

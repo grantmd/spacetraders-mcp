@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 )
 
 // Client handles SpaceTraders API interactions
@@ -565,7 +566,9 @@ func (c *Client) GetContracts() ([]Contract, error) {
 func (c *Client) AcceptContract(contractID string) (*Contract, *Agent, error) {
 	endpoint := fmt.Sprintf("/my/contracts/%s/accept", contractID)
 
-	resp, err := c.makeRequest("POST", endpoint, nil)
+	// SpaceTraders API requires an empty JSON object for POST requests
+	emptyBody := strings.NewReader("{}")
+	resp, err := c.makeRequest("POST", endpoint, emptyBody)
 	if err != nil {
 		return nil, nil, err
 	}

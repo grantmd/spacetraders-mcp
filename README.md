@@ -280,6 +280,72 @@ Instead of asking "What ships do I have?", try:
 - "Show me my agent information"
 - "Read my contracts list"
 
+### Available Prompts
+
+Prompts are **conversation starters** that automatically guide Claude to read relevant resources and provide strategic analysis. Instead of manually asking Claude to read specific resources, use these prompts for guided interactions:
+
+#### `status_check`
+
+**Description:** Get comprehensive status of your SpaceTraders agent including ships, contracts, and opportunities
+
+**Parameters:**
+- `detail_level` (optional): "basic", "detailed", or "full"
+
+**What it does:**
+- Automatically calls `get_status_summary` tool
+- Reads your ships list and contracts
+- For detailed/full: checks waypoints and facilities at your locations
+- For full: suggests concrete next actions and identifies opportunities
+
+**Usage Examples:**
+- "Use the status_check prompt"
+- "Run status_check with detail_level=full"
+
+#### `explore_system`
+
+**Description:** Explore a specific system to find trading opportunities, shipyards, and points of interest
+
+**Parameters:**
+- `system_symbol` (required): System to explore (e.g., "X1-FM66")
+
+**What it does:**
+- Reads all waypoints in the specified system
+- Identifies marketplaces, shipyards, and mining sites
+- Checks available ships at any shipyards
+- Provides strategic analysis and recommendations
+
+**Usage Examples:**
+- "Use explore_system prompt for X1-FM66"
+- "Run the explore_system prompt with system_symbol=X1-ABC123"
+
+#### `contract_strategy`
+
+**Description:** Analyze available contracts and suggest the best ones to accept based on current capabilities
+
+**What it does:**
+- Reads your current contracts and agent status
+- Analyzes profitability, feasibility, and logistics for each contract
+- Recommends which contracts to accept and why
+- Provides execution plan including ship movements and cargo requirements
+
+**Usage Examples:**
+- "Use the contract_strategy prompt"
+- "Run contract analysis"
+
+#### `fleet_optimization`
+
+**Description:** Analyze current fleet and suggest optimizations for better efficiency and profit
+
+**What it does:**
+- Reads your ships and agent status
+- Analyzes fleet composition and utilization
+- Checks shipyards in your current systems
+- Recommends fleet improvements with cost-benefit analysis
+
+**Usage Examples:**
+- "Use the fleet_optimization prompt"
+- "Run fleet analysis"
+
 ### Available Tools
 
 #### `get_status_summary`

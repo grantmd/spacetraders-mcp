@@ -2,6 +2,7 @@ package spacetraders
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -856,5 +857,231 @@ func TestClient_GetShipyard_Error(t *testing.T) {
 	}
 	if shipyard != nil {
 		t.Error("Expected nil shipyard on error, got non-nil")
+	}
+}
+
+func TestClient_PurchaseShip(t *testing.T) {
+	// Mock successful ship purchase response
+	mockShip := Ship{
+		Symbol: "TEST_SHIP_NEW",
+		Registration: Registration{
+			Name:          "Test Mining Drone",
+			FactionSymbol: "COSMIC",
+			Role:          "EXCAVATOR",
+		},
+		Nav: Navigation{
+			SystemSymbol:   "X1-TEST",
+			WaypointSymbol: "X1-TEST-SHIPYARD",
+			Status:         "DOCKED",
+			FlightMode:     "CRUISE",
+		},
+		Cargo: Cargo{
+			Capacity: 30,
+			Units:    0,
+		},
+		Fuel: Fuel{
+			Current:  400,
+			Capacity: 400,
+		},
+		Crew: Crew{
+			Current:  1,
+			Capacity: 3,
+		},
+	}
+
+	mockAgent := Agent{
+		AccountID:       "test-account",
+		Symbol:          "TEST_AGENT",
+		Headquarters:    "X1-TEST-HQ",
+		Credits:         125000, // After spending 75000 on ship
+		StartingFaction: "COSMIC",
+		ShipCount:       2, // Increased after purchase
+	}
+
+	mockTransaction := Transaction{
+		WaypointSymbol: "X1-TEST-SHIPYARD",
+		ShipSymbol:     "TEST_SHIP_NEW",
+		ShipType:       "SHIP_MINING_DRONE",
+		Price:          75000,
+		AgentSymbol:    "TEST_AGENT",
+		Timestamp:      "2025-01-01T12:00:00.000Z",
+	}
+
+	mockResponse := PurchaseShipResponse{
+		Data: struct {
+			Agent       Agent       `json:"agent"`
+			Ship        Ship        `json:"ship"`
+			Transaction Transaction `json:"transaction"`
+		}{
+			Agent:       mockAgent,
+			Ship:        mockShip,
+			Transaction: mockTransaction,
+		},
+	}
+
+	responseJSON, err := json.Marshal(mockResponse)
+	if err != nil {
+		t.Fatalf("Failed to marshal mock response: %v", err)
+	}
+
+	// Create test server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Check request method and path
+		if r.Method != "POST" {
+			t.Errorf("Expected POST request, got %s", r.Method)
+		}
+		expectedPath := "/my/ships"
+		if r.URL.Path != expectedPath {
+			t.Errorf("Expected path %s, got %s", expectedPath, r.URL.Path)
+		}
+
+		// Check authorization header
+		authHeader := r.Header.Get("Authorization")
+		expectedAuth := "Bearer test-token"
+		if authHeader != expectedAuth {
+			t.Errorf("Expected Authorization header %s, got %s", expectedAuth, authHeader)
+		}
+
+		// Check content type
+		contentType := r.Header.Get("Content-Type")
+		expectedContentType := "application/json"
+		if contentType != expectedContentType {
+			t.Errorf("Expected Content-Type %s, got %s", expectedContentType, contentType)
+		}
+
+		// Check request body
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Errorf("Failed to read request body: %v", err)
+		}
+
+		var purchaseReq PurchaseShipRequest
+		if err := json.Unmarshal(body, &purchaseReq); err != nil {
+			t.Errorf("Failed to parse request body: %v", err)
+		}
+
+		if purchaseReq.ShipType != "SHIP_MINING_DRONE" {
+			t.Errorf("Expected ship type SHIP_MINING_DRONE, got %s", purchaseReq.ShipType)
+		}
+
+		if purchaseReq.WaypointSymbol != "X1-TEST-SHIPYARD" {
+			t.Errorf("Expected waypoint X1-TEST-SHIPYARD, got %s", purchaseReq.WaypointSymbol)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		if _, err := w.Write(responseJSON); err != nil {
+			t.Errorf("Failed to write response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	// Create client with test server URL
+	client := &Client{
+		APIToken: "test-token",
+		BaseURL:  server.URL,
+	}
+
+	// Test PurchaseShip
+	ship, agent, transaction, err := client.PurchaseShip("SHIP_MINING_DRONE", "X1-TEST-SHIPYARD")
+	if err != nil {
+		t.Fatalf("PurchaseShip returned error: %v", err)
+	}
+
+	// Verify ship response
+	if ship.Symbol != mockShip.Symbol {
+		t.Errorf("Expected ship symbol %s, got %s", mockShip.Symbol, ship.Symbol)
+	}
+	if ship.Registration.Role != mockShip.Registration.Role {
+		t.Errorf("Expected ship role %s, got %s", mockShip.Registration.Role, ship.Registration.Role)
+	}
+	if ship.Nav.WaypointSymbol != mockShip.Nav.WaypointSymbol {
+		t.Errorf("Expected ship waypoint %s, got %s", mockShip.Nav.WaypointSymbol, ship.Nav.WaypointSymbol)
+	}
+
+	// Verify agent response
+	if agent.Credits != mockAgent.Credits {
+		t.Errorf("Expected agent credits %d, got %d", mockAgent.Credits, agent.Credits)
+	}
+	if agent.ShipCount != mockAgent.ShipCount {
+		t.Errorf("Expected ship count %d, got %d", mockAgent.ShipCount, agent.ShipCount)
+	}
+
+	// Verify transaction response
+	if transaction.Price != mockTransaction.Price {
+		t.Errorf("Expected transaction price %d, got %d", mockTransaction.Price, transaction.Price)
+	}
+	if transaction.ShipType != mockTransaction.ShipType {
+		t.Errorf("Expected transaction ship type %s, got %s", mockTransaction.ShipType, transaction.ShipType)
+	}
+}
+
+func TestClient_PurchaseShip_InsufficientFunds(t *testing.T) {
+	// Test server that returns insufficient funds error
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		if _, err := w.Write([]byte(`{"error": {"message": "Insufficient funds"}}`)); err != nil {
+			t.Errorf("Failed to write response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	client := &Client{
+		APIToken: "test-token",
+		BaseURL:  server.URL,
+	}
+
+	ship, agent, transaction, err := client.PurchaseShip("SHIP_MINING_DRONE", "X1-TEST-SHIPYARD")
+	if err == nil {
+		t.Fatal("Expected error for insufficient funds, got nil")
+	}
+	if ship != nil {
+		t.Error("Expected nil ship on error, got non-nil")
+	}
+	if agent != nil {
+		t.Error("Expected nil agent on error, got non-nil")
+	}
+	if transaction != nil {
+		t.Error("Expected nil transaction on error, got non-nil")
+	}
+
+	// Check that the error message contains status code
+	if !contains(err.Error(), "400") {
+		t.Errorf("Expected error to contain '400', got: %s", err.Error())
+	}
+}
+
+func TestClient_PurchaseShip_ShipNotAvailable(t *testing.T) {
+	// Test server that returns ship not available error
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusConflict)
+		if _, err := w.Write([]byte(`{"error": {"message": "Ship type not available at this shipyard"}}`)); err != nil {
+			t.Errorf("Failed to write response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	client := &Client{
+		APIToken: "test-token",
+		BaseURL:  server.URL,
+	}
+
+	ship, agent, transaction, err := client.PurchaseShip("SHIP_MINING_DRONE", "X1-TEST-SHIPYARD")
+	if err == nil {
+		t.Fatal("Expected error for unavailable ship, got nil")
+	}
+	if ship != nil {
+		t.Error("Expected nil ship on error, got non-nil")
+	}
+	if agent != nil {
+		t.Error("Expected nil agent on error, got non-nil")
+	}
+	if transaction != nil {
+		t.Error("Expected nil transaction on error, got non-nil")
+	}
+
+	// Check that the error message contains status code
+	if !contains(err.Error(), "409") {
+		t.Errorf("Expected error to contain '409', got: %s", err.Error())
 	}
 }

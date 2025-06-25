@@ -280,6 +280,14 @@ Instead of asking "What ships do I have?", try:
 - "Show me my agent information"
 - "Read my contracts list"
 
+### Smart Workflow for Contract Management
+
+1. **Check Status**: "Get my status summary" - See credits, ships, contracts
+2. **Analyze Contracts**: "Get contract info" - See requirements and profitability  
+3. **Check Fleet**: "Analyze fleet capabilities" - See if you have the right ships
+4. **Buy Ships**: "Purchase a SHIP_MINING_DRONE at X1-SYSTEM-SHIPYARD" - Get needed ships
+5. **Accept Contract**: "Accept contract [contract-id]" - Commit to the contract
+
 ### Available Prompts
 
 Prompts are **conversation starters** that automatically guide Claude to read relevant resources and provide strategic analysis. Instead of manually asking Claude to read specific resources, use these prompts for guided interactions:
@@ -433,6 +441,88 @@ Analysis:
 
 💡 Available Actions:
 • Use accept_contract with contract_id=clq123abc to accept this contract
+```
+
+#### `analyze_fleet_capabilities`
+
+Analyze your current fleet's capabilities against contract requirements and suggest needed ships.
+
+**Parameters:**
+- `include_recommendations` (boolean, default: true): Include ship purchase recommendations
+
+**Usage Examples:**
+- "Analyze my fleet capabilities"
+- "Check if my fleet can handle my contracts"
+- "Analyze fleet capabilities with include_recommendations=false"
+
+**Sample Output:**
+```
+🚢 Fleet Capability Analysis
+
+Current Fleet:
+• Total Ships: 2
+• Total Cargo Capacity: 70 units
+• Mining Capable Ships: 0
+• Hauling Capable Ships: 1
+• Combat Capable Ships: 1
+
+Fleet Composition:
+• COMMAND: 1 ship(s) - Multi-purpose command vessel
+• HAULER: 1 ship(s) - Large cargo capacity transport
+
+Contract Requirements Analysis:
+
+📋 Contract clq123abc:
+• Status: Available
+• Required Materials:
+  - IRON_ORE: 100 units
+    *Requires mining*
+• Required Cargo Space: 100 units
+
+🔍 Gap Analysis:
+❌ CRITICAL GAP: No mining ships available but contracts require mining
+   *You need a SHIP_MINING_DRONE or similar mining vessel*
+✅ Sufficient cargo capacity available
+
+💡 Recommendations:
+🔥 URGENT: Purchase a SHIP_MINING_DRONE
+   • Required for mining contracts
+   • Use purchase_ship with ship_type=SHIP_MINING_DRONE
+   • Must be at a shipyard that sells mining drones
+```
+
+#### `purchase_ship`
+
+Purchase a ship at a shipyard. Requires being docked at the shipyard and having sufficient credits.
+
+**Parameters:**
+- `ship_type` (string, required): Type of ship to purchase (e.g., SHIP_MINING_DRONE, SHIP_PROBE, SHIP_LIGHT_HAULER)
+- `waypoint_symbol` (string, required): Waypoint symbol of the shipyard where you want to purchase the ship
+
+**Usage Examples:**
+- "Purchase a SHIP_MINING_DRONE at X1-FM66-B2"
+- "Buy ship with ship_type=SHIP_PROBE and waypoint_symbol=X1-ABC-SHIPYARD"
+
+**Sample Output:**
+```
+🚢 Ship Purchase Successful!
+
+New Ship: TEST_SHIP_NEW (Test Mining Drone)
+Type: SHIP_MINING_DRONE
+Role: EXCAVATOR
+Location: X1-FM66-B2 (Status: DOCKED)
+Cost: 75000 credits
+Remaining Credits: 125000
+Total Ships: 3
+
+Ship Specifications:
+• Cargo Capacity: 30 units
+• Fuel Capacity: 400 units
+• Crew Capacity: 1/3
+
+💡 Next Steps:
+• Use get_status_summary to see your updated fleet
+• Your new ship is ready for missions!
 ```
 
 #### `accept_contract`

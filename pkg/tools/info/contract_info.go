@@ -153,10 +153,26 @@ func (t *ContractInfoTool) Handler() func(ctx context.Context, request mcp.CallT
 			response.WriteString("• Use `get_contract_info` with a specific contract_id for detailed analysis\n")
 		}
 
+		hasMiningContract := false
 		for _, contract := range filteredContracts {
 			if !contract.Accepted {
 				response.WriteString(fmt.Sprintf("• Use `accept_contract` with contract_id=%s to accept this contract\n", contract.ID))
 			}
+
+			// Check if any contract requires mining
+			for _, delivery := range contract.Terms.Deliver {
+				if t.isMiningMaterial(delivery.TradeSymbol) {
+					hasMiningContract = true
+					break
+				}
+			}
+		}
+
+		if hasMiningContract {
+			response.WriteString("• ⛏️ **Mining contracts detected!** You may need:\n")
+			response.WriteString("  - A SHIP_MINING_DRONE for resource extraction\n")
+			response.WriteString("  - Use `get_status_summary` to check your current fleet\n")
+			response.WriteString("  - Use `purchase_ship` to buy a mining drone at a shipyard\n")
 		}
 
 		ctxLogger.ToolCall("get_contract_info", true)
@@ -203,6 +219,8 @@ func (t *ContractInfoTool) formatContractDetails(contract spacetraders.Contract)
 	details.WriteString(fmt.Sprintf("**Expires:** %s\n", contract.Expiration))
 
 	// Delivery requirements
+	requiresMining := false
+	miningMaterials := []string{}
 	if len(contract.Terms.Deliver) > 0 {
 		details.WriteString("\n**Delivery Requirements:**\n")
 		for i, delivery := range contract.Terms.Deliver {
@@ -222,6 +240,12 @@ func (t *ContractInfoTool) formatContractDetails(contract spacetraders.Contract)
 			if remaining > 0 {
 				details.WriteString(fmt.Sprintf("   *Need %d more units*\n", remaining))
 			}
+
+			// Check if this is a mining material
+			if t.isMiningMaterial(delivery.TradeSymbol) {
+				requiresMining = true
+				miningMaterials = append(miningMaterials, delivery.TradeSymbol)
+			}
 		}
 	}
 
@@ -234,6 +258,13 @@ func (t *ContractInfoTool) formatContractDetails(contract spacetraders.Contract)
 
 		if len(contract.Terms.Deliver) > 0 {
 			details.WriteString("• Requires cargo space and delivery logistics\n")
+		}
+
+		// Mining requirements analysis
+		if requiresMining {
+			details.WriteString(fmt.Sprintf("• ⛏️ **MINING REQUIRED** for: %s\n", strings.Join(miningMaterials, ", ")))
+			details.WriteString("• You will need a SHIP_MINING_DRONE to extract these materials\n")
+			details.WriteString("• Find asteroids or mining sites in systems to extract resources\n")
 		}
 	} else if !contract.Fulfilled {
 		completed := 0
@@ -249,7 +280,43 @@ func (t *ContractInfoTool) formatContractDetails(contract spacetraders.Contract)
 			details.WriteString(fmt.Sprintf("• Progress: %.1f%% complete (%d/%d deliveries)\n",
 				completionPercent, completed, total))
 		}
+
+		if requiresMining {
+			details.WriteString(fmt.Sprintf("• ⛏️ Mining needed for: %s\n", strings.Join(miningMaterials, ", ")))
+		}
 	}
 
 	return details.String()
+}
+
+// isMiningMaterial checks if a trade symbol represents a material that requires mining
+func (t *ContractInfoTool) isMiningMaterial(tradeSymbol string) bool {
+	miningMaterials := map[string]bool{
+		"IRON_ORE":          true,
+		"COPPER_ORE":        true,
+		"ALUMINUM_ORE":      true,
+		"SILVER_ORE":        true,
+		"GOLD_ORE":          true,
+		"PLATINUM_ORE":      true,
+		"URANITE_ORE":       true,
+		"MERITIUM_ORE":      true,
+		"HYDROCARBON":       true,
+		"QUARTZ_SAND":       true,
+		"SILICON_CRYSTALS":  true,
+		"AMMONIA_ICE":       true,
+		"LIQUID_HYDROGEN":   true,
+		"LIQUID_NITROGEN":   true,
+		"ICE_WATER":         true,
+		"EXOTIC_MATTER":     true,
+		"GRAVITON_EMITTERS": true,
+		"IRON":              true,
+		"COPPER":            true,
+		"ALUMINUM":          true,
+		"SILVER":            true,
+		"GOLD":              true,
+		"PLATINUM":          true,
+		"URANITE":           true,
+		"MERITIUM":          true,
+	}
+	return miningMaterials[tradeSymbol]
 }

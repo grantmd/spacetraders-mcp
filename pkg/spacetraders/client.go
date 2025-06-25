@@ -409,6 +409,31 @@ type ShipyardShipCrew struct {
 	Capacity int `json:"capacity"`
 }
 
+// PurchaseShipRequest represents a request to purchase a ship
+type PurchaseShipRequest struct {
+	ShipType       string `json:"shipType"`
+	WaypointSymbol string `json:"waypointSymbol"`
+}
+
+// PurchaseShipResponse represents the response from purchasing a ship
+type PurchaseShipResponse struct {
+	Data struct {
+		Agent       Agent       `json:"agent"`
+		Ship        Ship        `json:"ship"`
+		Transaction Transaction `json:"transaction"`
+	} `json:"data"`
+}
+
+// Transaction represents a ship purchase transaction
+type Transaction struct {
+	WaypointSymbol string `json:"waypointSymbol"`
+	ShipSymbol     string `json:"shipSymbol"`
+	ShipType       string `json:"shipType"`
+	Price          int    `json:"price"`
+	AgentSymbol    string `json:"agentSymbol"`
+	Timestamp      string `json:"timestamp"`
+}
+
 // API Response wrappers
 type AgentResponse struct {
 	Data Agent `json:"data"`
@@ -652,4 +677,46 @@ func (c *Client) GetShipyard(systemSymbol, waypointSymbol string) (*Shipyard, er
 	}
 
 	return &shipyardResp.Data, nil
+}
+
+// PurchaseShip purchases a ship at a shipyard
+func (c *Client) PurchaseShip(shipType, waypointSymbol string) (*Ship, *Agent, *Transaction, error) {
+	endpoint := fmt.Sprintf("/my/ships")
+
+	// Create the purchase request
+	purchaseReq := PurchaseShipRequest{
+		ShipType:       shipType,
+		WaypointSymbol: waypointSymbol,
+	}
+
+	// Marshal the request body
+	requestBody, err := json.Marshal(purchaseReq)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to marshal purchase request: %w", err)
+	}
+
+	resp, err := c.makeRequest("POST", endpoint, strings.NewReader(string(requestBody)))
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, nil, nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	var purchaseResp PurchaseShipResponse
+	if err := json.Unmarshal(body, &purchaseResp); err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	return &purchaseResp.Data.Ship, &purchaseResp.Data.Agent, &purchaseResp.Data.Transaction, nil
 }

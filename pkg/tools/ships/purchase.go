@@ -165,7 +165,7 @@ func (t *PurchaseShipTool) Handler() func(ctx context.Context, request mcp.CallT
 		}
 
 		// Create formatted text summary
-		textSummary := fmt.Sprintf("🚢 **Ship Purchase Successful!**\n\n")
+		textSummary := "🚢 **Ship Purchase Successful!**\n\n"
 		textSummary += fmt.Sprintf("**New Ship:** %s (%s)\n", ship.Symbol, ship.Registration.Name)
 		textSummary += fmt.Sprintf("**Type:** %s\n", shipType)
 		textSummary += fmt.Sprintf("**Role:** %s\n", ship.Registration.Role)

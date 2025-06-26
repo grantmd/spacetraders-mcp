@@ -29,7 +29,7 @@ func TestClient_OrbitShip(t *testing.T) {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(mockResponse)
+		_ = json.NewEncoder(w).Encode(mockResponse)
 	}))
 	defer server.Close()
 
@@ -68,7 +68,7 @@ func TestClient_DockShip(t *testing.T) {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(mockResponse)
+		_ = json.NewEncoder(w).Encode(mockResponse)
 	}))
 	defer server.Close()
 
@@ -143,7 +143,7 @@ func TestClient_NavigateShip(t *testing.T) {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(mockResponse)
+		_ = json.NewEncoder(w).Encode(mockResponse)
 	}))
 	defer server.Close()
 
@@ -195,7 +195,7 @@ func TestClient_PatchShipNav(t *testing.T) {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(mockResponse)
+		_ = json.NewEncoder(w).Encode(mockResponse)
 	}))
 	defer server.Close()
 
@@ -242,7 +242,7 @@ func TestClient_WarpShip(t *testing.T) {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(mockResponse)
+		_ = json.NewEncoder(w).Encode(mockResponse)
 	}))
 	defer server.Close()
 
@@ -290,7 +290,7 @@ func TestClient_JumpShip(t *testing.T) {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(mockResponse)
+		_ = json.NewEncoder(w).Encode(mockResponse)
 	}))
 	defer server.Close()
 
@@ -314,7 +314,7 @@ func TestClient_JumpShip(t *testing.T) {
 func TestClient_OrbitShip_Error(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"error": {"message": "Ship is already in orbit"}}`))
+		_, _ = w.Write([]byte(`{"error": {"message": "Ship is already in orbit"}}`))
 	}))
 	defer server.Close()
 
@@ -332,7 +332,7 @@ func TestClient_OrbitShip_Error(t *testing.T) {
 func TestClient_NavigateShip_Error(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"error": {"message": "Ship must be in orbit to navigate"}}`))
+		_, _ = w.Write([]byte(`{"error": {"message": "Ship must be in orbit to navigate"}}`))
 	}))
 	defer server.Close()
 

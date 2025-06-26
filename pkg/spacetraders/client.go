@@ -768,7 +768,7 @@ func (c *Client) GetShipyard(systemSymbol, waypointSymbol string) (*Shipyard, er
 
 // PurchaseShip purchases a ship at a shipyard
 func (c *Client) PurchaseShip(shipType, waypointSymbol string) (*Ship, *Agent, *Transaction, error) {
-	endpoint := fmt.Sprintf("/my/ships")
+	endpoint := "/my/ships"
 
 	// Create the purchase request
 	purchaseReq := PurchaseShipRequest{
@@ -816,7 +816,7 @@ func (c *Client) OrbitShip(shipSymbol string) (*Navigation, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to orbit ship: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to orbit ship, status: %d", resp.StatusCode)
@@ -838,7 +838,7 @@ func (c *Client) DockShip(shipSymbol string) (*Navigation, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to dock ship: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to dock ship, status: %d", resp.StatusCode)
@@ -870,7 +870,7 @@ func (c *Client) NavigateShip(shipSymbol, waypointSymbol string) (*Navigation, *
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to navigate ship: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, nil, nil, fmt.Errorf("failed to navigate ship, status: %d", resp.StatusCode)
@@ -902,7 +902,7 @@ func (c *Client) PatchShipNav(shipSymbol, flightMode string) (*Navigation, error
 	if err != nil {
 		return nil, fmt.Errorf("failed to patch ship nav: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to patch ship nav, status: %d", resp.StatusCode)
@@ -934,7 +934,7 @@ func (c *Client) WarpShip(shipSymbol, waypointSymbol string) (*Navigation, *Fuel
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to warp ship: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, nil, nil, fmt.Errorf("failed to warp ship, status: %d", resp.StatusCode)
@@ -966,7 +966,7 @@ func (c *Client) JumpShip(shipSymbol, systemSymbol string) (*Navigation, *Cooldo
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to jump ship: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, nil, nil, fmt.Errorf("failed to jump ship, status: %d", resp.StatusCode)

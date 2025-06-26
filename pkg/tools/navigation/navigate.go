@@ -162,7 +162,7 @@ func (t *NavigateShipTool) Handler() func(ctx context.Context, request mcp.CallT
 		}
 
 		// Create text summary
-		textSummary := fmt.Sprintf("## Ship Navigation Started\n\n")
+		textSummary := "## Ship Navigation Started\n\n"
 		textSummary += fmt.Sprintf("**Ship:** %s\n", shipSymbol)
 		textSummary += fmt.Sprintf("**Status:** %s\n", nav.Status)
 		textSummary += fmt.Sprintf("**Current Location:** %s (%s)\n", nav.WaypointSymbol, nav.SystemSymbol)
@@ -170,7 +170,7 @@ func (t *NavigateShipTool) Handler() func(ctx context.Context, request mcp.CallT
 		textSummary += fmt.Sprintf("**Fuel:** %d/%d units\n", fuel.Current, fuel.Capacity)
 
 		if nav.Route.Destination.Symbol != "" {
-			textSummary += fmt.Sprintf("\n**Route Details:**\n")
+			textSummary += "\n**Route Details:**\n"
 			textSummary += fmt.Sprintf("- **From:** %s (%s) at coordinates (%d, %d)\n",
 				nav.Route.Origin.Symbol, nav.Route.Origin.Type, nav.Route.Origin.X, nav.Route.Origin.Y)
 			textSummary += fmt.Sprintf("- **To:** %s (%s) at coordinates (%d, %d)\n",
@@ -190,13 +190,13 @@ func (t *NavigateShipTool) Handler() func(ctx context.Context, request mcp.CallT
 		}
 
 		if fuel.Consumed.Amount > 0 {
-			textSummary += fmt.Sprintf("\n**Fuel Consumption:**\n")
+			textSummary += "\n**Fuel Consumption:**\n"
 			textSummary += fmt.Sprintf("- **Amount Used:** %d units\n", fuel.Consumed.Amount)
 			textSummary += fmt.Sprintf("- **Remaining:** %d units\n", fuel.Current)
 		}
 
 		if event != nil {
-			textSummary += fmt.Sprintf("\n**Navigation Event:**\n")
+			textSummary += "\n**Navigation Event:**\n"
 			textSummary += fmt.Sprintf("- **Event:** %s\n", event.Name)
 			textSummary += fmt.Sprintf("- **Description:** %s\n", event.Description)
 			if event.Component != "" {
@@ -205,8 +205,8 @@ func (t *NavigateShipTool) Handler() func(ctx context.Context, request mcp.CallT
 		}
 
 		if nav.Status == "IN_TRANSIT" {
-			textSummary += fmt.Sprintf("\n**Status:** The ship is currently in transit. It will automatically arrive at the destination at the scheduled time.\n")
-			textSummary += fmt.Sprintf("Use the `get_status_summary` tool to check the current status of all your ships.\n")
+			textSummary += "\n**Status:** The ship is currently in transit. It will automatically arrive at the destination at the scheduled time.\n"
+			textSummary += "Use the `get_status_summary` tool to check the current status of all your ships.\n"
 		}
 
 		return &mcp.CallToolResult{

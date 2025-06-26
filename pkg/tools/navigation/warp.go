@@ -162,7 +162,7 @@ func (t *WarpShipTool) Handler() func(ctx context.Context, request mcp.CallToolR
 		}
 
 		// Create text summary
-		textSummary := fmt.Sprintf("## Ship Warp Initiated\n\n")
+		textSummary := "## Ship Warp Initiated\n\n"
 		textSummary += fmt.Sprintf("**Ship:** %s\n", shipSymbol)
 		textSummary += fmt.Sprintf("**Status:** %s\n", nav.Status)
 		textSummary += fmt.Sprintf("**Current Location:** %s (%s)\n", nav.WaypointSymbol, nav.SystemSymbol)
@@ -170,7 +170,7 @@ func (t *WarpShipTool) Handler() func(ctx context.Context, request mcp.CallToolR
 		textSummary += fmt.Sprintf("**Fuel:** %d/%d units\n", fuel.Current, fuel.Capacity)
 
 		if nav.Route.Destination.Symbol != "" {
-			textSummary += fmt.Sprintf("\n**Warp Route Details:**\n")
+			textSummary += "\n**Warp Route Details:**\n"
 			textSummary += fmt.Sprintf("- **From:** %s (%s) at coordinates (%d, %d)\n",
 				nav.Route.Origin.Symbol, nav.Route.Origin.Type, nav.Route.Origin.X, nav.Route.Origin.Y)
 			textSummary += fmt.Sprintf("- **To:** %s (%s) at coordinates (%d, %d)\n",
@@ -190,14 +190,14 @@ func (t *WarpShipTool) Handler() func(ctx context.Context, request mcp.CallToolR
 		}
 
 		if fuel.Consumed.Amount > 0 {
-			textSummary += fmt.Sprintf("\n**Fuel Consumption:**\n")
+			textSummary += "\n**Fuel Consumption:**\n"
 			textSummary += fmt.Sprintf("- **Amount Used:** %d units\n", fuel.Consumed.Amount)
 			textSummary += fmt.Sprintf("- **Remaining:** %d units\n", fuel.Current)
-			textSummary += fmt.Sprintf("- **Efficiency:** Warp drives consume significant fuel for inter-system travel\n")
+			textSummary += "- **Efficiency:** Warp drives consume significant fuel for inter-system travel\n"
 		}
 
 		if event != nil {
-			textSummary += fmt.Sprintf("\n**Warp Event:**\n")
+			textSummary += "\n**Warp Event:**\n"
 			textSummary += fmt.Sprintf("- **Event:** %s\n", event.Name)
 			textSummary += fmt.Sprintf("- **Description:** %s\n", event.Description)
 			if event.Component != "" {
@@ -206,16 +206,16 @@ func (t *WarpShipTool) Handler() func(ctx context.Context, request mcp.CallToolR
 		}
 
 		if nav.Status == "IN_TRANSIT" {
-			textSummary += fmt.Sprintf("\n**Status:** The ship is currently warping through space. It will automatically arrive at the destination system at the scheduled time.\n")
-			textSummary += fmt.Sprintf("Warp travel allows ships to move between different star systems much faster than conventional navigation.\n")
-			textSummary += fmt.Sprintf("Use the `get_status_summary` tool to check the current status of all your ships.\n")
+			textSummary += "\n**Status:** The ship is currently warping through space. It will automatically arrive at the destination system at the scheduled time.\n"
+			textSummary += "Warp travel allows ships to move between different star systems much faster than conventional navigation.\n"
+			textSummary += "Use the `get_status_summary` tool to check the current status of all your ships.\n"
 		}
 
-		textSummary += fmt.Sprintf("\n**Important Notes:**\n")
-		textSummary += fmt.Sprintf("- Warp drives enable inter-system travel\n")
-		textSummary += fmt.Sprintf("- Warp travel is faster than regular navigation but consumes more fuel\n")
-		textSummary += fmt.Sprintf("- Ships must have a functional warp drive installed\n")
-		textSummary += fmt.Sprintf("- Ships must be in orbit before initiating warp\n")
+		textSummary += "\n**Important Notes:**\n"
+		textSummary += "- Warp drives enable inter-system travel\n"
+		textSummary += "- Warp travel is faster than regular navigation but consumes more fuel\n"
+		textSummary += "- Ships must have a functional warp drive installed\n"
+		textSummary += "- Ships must be in orbit before initiating warp\n"
 
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{

@@ -156,14 +156,14 @@ func (t *JumpShipTool) Handler() func(ctx context.Context, request mcp.CallToolR
 		}
 
 		// Create text summary
-		textSummary := fmt.Sprintf("## Ship Jump Completed\n\n")
+		textSummary := "## Ship Jump Completed\n\n"
 		textSummary += fmt.Sprintf("**Ship:** %s\n", shipSymbol)
 		textSummary += fmt.Sprintf("**Status:** %s\n", nav.Status)
 		textSummary += fmt.Sprintf("**New Location:** %s (%s)\n", nav.WaypointSymbol, nav.SystemSymbol)
 		textSummary += fmt.Sprintf("**Flight Mode:** %s\n", nav.FlightMode)
 
 		if nav.Route.Destination.Symbol != "" {
-			textSummary += fmt.Sprintf("\n**Jump Details:**\n")
+			textSummary += "\n**Jump Details:**\n"
 			textSummary += fmt.Sprintf("- **From:** %s (%s) at coordinates (%d, %d)\n",
 				nav.Route.Origin.Symbol, nav.Route.Origin.Type, nav.Route.Origin.X, nav.Route.Origin.Y)
 			textSummary += fmt.Sprintf("- **To:** %s (%s) at coordinates (%d, %d)\n",
@@ -173,7 +173,7 @@ func (t *JumpShipTool) Handler() func(ctx context.Context, request mcp.CallToolR
 		}
 
 		// Add cooldown information
-		textSummary += fmt.Sprintf("\n**Jump Drive Cooldown:**\n")
+		textSummary += "\n**Jump Drive Cooldown:**\n"
 		textSummary += fmt.Sprintf("- **Total Cooldown:** %d seconds\n", cooldown.TotalSeconds)
 		textSummary += fmt.Sprintf("- **Remaining:** %d seconds\n", cooldown.RemainingSeconds)
 		textSummary += fmt.Sprintf("- **Ready At:** %s\n", cooldown.Expiration)
@@ -186,13 +186,13 @@ func (t *JumpShipTool) Handler() func(ctx context.Context, request mcp.CallToolR
 					duration := expirationTime.Sub(now)
 					textSummary += fmt.Sprintf("- **Time Until Ready:** %s\n", duration.String())
 				} else {
-					textSummary += fmt.Sprintf("- **Status:** Jump drive is ready for use\n")
+					textSummary += "- **Status:** Jump drive is ready for use\n"
 				}
 			}
 		}
 
 		if event != nil {
-			textSummary += fmt.Sprintf("\n**Jump Event:**\n")
+			textSummary += "\n**Jump Event:**\n"
 			textSummary += fmt.Sprintf("- **Event:** %s\n", event.Name)
 			textSummary += fmt.Sprintf("- **Description:** %s\n", event.Description)
 			if event.Component != "" {
@@ -200,17 +200,17 @@ func (t *JumpShipTool) Handler() func(ctx context.Context, request mcp.CallToolR
 			}
 		}
 
-		textSummary += fmt.Sprintf("\n**Jump Drive Information:**\n")
-		textSummary += fmt.Sprintf("- Jump drives enable instant travel between systems via jump gates\n")
-		textSummary += fmt.Sprintf("- Each jump creates a cooldown period before the next jump\n")
-		textSummary += fmt.Sprintf("- Ships must be in orbit and have a functional jump drive\n")
-		textSummary += fmt.Sprintf("- Jump gates connect specific systems - not all systems are connected\n")
+		textSummary += "\n**Jump Drive Information:**\n"
+		textSummary += "- Jump drives enable instant travel between systems via jump gates\n"
+		textSummary += "- Each jump creates a cooldown period before the next jump\n"
+		textSummary += "- Ships must be in orbit and have a functional jump drive\n"
+		textSummary += "- Jump gates connect specific systems - not all systems are connected\n"
 
 		if cooldown.RemainingSeconds > 0 {
-			textSummary += fmt.Sprintf("\n**Current Status:** The ship's jump drive is cooling down and cannot be used until the cooldown expires.\n")
-			textSummary += fmt.Sprintf("During cooldown, the ship can still use regular navigation and warp drives.\n")
+			textSummary += "\n**Current Status:** The ship's jump drive is cooling down and cannot be used until the cooldown expires.\n"
+			textSummary += "During cooldown, the ship can still use regular navigation and warp drives.\n"
 		} else {
-			textSummary += fmt.Sprintf("\n**Current Status:** The ship's jump drive is ready for immediate use.\n")
+			textSummary += "\n**Current Status:** The ship's jump drive is ready for immediate use.\n"
 		}
 
 		return &mcp.CallToolResult{

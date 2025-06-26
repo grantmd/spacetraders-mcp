@@ -157,7 +157,7 @@ func (t *PatchNavTool) Handler() func(ctx context.Context, request mcp.CallToolR
 		}
 
 		// Create text summary with flight mode descriptions
-		textSummary := fmt.Sprintf("## Flight Mode Updated\n\n")
+		textSummary := "## Flight Mode Updated\n\n"
 		textSummary += fmt.Sprintf("**Ship:** %s\n", shipSymbol)
 		textSummary += fmt.Sprintf("**Flight Mode:** %s\n", nav.FlightMode)
 		textSummary += fmt.Sprintf("**Status:** %s\n", nav.Status)
@@ -175,19 +175,19 @@ func (t *PatchNavTool) Handler() func(ctx context.Context, request mcp.CallToolR
 		}
 
 		if nav.Route.Destination.Symbol != "" {
-			textSummary += fmt.Sprintf("\n**Current Route:**\n")
+			textSummary += "\n**Current Route:**\n"
 			textSummary += fmt.Sprintf("- From: %s (%s)\n", nav.Route.Origin.Symbol, nav.Route.Origin.Type)
 			textSummary += fmt.Sprintf("- To: %s (%s)\n", nav.Route.Destination.Symbol, nav.Route.Destination.Type)
 			textSummary += fmt.Sprintf("- Departure: %s\n", nav.Route.DepartureTime)
 			textSummary += fmt.Sprintf("- Arrival: %s\n", nav.Route.Arrival)
-			textSummary += fmt.Sprintf("\n**Note:** The arrival time may have changed due to the flight mode change.\n")
+			textSummary += "\n**Note:** The arrival time may have changed due to the flight mode change.\n"
 		}
 
-		textSummary += fmt.Sprintf("\n**Flight Mode Effects:**\n")
-		textSummary += fmt.Sprintf("- **DRIFT:** 25%% speed, 1x fuel consumption\n")
-		textSummary += fmt.Sprintf("- **STEALTH:** 30%% speed, 1x fuel consumption, stealth bonus\n")
-		textSummary += fmt.Sprintf("- **CRUISE:** 100%% speed, 1x fuel consumption (default)\n")
-		textSummary += fmt.Sprintf("- **BURN:** 200%% speed, 2x fuel consumption\n")
+		textSummary += "\n**Flight Mode Effects:**\n"
+		textSummary += "- **DRIFT:** 25% speed, 1x fuel consumption\n"
+		textSummary += "- **STEALTH:** 30% speed, 1x fuel consumption, stealth bonus\n"
+		textSummary += "- **CRUISE:** 100% speed, 1x fuel consumption (default)\n"
+		textSummary += "- **BURN:** 200% speed, 2x fuel consumption\n"
 
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{

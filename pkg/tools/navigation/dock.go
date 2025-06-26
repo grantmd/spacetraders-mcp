@@ -119,26 +119,26 @@ func (t *DockShipTool) Handler() func(ctx context.Context, request mcp.CallToolR
 		}
 
 		// Create text summary
-		textSummary := fmt.Sprintf("## Ship Dock Successful\n\n")
+		textSummary := "## Ship Dock Successful\n\n"
 		textSummary += fmt.Sprintf("**Ship:** %s\n", shipSymbol)
 		textSummary += fmt.Sprintf("**Status:** %s\n", nav.Status)
 		textSummary += fmt.Sprintf("**Location:** %s (%s)\n", nav.WaypointSymbol, nav.SystemSymbol)
 		textSummary += fmt.Sprintf("**Flight Mode:** %s\n", nav.FlightMode)
 
 		if nav.Route.Destination.Symbol != "" {
-			textSummary += fmt.Sprintf("\n**Current Route:**\n")
+			textSummary += "\n**Current Route:**\n"
 			textSummary += fmt.Sprintf("- From: %s (%s)\n", nav.Route.Origin.Symbol, nav.Route.Origin.Type)
 			textSummary += fmt.Sprintf("- To: %s (%s)\n", nav.Route.Destination.Symbol, nav.Route.Destination.Type)
 			textSummary += fmt.Sprintf("- Departure: %s\n", nav.Route.DepartureTime)
 			textSummary += fmt.Sprintf("- Arrival: %s\n", nav.Route.Arrival)
 		}
 
-		textSummary += fmt.Sprintf("\n**Available Actions:**\n")
-		textSummary += fmt.Sprintf("- Now that the ship is docked, you can:\n")
-		textSummary += fmt.Sprintf("  - Trade goods at the marketplace\n")
-		textSummary += fmt.Sprintf("  - Purchase ships at the shipyard\n")
-		textSummary += fmt.Sprintf("  - Refuel the ship\n")
-		textSummary += fmt.Sprintf("  - Repair the ship\n")
+		textSummary += "\n**Available Actions:**\n"
+		textSummary += "- Now that the ship is docked, you can:\n"
+		textSummary += "  - Trade goods at the marketplace\n"
+		textSummary += "  - Purchase ships at the shipyard\n"
+		textSummary += "  - Refuel the ship\n"
+		textSummary += "  - Repair the ship\n"
 
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{

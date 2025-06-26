@@ -6,6 +6,7 @@ import (
 	"spacetraders-mcp/pkg/spacetraders"
 	"spacetraders-mcp/pkg/tools/contract"
 	"spacetraders-mcp/pkg/tools/info"
+	"spacetraders-mcp/pkg/tools/navigation"
 	"spacetraders-mcp/pkg/tools/ships"
 	"spacetraders-mcp/pkg/tools/status"
 
@@ -57,21 +58,24 @@ func (r *Registry) registerTools() {
 	// Register Ship Purchase tool
 	r.handlers = append(r.handlers, ships.NewPurchaseShipTool(r.client, r.logger))
 
+	// Register Navigation tools
+	r.handlers = append(r.handlers, navigation.NewOrbitShipTool(r.client, r.logger))
+	r.handlers = append(r.handlers, navigation.NewDockShipTool(r.client, r.logger))
+	r.handlers = append(r.handlers, navigation.NewNavigateShipTool(r.client, r.logger))
+	r.handlers = append(r.handlers, navigation.NewPatchNavTool(r.client, r.logger))
+	r.handlers = append(r.handlers, navigation.NewWarpShipTool(r.client, r.logger))
+	r.handlers = append(r.handlers, navigation.NewJumpShipTool(r.client, r.logger))
+
 	// TODO: Add more tool handlers here as we implement them:
-	// - NavigateShip tool
 	// - FulfillContract tool
-	// - PurchaseShip tool
 	// - SellCargo tool
 	// - BuyCargo tool
 	// - RefuelShip tool
 	// - RepairShip tool
 	// - ExtractResources tool
-	// - JumpShip tool
 	// - ScanSystems tool
 	// - ScanWaypoints tool
 	// - ScanShips tool
-	// - OrbitShip tool
-	// - DockShip tool
 	// etc.
 }
 

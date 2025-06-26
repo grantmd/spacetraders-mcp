@@ -549,6 +549,76 @@ Accept a contract by its ID. This commits the agent to fulfilling the contract t
 
 **Response:** Returns contract details and updated agent information including the acceptance payment.
 
+#### `orbit_ship`
+
+Puts a ship into orbit around its current waypoint. Ship must be docked to use this command.
+
+**Parameters:**
+- `ship_symbol` (string, required): Symbol of the ship to put into orbit (e.g., 'SHIP_1234')
+
+**Usage Examples:**
+- "Put ship SHIP_1234 into orbit"
+- "Orbit my command ship"
+
+#### `dock_ship`
+
+Docks a ship at its current waypoint. Ship must be in orbit to use this command.
+
+**Parameters:**
+- `ship_symbol` (string, required): Symbol of the ship to dock (e.g., 'SHIP_1234')
+
+**Usage Examples:**
+- "Dock ship SHIP_1234"
+- "Dock my hauler at the station"
+
+#### `navigate_ship`
+
+Navigate a ship to a waypoint within the same system. Ship must be in orbit to navigate.
+
+**Parameters:**
+- `ship_symbol` (string, required): Symbol of the ship to navigate (e.g., 'SHIP_1234')
+- `waypoint_symbol` (string, required): Symbol of the destination waypoint (e.g., 'X1-DF55-20250Z')
+
+**Usage Examples:**
+- "Navigate ship SHIP_1234 to X1-DF55-20250Z"
+- "Send my mining ship to the asteroid field"
+
+#### `patch_ship_nav`
+
+Change a ship's navigation settings, particularly the flight mode.
+
+**Parameters:**
+- `ship_symbol` (string, required): Symbol of the ship to modify (e.g., 'SHIP_1234')
+- `flight_mode` (string, required): Flight mode to set. Options: DRIFT (slowest, most fuel efficient), STEALTH (slow, hard to detect), CRUISE (balanced), BURN (fastest, most fuel consumption)
+
+**Usage Examples:**
+- "Set ship SHIP_1234 flight mode to BURN"
+- "Change my ship to stealth mode"
+
+#### `warp_ship`
+
+Warp a ship to a waypoint in a different system. Ship must have a warp drive and be in orbit to warp.
+
+**Parameters:**
+- `ship_symbol` (string, required): Symbol of the ship to warp (e.g., 'SHIP_1234')
+- `waypoint_symbol` (string, required): Symbol of the destination waypoint in another system (e.g., 'X1-AB12-34567Z')
+
+**Usage Examples:**
+- "Warp ship SHIP_1234 to X1-AB12-34567Z"
+- "Send my explorer to the next system"
+
+#### `jump_ship`
+
+Jump a ship to a different system using a jump gate. Ship must have a jump drive and be in orbit to jump. Creates a cooldown period.
+
+**Parameters:**
+- `ship_symbol` (string, required): Symbol of the ship to jump (e.g., 'SHIP_1234')
+- `system_symbol` (string, required): Symbol of the destination system (e.g., 'X1-AB12')
+
+**Usage Examples:**
+- "Jump ship SHIP_1234 to system X1-AB12"
+- "Use jump gate to send my ship to the distant system"
+
 ## Testing
 
 The project includes comprehensive tests covering both unit tests and integration tests. Tests have been converted from shell scripts to native Go tests for better reliability and maintainability.

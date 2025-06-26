@@ -434,6 +434,85 @@ type Transaction struct {
 	Timestamp      string `json:"timestamp"`
 }
 
+// NavigateRequest represents the request body for navigating a ship
+type NavigateRequest struct {
+	WaypointSymbol string `json:"waypointSymbol"`
+}
+
+// NavigateResponse represents the response from navigating a ship
+type NavigateResponse struct {
+	Data NavigateData `json:"data"`
+}
+
+type NavigateData struct {
+	Fuel  Fuel       `json:"fuel"`
+	Nav   Navigation `json:"nav"`
+	Event *Event     `json:"event,omitempty"`
+}
+
+// OrbitResponse represents the response from orbiting a ship
+type OrbitResponse struct {
+	Data OrbitData `json:"data"`
+}
+
+type OrbitData struct {
+	Nav Navigation `json:"nav"`
+}
+
+// DockResponse represents the response from docking a ship
+type DockResponse struct {
+	Data DockData `json:"data"`
+}
+
+type DockData struct {
+	Nav Navigation `json:"nav"`
+}
+
+// PatchNavRequest represents the request body for patching ship navigation
+type PatchNavRequest struct {
+	FlightMode string `json:"flightMode"`
+}
+
+// PatchNavResponse represents the response from patching ship navigation
+type PatchNavResponse struct {
+	Data Navigation `json:"data"`
+}
+
+// WarpResponse represents the response from warping a ship
+type WarpResponse struct {
+	Data WarpData `json:"data"`
+}
+
+type WarpData struct {
+	Fuel  Fuel       `json:"fuel"`
+	Nav   Navigation `json:"nav"`
+	Event *Event     `json:"event,omitempty"`
+}
+
+// JumpRequest represents the request body for jumping a ship
+type JumpRequest struct {
+	SystemSymbol string `json:"systemSymbol"`
+}
+
+// JumpResponse represents the response from jumping a ship
+type JumpResponse struct {
+	Data JumpData `json:"data"`
+}
+
+type JumpData struct {
+	Cooldown Cooldown   `json:"cooldown"`
+	Nav      Navigation `json:"nav"`
+	Event    *Event     `json:"event,omitempty"`
+}
+
+// Event represents an event that occurred during navigation
+type Event struct {
+	Symbol      string `json:"symbol"`
+	Component   string `json:"component"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
 // API Response wrappers
 type AgentResponse struct {
 	Data Agent `json:"data"`
@@ -479,6 +558,14 @@ func NewClient(apiToken string) *Client {
 	return &Client{
 		APIToken: apiToken,
 		BaseURL:  "https://api.spacetraders.io/v2",
+	}
+}
+
+// NewClientWithBaseURL creates a new SpaceTraders client with a custom base URL (for testing)
+func NewClientWithBaseURL(apiToken, baseURL string) *Client {
+	return &Client{
+		APIToken: apiToken,
+		BaseURL:  baseURL,
 	}
 }
 
@@ -719,4 +806,176 @@ func (c *Client) PurchaseShip(shipType, waypointSymbol string) (*Ship, *Agent, *
 	}
 
 	return &purchaseResp.Data.Ship, &purchaseResp.Data.Agent, &purchaseResp.Data.Transaction, nil
+}
+
+// OrbitShip puts a ship into orbit around a waypoint
+func (c *Client) OrbitShip(shipSymbol string) (*Navigation, error) {
+	endpoint := fmt.Sprintf("/my/ships/%s/orbit", shipSymbol)
+
+	resp, err := c.makeRequest("POST", endpoint, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to orbit ship: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to orbit ship, status: %d", resp.StatusCode)
+	}
+
+	var orbitResp OrbitResponse
+	if err := json.NewDecoder(resp.Body).Decode(&orbitResp); err != nil {
+		return nil, fmt.Errorf("failed to decode orbit response: %w", err)
+	}
+
+	return &orbitResp.Data.Nav, nil
+}
+
+// DockShip docks a ship at a waypoint
+func (c *Client) DockShip(shipSymbol string) (*Navigation, error) {
+	endpoint := fmt.Sprintf("/my/ships/%s/dock", shipSymbol)
+
+	resp, err := c.makeRequest("POST", endpoint, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to dock ship: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to dock ship, status: %d", resp.StatusCode)
+	}
+
+	var dockResp DockResponse
+	if err := json.NewDecoder(resp.Body).Decode(&dockResp); err != nil {
+		return nil, fmt.Errorf("failed to decode dock response: %w", err)
+	}
+
+	return &dockResp.Data.Nav, nil
+}
+
+// NavigateShip navigates a ship to a waypoint
+func (c *Client) NavigateShip(shipSymbol, waypointSymbol string) (*Navigation, *Fuel, *Event, error) {
+	endpoint := fmt.Sprintf("/my/ships/%s/navigate", shipSymbol)
+
+	reqBody := NavigateRequest{
+		WaypointSymbol: waypointSymbol,
+	}
+
+	// Marshal the request body
+	requestBody, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to marshal navigate request: %w", err)
+	}
+
+	resp, err := c.makeRequest("POST", endpoint, strings.NewReader(string(requestBody)))
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to navigate ship: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, nil, nil, fmt.Errorf("failed to navigate ship, status: %d", resp.StatusCode)
+	}
+
+	var navResp NavigateResponse
+	if err := json.NewDecoder(resp.Body).Decode(&navResp); err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to decode navigate response: %w", err)
+	}
+
+	return &navResp.Data.Nav, &navResp.Data.Fuel, navResp.Data.Event, nil
+}
+
+// PatchShipNav updates a ship's navigation settings (e.g., flight mode)
+func (c *Client) PatchShipNav(shipSymbol, flightMode string) (*Navigation, error) {
+	endpoint := fmt.Sprintf("/my/ships/%s/nav", shipSymbol)
+
+	reqBody := PatchNavRequest{
+		FlightMode: flightMode,
+	}
+
+	// Marshal the request body
+	requestBody, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal patch nav request: %w", err)
+	}
+
+	resp, err := c.makeRequest("PATCH", endpoint, strings.NewReader(string(requestBody)))
+	if err != nil {
+		return nil, fmt.Errorf("failed to patch ship nav: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to patch ship nav, status: %d", resp.StatusCode)
+	}
+
+	var patchResp PatchNavResponse
+	if err := json.NewDecoder(resp.Body).Decode(&patchResp); err != nil {
+		return nil, fmt.Errorf("failed to decode patch nav response: %w", err)
+	}
+
+	return &patchResp.Data, nil
+}
+
+// WarpShip warps a ship to a waypoint (requires warp drive)
+func (c *Client) WarpShip(shipSymbol, waypointSymbol string) (*Navigation, *Fuel, *Event, error) {
+	endpoint := fmt.Sprintf("/my/ships/%s/warp", shipSymbol)
+
+	reqBody := NavigateRequest{
+		WaypointSymbol: waypointSymbol,
+	}
+
+	// Marshal the request body
+	requestBody, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to marshal warp request: %w", err)
+	}
+
+	resp, err := c.makeRequest("POST", endpoint, strings.NewReader(string(requestBody)))
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to warp ship: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, nil, nil, fmt.Errorf("failed to warp ship, status: %d", resp.StatusCode)
+	}
+
+	var warpResp WarpResponse
+	if err := json.NewDecoder(resp.Body).Decode(&warpResp); err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to decode warp response: %w", err)
+	}
+
+	return &warpResp.Data.Nav, &warpResp.Data.Fuel, warpResp.Data.Event, nil
+}
+
+// JumpShip jumps a ship to a different system (requires jump drive)
+func (c *Client) JumpShip(shipSymbol, systemSymbol string) (*Navigation, *Cooldown, *Event, error) {
+	endpoint := fmt.Sprintf("/my/ships/%s/jump", shipSymbol)
+
+	reqBody := JumpRequest{
+		SystemSymbol: systemSymbol,
+	}
+
+	// Marshal the request body
+	requestBody, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to marshal jump request: %w", err)
+	}
+
+	resp, err := c.makeRequest("POST", endpoint, strings.NewReader(string(requestBody)))
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to jump ship: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, nil, nil, fmt.Errorf("failed to jump ship, status: %d", resp.StatusCode)
+	}
+
+	var jumpResp JumpResponse
+	if err := json.NewDecoder(resp.Body).Decode(&jumpResp); err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to decode jump response: %w", err)
+	}
+
+	return &jumpResp.Data.Nav, &jumpResp.Data.Cooldown, jumpResp.Data.Event, nil
 }

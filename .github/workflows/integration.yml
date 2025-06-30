@@ -81,38 +81,11 @@ jobs:
           path: integration-report.md
           retention-days: 30
 
-  # Fallback job when no API token is available
-  integration-test-fallback:
-    name: Integration Tests (No API Token)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: 1.22
-
-      - name: Run integration tests without API
-        run: |
-          echo "⚠️  SPACETRADERS_API_TOKEN secret not available"
-          echo "Running integration tests without real API calls..."
-          go run ./cmd/test_runner.go
-
-      - name: Reminder about API token
-        run: |
-          echo "💡 To enable full integration testing:"
-          echo "1. Get a SpaceTraders API token from https://spacetraders.io/"
-          echo "2. Add it as a repository secret named 'SPACETRADERS_API_TOKEN'"
-          echo "3. Re-run this workflow to test with real API calls"
-
   notify:
     name: Notify Results
     runs-on: ubuntu-latest
-    needs: [integration-test, integration-test-fallback]
-    if: always() && (needs.integration-test.result == 'failure' || needs.integration-test-fallback.result == 'failure')
+    needs: [integration-test]
+    if: always() && needs.integration-test.result == 'failure'
 
     steps:
       - name: Create issue on failure

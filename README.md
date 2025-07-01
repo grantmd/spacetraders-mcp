@@ -942,6 +942,40 @@ This server uses the SpaceTraders v2 API. For full API documentation, visit:
 
 ## Troubleshooting
 
+### Tool Error Handling
+
+#### Problem: Getting "status: 422" without details when using navigation tools
+
+**Solution:** This has been fixed in the latest version. Navigation tools (orbit, dock, navigate, warp, jump, patch nav) now properly expose detailed error messages from the SpaceTraders API.
+
+**What was fixed:**
+- Previously, HTTP error responses only showed status codes (e.g., "failed to orbit ship, status: 422")
+- Now, error responses include the full API error message with details about what went wrong
+- Fixed Content-Type header issue where POST requests with empty bodies were rejected by the API
+- This applies to all navigation methods: `orbit_ship`, `dock_ship`, `navigate_ship`, `patch_ship_nav`, `warp_ship`, `jump_ship`
+
+**Example error messages you'll now see:**
+```
+API request failed with status 422: {"error":{"message":"Ship must be docked to enter orbit","code":4214,"data":{"shipSymbol":"SHIP_1234","shipStatus":"IN_TRANSIT"}}}
+```
+
+Instead of just:
+```
+failed to orbit ship, status: 422
+```
+
+Or the Content-Type error:
+```
+You specified a 'Content-Type' header of 'application/json', but the request body is an empty string (which can't be parsed as valid JSON). Send an empty object (e.g. {}) instead.
+```
+
+**Common 422 errors and their meanings:**
+- **Orbit:** "Ship must be docked to enter orbit" - Ship is not at a waypoint or is in transit
+- **Dock:** "Ship must be in orbit to dock" - Ship is not in orbit around a waypoint
+- **Navigate:** "Ship must be in orbit to navigate" - Ship is docked or in transit
+- **Warp:** "Ship does not have warp drive installed" - Ship lacks warp capability
+- **Jump:** "Ship does not have jump drive installed" - Ship lacks jump capability
+
 ### MCP Resource Issues
 
 #### Problem: Claude doesn't know about my agent/ships/contracts

@@ -812,14 +812,17 @@ func (c *Client) PurchaseShip(shipType, waypointSymbol string) (*Ship, *Agent, *
 func (c *Client) OrbitShip(shipSymbol string) (*Navigation, error) {
 	endpoint := fmt.Sprintf("/my/ships/%s/orbit", shipSymbol)
 
-	resp, err := c.makeRequest("POST", endpoint, nil)
+	// SpaceTraders API requires an empty JSON object for POST requests
+	emptyBody := strings.NewReader("{}")
+	resp, err := c.makeRequest("POST", endpoint, emptyBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to orbit ship: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to orbit ship, status: %d", resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
 	var orbitResp OrbitResponse
@@ -834,14 +837,17 @@ func (c *Client) OrbitShip(shipSymbol string) (*Navigation, error) {
 func (c *Client) DockShip(shipSymbol string) (*Navigation, error) {
 	endpoint := fmt.Sprintf("/my/ships/%s/dock", shipSymbol)
 
-	resp, err := c.makeRequest("POST", endpoint, nil)
+	// SpaceTraders API requires an empty JSON object for POST requests
+	emptyBody := strings.NewReader("{}")
+	resp, err := c.makeRequest("POST", endpoint, emptyBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to dock ship: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to dock ship, status: %d", resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
 	var dockResp DockResponse
@@ -873,7 +879,8 @@ func (c *Client) NavigateShip(shipSymbol, waypointSymbol string) (*Navigation, *
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, nil, nil, fmt.Errorf("failed to navigate ship, status: %d", resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		return nil, nil, nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
 	var navResp NavigateResponse
@@ -905,7 +912,8 @@ func (c *Client) PatchShipNav(shipSymbol, flightMode string) (*Navigation, error
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to patch ship nav, status: %d", resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
 	var patchResp PatchNavResponse
@@ -937,7 +945,8 @@ func (c *Client) WarpShip(shipSymbol, waypointSymbol string) (*Navigation, *Fuel
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, nil, nil, fmt.Errorf("failed to warp ship, status: %d", resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		return nil, nil, nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
 	var warpResp WarpResponse
@@ -969,7 +978,8 @@ func (c *Client) JumpShip(shipSymbol, systemSymbol string) (*Navigation, *Cooldo
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, nil, nil, fmt.Errorf("failed to jump ship, status: %d", resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		return nil, nil, nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
 	var jumpResp JumpResponse

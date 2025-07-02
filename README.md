@@ -1,6 +1,8 @@
 # SpaceTraders MCP Server
 
-A Model Context Protocol (MCP) server that provides seamless integration between Claude Desktop and the SpaceTraders API, enabling intelligent assistance for your space trading adventures.
+A Model Context Protocol (MCP) server that provides seamless integration between any MCP client and the SpaceTraders API, enabling automation, analysis, and discussion about the current state of your SpaceTraders game state.
+
+**Most of this is being "written" via LLM tools as a personal experiment, which is probably unsurprising given the target audience, but I wanted to make that clear upfront.**
 
 ## ✨ Features
 
@@ -15,7 +17,7 @@ A Model Context Protocol (MCP) server that provides seamless integration between
 ### Prerequisites
 
 - Go 1.21 or higher
-- Claude Desktop
+- Any MCP Client
 - SpaceTraders API token ([Get one here](https://spacetraders.io))
 
 ### Installation
@@ -30,12 +32,11 @@ A Model Context Protocol (MCP) server that provides seamless integration between
 2. **Set up your SpaceTraders credentials:**
    ```bash
    export SPACETRADERS_TOKEN=your_token_here
-   export SPACETRADERS_AGENT_SYMBOL=your_agent_symbol
    ```
 
-3. **Configure Claude Desktop:**
+3. **Configure Claude Desktop (or other client):**
    
-   Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
+   Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (Claude macOS):
    ```json
    {
      "mcpServers": {
@@ -47,11 +48,11 @@ A Model Context Protocol (MCP) server that provides seamless integration between
    }
    ```
 
-4. **Restart Claude Desktop** and start exploring!
+4. **Restart your client** and start exploring!
 
 ### First Steps
 
-Once configured, try these commands in Claude Desktop:
+Once configured, try these commands:
 
 - **"Show me my current SpaceTraders status"** - Get a complete overview
 - **"What systems should I explore next?"** - Get strategic recommendations  
@@ -124,12 +125,8 @@ Detailed documentation is available in the `docs/` folder:
 
 ## 📜 License
 
-MIT License - see [LICENSE](LICENSE) for details.
+Apache License - see [LICENSE](LICENSE) for details.
 
 ## 🤝 Contributing
 
 Contributions are welcome! Please see our [Development Guide](docs/development.md) for details on how to get started.
-
----
-
-**Ready to enhance your SpaceTraders experience?** Follow the Quick Start guide above and begin your intelligent space trading journey! 🚀

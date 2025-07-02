@@ -6,6 +6,7 @@ import (
 
 	"spacetraders-mcp/pkg/logging"
 	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/tools/utils"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
@@ -136,14 +137,8 @@ func (t *OrbitShipTool) Handler() func(ctx context.Context, request mcp.CallTool
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{
 				mcp.NewTextContent(textSummary),
-				mcp.NewTextContent(fmt.Sprintf("```json\n%s\n```", formatJSON(result))),
+				mcp.NewTextContent(fmt.Sprintf("```json\n%s\n```", utils.FormatJSON(result))),
 			},
 		}, nil
 	}
-}
-
-// formatJSON formats a map as JSON string for display
-func formatJSON(data interface{}) string {
-	// Simple JSON formatting - in a real implementation you might use json.MarshalIndent
-	return fmt.Sprintf("%+v", data)
 }

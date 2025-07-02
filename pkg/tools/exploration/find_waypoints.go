@@ -7,6 +7,7 @@ import (
 
 	"spacetraders-mcp/pkg/logging"
 	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/tools/utils"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
@@ -228,12 +229,13 @@ func (t *FindWaypointsTool) Handler() func(ctx context.Context, request mcp.Call
 
 			// Add next steps
 			textSummary += "## 🚀 Next Steps\n\n"
-			if trait == "SHIPYARD" {
+			switch trait {
+			case "SHIPYARD":
 				textSummary += "To see available ships at a shipyard, use:\n"
 				for _, waypoint := range matchingWaypoints {
 					textSummary += fmt.Sprintf("- Check ships at %s: `spacetraders://systems/%s/waypoints/%s/shipyard`\n", waypoint.Symbol, systemSymbol, waypoint.Symbol)
 				}
-			} else if trait == "MARKETPLACE" {
+			case "MARKETPLACE":
 				textSummary += "To see market prices and trade opportunities:\n"
 				for _, waypoint := range matchingWaypoints {
 					textSummary += fmt.Sprintf("- Check market at %s: `spacetraders://systems/%s/waypoints/%s/market`\n", waypoint.Symbol, systemSymbol, waypoint.Symbol)
@@ -245,14 +247,8 @@ func (t *FindWaypointsTool) Handler() func(ctx context.Context, request mcp.Call
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{
 				mcp.NewTextContent(textSummary),
-				mcp.NewTextContent(fmt.Sprintf("```json\n%s\n```", formatJSON(result))),
+				mcp.NewTextContent(fmt.Sprintf("```json\n%s\n```", utils.FormatJSON(result))),
 			},
 		}, nil
 	}
-}
-
-// formatJSON formats a map as JSON string for display
-func formatJSON(data interface{}) string {
-	// Simple JSON formatting - in a real implementation you might use json.MarshalIndent
-	return fmt.Sprintf("%+v", data)
 }

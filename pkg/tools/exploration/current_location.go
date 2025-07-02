@@ -7,6 +7,7 @@ import (
 
 	"spacetraders-mcp/pkg/logging"
 	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/tools/utils"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
@@ -131,7 +132,7 @@ func (t *CurrentLocationTool) Handler() func(ctx context.Context, request mcp.Ca
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{
 				mcp.NewTextContent(textSummary),
-				mcp.NewTextContent(fmt.Sprintf("```json\n%s\n```", formatJSON(result))),
+				mcp.NewTextContent(fmt.Sprintf("```json\n%s\n```", utils.FormatJSON(result))),
 			},
 		}, nil
 	}
@@ -318,7 +319,7 @@ func (t *CurrentLocationTool) generateLocationSummary(analysis *LocationAnalysis
 	if specificShip != "" {
 		summary = fmt.Sprintf("# 📍 Location Analysis: %s\n\n", specificShip)
 	} else {
-		summary = fmt.Sprintf("# 📍 Fleet Location Analysis\n\n")
+		summary = "# 📍 Fleet Location Analysis\n\n"
 		summary += fmt.Sprintf("**Total Ships:** %d\n", len(analysis.ShipLocations))
 		summary += fmt.Sprintf("**Systems Occupied:** %d\n\n", len(analysis.SystemSummary))
 	}

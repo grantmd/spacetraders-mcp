@@ -2,13 +2,13 @@ package ships
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
 	"spacetraders-mcp/pkg/logging"
 	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/tools/utils"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
@@ -170,15 +170,7 @@ func (t *RefuelShipTool) Handler() func(ctx context.Context, request mcp.CallToo
 			}
 		}
 
-		jsonData, err := json.MarshalIndent(result, "", "  ")
-		if err != nil {
-			ctxLogger.Error("Failed to marshal refuel result: %v", err)
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{
-					mcp.NewTextContent("✅ Ship refueled successfully, but failed to format response"),
-				},
-			}, nil
-		}
+		jsonData := utils.FormatJSON(result)
 
 		// Calculate fuel purchased and cost per unit
 		fuelPurchased := fuel.Current - (fuel.Capacity - transaction.Price) // This is an approximation
@@ -231,7 +223,7 @@ func (t *RefuelShipTool) Handler() func(ctx context.Context, request mcp.CallToo
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{
 				mcp.NewTextContent(textSummary),
-				mcp.NewTextContent(fmt.Sprintf("**Raw JSON Data:**\n```json\n%s\n```", string(jsonData))),
+				mcp.NewTextContent(fmt.Sprintf("```json\n%s\n```", jsonData)),
 			},
 		}, nil
 	}

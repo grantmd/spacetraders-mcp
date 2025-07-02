@@ -233,7 +233,7 @@ func (t *StatusTool) Handler() func(ctx context.Context, request mcp.CallToolReq
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{
 				mcp.NewTextContent(textSummary),
-				mcp.NewTextContent(fmt.Sprintf("**Raw JSON Data:**\n```json\n%s\n```", string(jsonData))),
+				mcp.NewTextContent(fmt.Sprintf("```json\n%s\n```", string(jsonData))),
 			},
 		}, nil
 	}

@@ -500,6 +500,31 @@ type RefuelRequest struct {
 	FromCargo bool `json:"fromCargo,omitempty"` // Optional: refuel from cargo instead of marketplace
 }
 
+// ExtractRequest represents a ship extraction request
+type ExtractRequest struct {
+	Survey *Survey `json:"survey,omitempty"` // Optional: survey data to improve extraction
+}
+
+// Survey represents survey data for mining operations
+type Survey struct {
+	Signature  string          `json:"signature"`
+	Symbol     string          `json:"symbol"`
+	Deposits   []SurveyDeposit `json:"deposits"`
+	Expiration string          `json:"expiration"`
+	Size       string          `json:"size"`
+}
+
+// SurveyDeposit represents a mineral deposit in a survey
+type SurveyDeposit struct {
+	Symbol string `json:"symbol"`
+}
+
+// JettisonRequest represents a cargo jettison request
+type JettisonRequest struct {
+	Symbol string `json:"symbol"` // The cargo symbol to jettison
+	Units  int    `json:"units"`  // Number of units to jettison
+}
+
 // JumpResponse represents the response from jumping a ship
 type JumpResponse struct {
 	Data JumpData `json:"data"`
@@ -515,6 +540,38 @@ type RefuelData struct {
 	Agent       Agent       `json:"agent"`
 	Fuel        Fuel        `json:"fuel"`
 	Transaction Transaction `json:"transaction"`
+}
+
+// ExtractResponse represents the response from extracting resources
+type ExtractResponse struct {
+	Data ExtractData `json:"data"`
+}
+
+// ExtractData contains the extraction operation results
+type ExtractData struct {
+	Cooldown   Cooldown   `json:"cooldown"`
+	Extraction Extraction `json:"extraction"`
+	Cargo      Cargo      `json:"cargo"`
+	Events     []Event    `json:"events"`
+}
+
+// Extraction represents an extraction operation result
+type Extraction struct {
+	ShipSymbol string `json:"shipSymbol"`
+	Yield      struct {
+		Symbol string `json:"symbol"`
+		Units  int    `json:"units"`
+	} `json:"yield"`
+}
+
+// JettisonResponse represents the response from jettisoning cargo
+type JettisonResponse struct {
+	Data JettisonData `json:"data"`
+}
+
+// JettisonData contains the jettison operation results
+type JettisonData struct {
+	Cargo Cargo `json:"cargo"`
 }
 
 type JumpData struct {
@@ -1114,4 +1171,72 @@ func (c *Client) RefuelShip(shipSymbol string, units int, fromCargo bool) (*Agen
 	}
 
 	return &refuelResp.Data.Agent, &refuelResp.Data.Fuel, &refuelResp.Data.Transaction, nil
+}
+
+// ExtractResources extracts resources from the current waypoint (asteroid, etc.)
+func (c *Client) ExtractResources(shipSymbol string, survey *Survey) (*Cooldown, *Extraction, *Cargo, []Event, error) {
+	endpoint := fmt.Sprintf("/my/ships/%s/extract", shipSymbol)
+
+	reqBody := ExtractRequest{}
+	if survey != nil {
+		reqBody.Survey = survey
+	}
+
+	// Marshal the request body
+	requestBody, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("failed to marshal extract request: %w", err)
+	}
+
+	resp, err := c.makeRequest("POST", endpoint, strings.NewReader(string(requestBody)))
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("failed to extract resources: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, nil, nil, nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var extractResp ExtractResponse
+	if err := json.NewDecoder(resp.Body).Decode(&extractResp); err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("failed to decode extract response: %w", err)
+	}
+
+	return &extractResp.Data.Cooldown, &extractResp.Data.Extraction, &extractResp.Data.Cargo, extractResp.Data.Events, nil
+}
+
+// JettisonCargo jettisons cargo from a ship
+func (c *Client) JettisonCargo(shipSymbol, cargoSymbol string, units int) (*Cargo, error) {
+	endpoint := fmt.Sprintf("/my/ships/%s/jettison", shipSymbol)
+
+	reqBody := JettisonRequest{
+		Symbol: cargoSymbol,
+		Units:  units,
+	}
+
+	// Marshal the request body
+	requestBody, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal jettison request: %w", err)
+	}
+
+	resp, err := c.makeRequest("POST", endpoint, strings.NewReader(string(requestBody)))
+	if err != nil {
+		return nil, fmt.Errorf("failed to jettison cargo: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var jettisonResp JettisonResponse
+	if err := json.NewDecoder(resp.Body).Decode(&jettisonResp); err != nil {
+		return nil, fmt.Errorf("failed to decode jettison response: %w", err)
+	}
+
+	return &jettisonResp.Data.Cargo, nil
 }

@@ -62,6 +62,12 @@ func (r *Registry) registerTools() {
 	// Register Refuel Ship tool
 	r.handlers = append(r.handlers, ships.NewRefuelShipTool(r.client, r.logger))
 
+	// Register Extract Resources tool
+	r.handlers = append(r.handlers, ships.NewExtractResourcesTool(r.client, r.logger))
+
+	// Register Jettison Cargo tool
+	r.handlers = append(r.handlers, ships.NewJettisonCargoTool(r.client, r.logger))
+
 	// Register Navigation tools
 	r.handlers = append(r.handlers, navigation.NewOrbitShipTool(r.client, r.logger))
 	r.handlers = append(r.handlers, navigation.NewDockShipTool(r.client, r.logger))
@@ -80,11 +86,15 @@ func (r *Registry) registerTools() {
 	// - SellCargo tool
 	// - BuyCargo tool
 	// - RepairShip tool
-	// - ExtractResources tool
 	// - ScanSystems tool
 	// - ScanWaypoints tool
 	// - ScanShips tool
 	// etc.
+	//
+	// IMPLEMENTED:
+	// - RefuelShip tool ✅
+	// - ExtractResources tool ✅
+	// - JettisonCargo tool ✅
 }
 
 // RegisterWithServer registers all tools with the MCP server

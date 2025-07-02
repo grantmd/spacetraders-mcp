@@ -608,6 +608,105 @@ Ship Specifications:
 • Your new ship is ready for missions!
 ```
 
+#### `refuel_ship`
+
+Refuel a ship at the current waypoint. The ship must be docked at a waypoint with a fuel station or market that sells fuel.
+
+**Parameters:**
+- `ship_symbol` (string, required): Symbol of the ship to refuel (e.g., 'SHIP_1234')
+- `units` (integer, optional): Specific amount of fuel units to purchase. If not specified, refuels to full capacity
+- `from_cargo` (boolean, optional): Whether to refuel from cargo instead of purchasing from marketplace. Defaults to false
+
+**Usage Examples:**
+- "Refuel ship SHIP_1234"
+- "refuel_ship ship_symbol=SHIP_1234 units=50"
+- "Refuel from cargo instead of buying fuel"
+
+**Sample Output:**
+```
+⛽ Ship Refuel Successful!
+
+Ship: SHIP_1234
+Location: X1-DF55-20250Z
+Fuel Status: 400/400 units (Full tank! ⛽)
+Cost: 200 credits (4 credits per unit)
+Remaining Credits: 149800
+
+Source: Purchased fuel from local marketplace
+
+🚀 Ready for Travel: Your ship is now fueled and ready for navigation!
+```
+
+#### `extract_resources`
+
+Extract resources from the current waypoint (asteroid fields, mining sites). Ship must be in orbit and have mining capabilities.
+
+**Parameters:**
+- `ship_symbol` (string, required): Symbol of the ship to perform extraction (e.g., 'SHIP_1234')
+- `survey` (object, optional): Survey data to improve extraction efficiency and target specific resources
+
+**Usage Examples:**
+- "Extract resources with ship SHIP_1234"
+- "Mine asteroids using my mining drone"
+- "Start resource extraction at this location"
+
+**Sample Output:**
+```
+⛏️ Resource Extraction Successful!
+
+Ship: SHIP_1234
+Extracted: 12 units of IRON_ORE
+Cargo Status: 42/60 units (70.0% full)
+
+Cooldown: 60 seconds remaining (until 2024-01-15T10:30:00Z)
+That's 1 minutes and 0 seconds
+
+Current Cargo Inventory:
+- Iron Ore: 42 units
+
+💡 Next Steps:
+• ⏱️ Wait for cooldown to complete before next extraction
+• 📊 Use get_status_summary to check all your ships
+• 🏪 Dock at a marketplace to sell extracted resources
+```
+
+#### `jettison_cargo`
+
+Jettison (dump) cargo from a ship to free up space. The cargo will be lost permanently. Ship must be in orbit to jettison cargo.
+
+**Parameters:**
+- `ship_symbol` (string, required): Symbol of the ship to jettison cargo from (e.g., 'SHIP_1234')
+- `cargo_symbol` (string, required): Symbol of the cargo item to jettison (e.g., 'IRON_ORE', 'ALUMINUM_ORE')
+- `units` (integer, required): Number of units to jettison
+
+**Usage Examples:**
+- "Jettison 10 units of IRON_ORE from ship SHIP_1234"
+- "jettison_cargo ship_symbol=SHIP_1234 cargo_symbol=ALUMINUM_ORE units=5"
+- "Dump unwanted cargo to make space"
+
+**Sample Output:**
+```
+🗑️ Cargo Jettisoned Successfully!
+
+Ship: SHIP_1234
+Jettisoned: 10 units of Iron Ore
+Cargo Status: 32/60 units (53.3% full)
+Free Space: 28 units available
+
+⚠️ Warning: The jettisoned cargo is permanently lost and cannot be recovered!
+
+Remaining Cargo Inventory:
+- Iron Ore: 32 units
+
+💡 Next Steps:
+• ✅ Plenty of space available for mining or trading
+• ⛏️ Use extract_resources to mine more materials
+• 🏪 Dock at a marketplace to sell valuable cargo instead of jettisoning
+• 📊 Use get_status_summary to check your ship status
+
+💰 Pro Tip: Consider selling cargo at a marketplace instead of jettisoning to earn credits!
+```
+
 #### `accept_contract`
 
 Accept a contract by its ID. This commits the agent to fulfilling the contract terms and provides an upfront payment.

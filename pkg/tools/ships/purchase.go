@@ -2,13 +2,13 @@ package ships
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
 	"spacetraders-mcp/pkg/logging"
 	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/tools/utils"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
@@ -154,15 +154,7 @@ func (t *PurchaseShipTool) Handler() func(ctx context.Context, request mcp.CallT
 			},
 		}
 
-		jsonData, err := json.MarshalIndent(result, "", "  ")
-		if err != nil {
-			ctxLogger.Error("Failed to marshal purchase result: %v", err)
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{
-					mcp.NewTextContent("✅ Ship purchased successfully, but failed to format response"),
-				},
-			}, nil
-		}
+		jsonData := utils.FormatJSON(result)
 
 		// Create formatted text summary
 		textSummary := "🚢 **Ship Purchase Successful!**\n\n"
@@ -189,7 +181,7 @@ func (t *PurchaseShipTool) Handler() func(ctx context.Context, request mcp.CallT
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{
 				mcp.NewTextContent(textSummary),
-				mcp.NewTextContent(fmt.Sprintf("**Raw JSON Data:**\n```json\n%s\n```", string(jsonData))),
+				mcp.NewTextContent(fmt.Sprintf("```json\n%s\n```", jsonData)),
 			},
 		}, nil
 	}

@@ -59,6 +59,9 @@ func (r *Registry) registerTools() {
 	// Register Ship Purchase tool
 	r.handlers = append(r.handlers, ships.NewPurchaseShipTool(r.client, r.logger))
 
+	// Register Refuel Ship tool
+	r.handlers = append(r.handlers, ships.NewRefuelShipTool(r.client, r.logger))
+
 	// Register Navigation tools
 	r.handlers = append(r.handlers, navigation.NewOrbitShipTool(r.client, r.logger))
 	r.handlers = append(r.handlers, navigation.NewDockShipTool(r.client, r.logger))
@@ -76,7 +79,6 @@ func (r *Registry) registerTools() {
 	// - FulfillContract tool
 	// - SellCargo tool
 	// - BuyCargo tool
-	// - RefuelShip tool
 	// - RepairShip tool
 	// - ExtractResources tool
 	// - ScanSystems tool

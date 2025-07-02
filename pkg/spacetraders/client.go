@@ -494,9 +494,27 @@ type JumpRequest struct {
 	SystemSymbol string `json:"systemSymbol"`
 }
 
+// RefuelRequest represents a ship refuel request
+type RefuelRequest struct {
+	Units     int  `json:"units,omitempty"`     // Optional: specific units to refuel (if not specified, refuels to capacity)
+	FromCargo bool `json:"fromCargo,omitempty"` // Optional: refuel from cargo instead of marketplace
+}
+
 // JumpResponse represents the response from jumping a ship
 type JumpResponse struct {
 	Data JumpData `json:"data"`
+}
+
+// RefuelResponse represents the response from refueling a ship
+type RefuelResponse struct {
+	Data RefuelData `json:"data"`
+}
+
+// RefuelData contains the refuel operation results
+type RefuelData struct {
+	Agent       Agent       `json:"agent"`
+	Fuel        Fuel        `json:"fuel"`
+	Transaction Transaction `json:"transaction"`
 }
 
 type JumpData struct {
@@ -1059,4 +1077,41 @@ func (c *Client) JumpShip(shipSymbol, systemSymbol string) (*Navigation, *Cooldo
 	}
 
 	return &jumpResp.Data.Nav, &jumpResp.Data.Cooldown, jumpResp.Data.Event, nil
+}
+
+// RefuelShip refuels a ship at the current waypoint
+func (c *Client) RefuelShip(shipSymbol string, units int, fromCargo bool) (*Agent, *Fuel, *Transaction, error) {
+	endpoint := fmt.Sprintf("/my/ships/%s/refuel", shipSymbol)
+
+	reqBody := RefuelRequest{}
+	if units > 0 {
+		reqBody.Units = units
+	}
+	if fromCargo {
+		reqBody.FromCargo = fromCargo
+	}
+
+	// Marshal the request body
+	requestBody, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to marshal refuel request: %w", err)
+	}
+
+	resp, err := c.makeRequest("POST", endpoint, strings.NewReader(string(requestBody)))
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to refuel ship: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, nil, nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var refuelResp RefuelResponse
+	if err := json.NewDecoder(resp.Body).Decode(&refuelResp); err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to decode refuel response: %w", err)
+	}
+
+	return &refuelResp.Data.Agent, &refuelResp.Data.Fuel, &refuelResp.Data.Transaction, nil
 }

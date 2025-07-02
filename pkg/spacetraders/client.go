@@ -513,6 +513,47 @@ type Event struct {
 	Description string `json:"description"`
 }
 
+// Market data structures
+type Market struct {
+	Symbol       string              `json:"symbol"`
+	Exports      []TradeGood         `json:"exports"`
+	Imports      []TradeGood         `json:"imports"`
+	Exchange     []TradeGood         `json:"exchange"`
+	Transactions []MarketTransaction `json:"transactions"`
+	TradeGoods   []MarketTradeGood   `json:"tradeGoods"`
+}
+
+type TradeGood struct {
+	Symbol      string `json:"symbol"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+type MarketTradeGood struct {
+	Symbol        string `json:"symbol"`
+	Type          string `json:"type"`
+	TradeVolume   int    `json:"tradeVolume"`
+	Supply        string `json:"supply"`
+	Activity      string `json:"activity"`
+	PurchasePrice int    `json:"purchasePrice"`
+	SellPrice     int    `json:"sellPrice"`
+}
+
+type MarketTransaction struct {
+	WaypointSymbol string `json:"waypointSymbol"`
+	ShipSymbol     string `json:"shipSymbol"`
+	TradeSymbol    string `json:"tradeSymbol"`
+	Type           string `json:"type"`
+	Units          int    `json:"units"`
+	PricePerUnit   int    `json:"pricePerUnit"`
+	TotalPrice     int    `json:"totalPrice"`
+	Timestamp      string `json:"timestamp"`
+}
+
+type MarketResponse struct {
+	Data Market `json:"data"`
+}
+
 // API Response wrappers
 type AgentResponse struct {
 	Data Agent `json:"data"`
@@ -764,6 +805,36 @@ func (c *Client) GetShipyard(systemSymbol, waypointSymbol string) (*Shipyard, er
 	}
 
 	return &shipyardResp.Data, nil
+}
+
+// GetMarket fetches market information for a waypoint
+func (c *Client) GetMarket(systemSymbol, waypointSymbol string) (*Market, error) {
+	endpoint := fmt.Sprintf("/systems/%s/waypoints/%s/market", systemSymbol, waypointSymbol)
+
+	resp, err := c.makeRequest("GET", endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	var marketResp MarketResponse
+	if err := json.Unmarshal(body, &marketResp); err != nil {
+		return nil, fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	return &marketResp.Data, nil
 }
 
 // PurchaseShip purchases a ship at a shipyard

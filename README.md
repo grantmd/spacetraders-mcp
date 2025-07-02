@@ -257,10 +257,93 @@ Provides detailed information about a shipyard, including available ships, price
       "MODERATE": 1
     },
     "modificationsFee": 5000,
-    "recentTransactions": 5
-  }
+    "recentTransactions": 0
+   }
+
+   #### `spacetraders://systems/{systemSymbol}/waypoints/{waypointSymbol}/market`
+
+   Provides detailed market information including trade goods, prices, and trading opportunities.
+
+   **URI:** `spacetraders://systems/{systemSymbol}/waypoints/{waypointSymbol}/market`  
+   **MIME Type:** `application/json`  
+   **Description:** Market data including exports, imports, current prices, and recent transactions
+
+   **Example URI:** `spacetraders://systems/X1-FM66/waypoints/X1-FM66-A1/market`
+
+   **Example Response:**
+   ```json
+   {
+     "system": "X1-FM66",
+     "waypoint": "X1-FM66-A1",
+     "market": {
+       "symbol": "X1-FM66-A1",
+       "exports": [
+         {
+           "symbol": "FOOD",
+           "name": "Food",
+           "description": "Essential nutrition for crew"
+         }
+       ],
+       "imports": [
+         {
+           "symbol": "MACHINERY",
+           "name": "Machinery",
+           "description": "Industrial equipment"
+         }
+       ],
+       "trade_goods": [
+         {
+           "symbol": "FOOD",
+           "type": "EXPORT",
+           "purchase_price": 45,
+           "sell_price": 55,
+           "supply": "ABUNDANT",
+           "activity": "STRONG"
+         }
+       ]
+     },
+     "analysis": {
+       "total_trade_goods": 12,
+       "high_value_goods": ["PLATINUM", "RARE_METALS"],
+       "activity_level": "HIGH"
+     }
+   }
 }
 ```
+
+## 🚀 Quick Start: System Exploration Workflow
+
+For the best experience with Claude Desktop, follow this recommended workflow:
+
+### 1. **Understand Your Current Situation**
+```
+current_location
+```
+This shows where all your ships are and what facilities are nearby.
+
+### 2. **Explore Your Current System**
+```
+system_overview system_symbol=X1-YOUR-SYSTEM
+```
+Gets a complete overview of facilities, shipyards, markets, and opportunities.
+
+### 3. **Find Specific Facilities**
+```
+find_waypoints system_symbol=X1-YOUR-SYSTEM trait=SHIPYARD
+find_waypoints system_symbol=X1-YOUR-SYSTEM trait=MARKETPLACE
+```
+Quickly locate exactly what you need.
+
+### 4. **Navigate and Take Action**
+```
+navigate_ship ship_symbol=YOUR_SHIP waypoint_symbol=TARGET_WAYPOINT
+purchase_ship ship_type=SHIP_MINING_DRONE waypoint_symbol=SHIPYARD_WAYPOINT
+```
+
+### 5. **Check Market Opportunities**
+Use resources like: `spacetraders://systems/X1-SYSTEM/waypoints/X1-MARKETPLACE/market`
+
+**This workflow eliminates guessing and provides Claude with complete system knowledge for strategic decision-making.**
 
 ## Important: How MCP Resources Work
 
@@ -619,6 +702,68 @@ Jump a ship to a different system using a jump gate. Ship must have a jump drive
 - "Jump ship SHIP_1234 to system X1-AB12"
 - "Use jump gate to send my ship to the distant system"
 
+#### `find_waypoints`
+
+Find waypoints in a system by specific traits or facilities. Perfect for discovering shipyards, marketplaces, mining sites, and other key locations.
+
+**Parameters:**
+- `system_symbol` (string, required): System symbol to search in (e.g., 'X1-FM66')
+- `trait` (string, required): Trait to search for (e.g., 'SHIPYARD', 'MARKETPLACE', 'ASTEROID_FIELD', 'JUMP_GATE')
+- `waypoint_type` (string, optional): Filter by waypoint type (e.g., 'PLANET', 'MOON', 'ASTEROID')
+
+**Usage Examples:**
+- "Find all shipyards in system X1-FM66"
+- "find_waypoints system_symbol=X1-FM66 trait=MARKETPLACE"
+- "Show me asteroid fields for mining in X1-ABC123"
+
+#### `system_overview`
+
+Get a comprehensive overview of a system including all facilities, waypoints, and strategic opportunities. Includes shipyard details if available.
+
+**Parameters:**
+- `system_symbol` (string, required): System symbol to analyze (e.g., 'X1-FM66')
+- `include_shipyards` (boolean, optional): Whether to include detailed shipyard information (default: true)
+
+**Usage Examples:**
+- "Give me an overview of system X1-FM66"
+- "system_overview system_symbol=X1-ABC123"
+- "Analyze the facilities and opportunities in my current system"
+
+#### `current_location`
+
+Analyze where your ships are currently located and what facilities are nearby. Provides strategic recommendations based on your fleet's positions.
+
+**Parameters:**
+- `include_nearby` (boolean, optional): Include nearby waypoints and facilities in the same system (default: true)
+- `ship_symbol` (string, optional): Analyze specific ship only (otherwise analyzes all ships)
+
+**Usage Examples:**
+- "Where are my ships and what's nearby?"
+- "current_location"
+- "Analyze the location of ship SHIP_1234"
+
+## 🎯 Recommended Claude Desktop Prompts
+
+### For New Players
+- "Show me my current situation and recommend next steps"
+- "Find the nearest shipyard and tell me what ships are available"
+- "What trading opportunities are available in my current system?"
+
+### For System Exploration
+- "Explore system X1-[SYSTEM] and identify the best opportunities"
+- "Find all mining sites in my current system"
+- "Show me a complete overview of system X1-[SYSTEM]"
+
+### For Fleet Management
+- "Analyze my fleet locations and suggest optimizations"
+- "Which of my ships need fuel or are at capacity?"
+- "What should I do with my docked ships?"
+
+### For Trading and Commerce
+- "Find the best trading routes in my current system"
+- "Show me market prices at all marketplaces in X1-[SYSTEM]"
+- "Where can I sell goods for the highest profit?"
+
 ## Testing
 
 The project includes comprehensive tests covering both unit tests and integration tests. Tests have been converted from shell scripts to native Go tests for better reliability and maintainability.
@@ -975,6 +1120,51 @@ You specified a 'Content-Type' header of 'application/json', but the request bod
 - **Navigate:** "Ship must be in orbit to navigate" - Ship is docked or in transit
 - **Warp:** "Ship does not have warp drive installed" - Ship lacks warp capability
 - **Jump:** "Ship does not have jump drive installed" - Ship lacks jump capability
+
+### System Exploration and Discovery
+
+#### Problem: Claude can't find waypoints with specific facilities
+
+**Solution:** Use the new exploration tools to efficiently discover and navigate to facilities.
+
+**New tools available:**
+
+1. **`find_waypoints`** - Search for specific facilities by trait:
+   ```
+   find_waypoints system_symbol=X1-FM66 trait=SHIPYARD
+   ```
+
+2. **`system_overview`** - Get comprehensive system analysis:
+   ```
+   system_overview system_symbol=X1-FM66
+   ```
+
+3. **`current_location`** - Analyze your fleet's current positions:
+   ```
+   current_location
+   ```
+
+**Common traits to search for:**
+- `SHIPYARD` - Build and buy ships
+- `MARKETPLACE` - Trade goods and check prices
+- `ASTEROID_FIELD` - Mine resources
+- `JUMP_GATE` - Travel to other systems
+- `FUEL_STATION` - Refuel ships
+
+**Example workflow:**
+```bash
+# 1. Find all shipyards in current system
+find_waypoints system_symbol=X1-FM66 trait=SHIPYARD
+
+# 2. Check what ships are available
+# Use resource: spacetraders://systems/X1-FM66/waypoints/X1-FM66-SHIPYARD/shipyard
+
+# 3. Navigate to the shipyard
+navigate_ship ship_symbol=SHIP_1234 waypoint_symbol=X1-FM66-SHIPYARD
+
+# 4. Purchase a ship
+purchase_ship ship_type=SHIP_MINING_DRONE waypoint_symbol=X1-FM66-SHIPYARD
+```
 
 ### MCP Resource Issues
 

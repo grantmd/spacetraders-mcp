@@ -5,6 +5,7 @@ import (
 	"spacetraders-mcp/pkg/logging"
 	"spacetraders-mcp/pkg/spacetraders"
 	"spacetraders-mcp/pkg/tools/contract"
+	"spacetraders-mcp/pkg/tools/exploration"
 	"spacetraders-mcp/pkg/tools/info"
 	"spacetraders-mcp/pkg/tools/navigation"
 	"spacetraders-mcp/pkg/tools/ships"
@@ -65,6 +66,11 @@ func (r *Registry) registerTools() {
 	r.handlers = append(r.handlers, navigation.NewPatchNavTool(r.client, r.logger))
 	r.handlers = append(r.handlers, navigation.NewWarpShipTool(r.client, r.logger))
 	r.handlers = append(r.handlers, navigation.NewJumpShipTool(r.client, r.logger))
+
+	// Register Exploration tools
+	r.handlers = append(r.handlers, exploration.NewFindWaypointsTool(r.client, r.logger))
+	r.handlers = append(r.handlers, exploration.NewSystemOverviewTool(r.client, r.logger))
+	r.handlers = append(r.handlers, exploration.NewCurrentLocationTool(r.client, r.logger))
 
 	// TODO: Add more tool handlers here as we implement them:
 	// - FulfillContract tool

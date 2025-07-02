@@ -53,9 +53,11 @@ func (r *Registry) registerResources() {
 	// Shipyard resource
 	r.handlers = append(r.handlers, NewShipyardResource(r.client, r.logger))
 
+	// Market resource
+	r.handlers = append(r.handlers, NewMarketResource(r.client, r.logger))
+
 	// TODO: Add more resources here as we implement them:
 	// - Systems resource
-	// - Markets resource
 	// - Faction resource
 	// etc.
 }

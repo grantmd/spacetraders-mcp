@@ -1085,3 +1085,321 @@ func TestClient_PurchaseShip_ShipNotAvailable(t *testing.T) {
 		t.Errorf("Expected error to contain '409', got: %s", err.Error())
 	}
 }
+
+func TestClient_GetSystems(t *testing.T) {
+	// Mock systems response
+	mockSystems := []System{
+		{
+			Symbol:       "X1-TEST",
+			SectorSymbol: "X1",
+			Type:         "STAR_SYSTEM",
+			X:            10,
+			Y:            20,
+			Waypoints: []Waypoint{
+				{Symbol: "X1-TEST-A1", Type: "PLANET", X: 10, Y: 20},
+			},
+			Factions: []struct {
+				Symbol string `json:"symbol"`
+			}{
+				{Symbol: "COSMIC"},
+			},
+		},
+	}
+
+	// Test server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/systems" {
+			t.Errorf("Expected path '/systems', got %s", r.URL.Path)
+		}
+		if r.Method != "GET" {
+			t.Errorf("Expected method 'GET', got %s", r.Method)
+		}
+
+		response := SystemsResponse{
+			Data: mockSystems,
+			Meta: struct {
+				Total int `json:"total"`
+				Page  int `json:"page"`
+				Limit int `json:"limit"`
+			}{
+				Total: 1,
+				Page:  1,
+				Limit: 10,
+			},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Errorf("Failed to encode response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	client := &Client{
+		APIToken: "test-token",
+		BaseURL:  server.URL,
+	}
+
+	// Test GetSystems
+	systems, err := client.GetSystems()
+	if err != nil {
+		t.Fatalf("GetSystems failed: %v", err)
+	}
+
+	if len(systems) != 1 {
+		t.Errorf("Expected 1 system, got %d", len(systems))
+	}
+
+	if systems[0].Symbol != "X1-TEST" {
+		t.Errorf("Expected system symbol 'X1-TEST', got %s", systems[0].Symbol)
+	}
+}
+
+func TestClient_GetSystem(t *testing.T) {
+	// Mock system response
+	mockSystem := System{
+		Symbol:       "X1-TEST",
+		SectorSymbol: "X1",
+		Type:         "STAR_SYSTEM",
+		X:            10,
+		Y:            20,
+		Waypoints: []Waypoint{
+			{Symbol: "X1-TEST-A1", Type: "PLANET", X: 10, Y: 20},
+		},
+		Factions: []struct {
+			Symbol string `json:"symbol"`
+		}{
+			{Symbol: "COSMIC"},
+		},
+	}
+
+	// Test server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/systems/X1-TEST" {
+			t.Errorf("Expected path '/systems/X1-TEST', got %s", r.URL.Path)
+		}
+		if r.Method != "GET" {
+			t.Errorf("Expected method 'GET', got %s", r.Method)
+		}
+
+		response := SystemResponse{
+			Data: mockSystem,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Errorf("Failed to encode response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	client := &Client{
+		APIToken: "test-token",
+		BaseURL:  server.URL,
+	}
+
+	// Test GetSystem
+	system, err := client.GetSystem("X1-TEST")
+	if err != nil {
+		t.Fatalf("GetSystem failed: %v", err)
+	}
+
+	if system.Symbol != "X1-TEST" {
+		t.Errorf("Expected system symbol 'X1-TEST', got %s", system.Symbol)
+	}
+
+	if system.Type != "STAR_SYSTEM" {
+		t.Errorf("Expected system type 'STAR_SYSTEM', got %s", system.Type)
+	}
+}
+
+func TestClient_GetFactions(t *testing.T) {
+	// Mock factions response
+	mockFactions := []Faction{
+		{
+			Symbol:       "COSMIC",
+			Name:         "Cosmic Syndicate",
+			Description:  "A peaceful faction focused on exploration and trade",
+			Headquarters: "X1-TEST-A1",
+			Traits: []struct {
+				Symbol      string `json:"symbol"`
+				Name        string `json:"name"`
+				Description string `json:"description"`
+			}{
+				{
+					Symbol:      "PEACEFUL",
+					Name:        "Peaceful",
+					Description: "Avoids conflict when possible",
+				},
+			},
+			IsRecruiting: true,
+		},
+	}
+
+	// Test server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/factions" {
+			t.Errorf("Expected path '/factions', got %s", r.URL.Path)
+		}
+		if r.Method != "GET" {
+			t.Errorf("Expected method 'GET', got %s", r.Method)
+		}
+
+		response := FactionsResponse{
+			Data: mockFactions,
+			Meta: struct {
+				Total int `json:"total"`
+				Page  int `json:"page"`
+				Limit int `json:"limit"`
+			}{
+				Total: 1,
+				Page:  1,
+				Limit: 10,
+			},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Errorf("Failed to encode response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	client := &Client{
+		APIToken: "test-token",
+		BaseURL:  server.URL,
+	}
+
+	// Test GetFactions
+	factions, err := client.GetFactions()
+	if err != nil {
+		t.Fatalf("GetFactions failed: %v", err)
+	}
+
+	if len(factions) != 1 {
+		t.Errorf("Expected 1 faction, got %d", len(factions))
+	}
+
+	if factions[0].Symbol != "COSMIC" {
+		t.Errorf("Expected faction symbol 'COSMIC', got %s", factions[0].Symbol)
+	}
+
+	if factions[0].Name != "Cosmic Syndicate" {
+		t.Errorf("Expected faction name 'Cosmic Syndicate', got %s", factions[0].Name)
+	}
+}
+
+func TestClient_GetFaction(t *testing.T) {
+	// Mock faction response
+	mockFaction := Faction{
+		Symbol:       "COSMIC",
+		Name:         "Cosmic Syndicate",
+		Description:  "A peaceful faction focused on exploration and trade",
+		Headquarters: "X1-TEST-A1",
+		Traits: []struct {
+			Symbol      string `json:"symbol"`
+			Name        string `json:"name"`
+			Description string `json:"description"`
+		}{
+			{
+				Symbol:      "PEACEFUL",
+				Name:        "Peaceful",
+				Description: "Avoids conflict when possible",
+			},
+		},
+		IsRecruiting: true,
+	}
+
+	// Test server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/factions/COSMIC" {
+			t.Errorf("Expected path '/factions/COSMIC', got %s", r.URL.Path)
+		}
+		if r.Method != "GET" {
+			t.Errorf("Expected method 'GET', got %s", r.Method)
+		}
+
+		response := FactionResponse{
+			Data: mockFaction,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Errorf("Failed to encode response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	client := &Client{
+		APIToken: "test-token",
+		BaseURL:  server.URL,
+	}
+
+	// Test GetFaction
+	faction, err := client.GetFaction("COSMIC")
+	if err != nil {
+		t.Fatalf("GetFaction failed: %v", err)
+	}
+
+	if faction.Symbol != "COSMIC" {
+		t.Errorf("Expected faction symbol 'COSMIC', got %s", faction.Symbol)
+	}
+
+	if faction.Name != "Cosmic Syndicate" {
+		t.Errorf("Expected faction name 'Cosmic Syndicate', got %s", faction.Name)
+	}
+
+	if !faction.IsRecruiting {
+		t.Error("Expected faction to be recruiting")
+	}
+}
+
+func TestClient_GetSystems_Error(t *testing.T) {
+	// Test server that returns error
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		if _, err := w.Write([]byte(`{"error": "Internal server error"}`)); err != nil {
+			t.Errorf("Failed to write response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	client := &Client{
+		APIToken: "test-token",
+		BaseURL:  server.URL,
+	}
+
+	// Test GetSystems with error
+	systems, err := client.GetSystems()
+	if err == nil {
+		t.Fatal("Expected error, got nil")
+	}
+	if systems != nil {
+		t.Error("Expected nil systems on error, got non-nil")
+	}
+}
+
+func TestClient_GetFactions_Error(t *testing.T) {
+	// Test server that returns error
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		if _, err := w.Write([]byte(`{"error": "Not found"}`)); err != nil {
+			t.Errorf("Failed to write response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	client := &Client{
+		APIToken: "test-token",
+		BaseURL:  server.URL,
+	}
+
+	// Test GetFactions with error
+	factions, err := client.GetFactions()
+	if err == nil {
+		t.Fatal("Expected error, got nil")
+	}
+	if factions != nil {
+		t.Error("Expected nil factions on error, got non-nil")
+	}
+}

@@ -734,4 +734,182 @@ func TestResourceHandler_Interface(t *testing.T) {
 	var _ ResourceHandler = NewAgentResource(client, logger)
 	var _ ResourceHandler = NewShipsResource(client, logger)
 	var _ ResourceHandler = NewContractsResource(client, logger)
+	var _ ResourceHandler = NewSystemsResource(client, logger)
+	var _ ResourceHandler = NewFactionsResource(client, logger)
+}
+
+func TestSystemsResource_Resource(t *testing.T) {
+	client := spacetraders.NewClient("test-token")
+	logger := createMockLogger()
+	resource := NewSystemsResource(client, logger)
+
+	resourceDef := resource.Resource()
+
+	if resourceDef.URI != "spacetraders://systems/*" {
+		t.Errorf("Expected URI 'spacetraders://systems/*', got %s", resourceDef.URI)
+	}
+
+	if resourceDef.Name != "Systems Data" {
+		t.Errorf("Expected name 'Systems Data', got %s", resourceDef.Name)
+	}
+
+	if resourceDef.MIMEType != "application/json" {
+		t.Errorf("Expected MIME type 'application/json', got %s", resourceDef.MIMEType)
+	}
+
+	if resourceDef.Description == "" {
+		t.Error("Expected non-empty description")
+	}
+}
+
+func TestFactionsResource_Resource(t *testing.T) {
+	client := spacetraders.NewClient("test-token")
+	logger := createMockLogger()
+	resource := NewFactionsResource(client, logger)
+
+	resourceDef := resource.Resource()
+
+	if resourceDef.URI != "spacetraders://factions/*" {
+		t.Errorf("Expected URI 'spacetraders://factions/*', got %s", resourceDef.URI)
+	}
+
+	if resourceDef.Name != "Factions Data" {
+		t.Errorf("Expected name 'Factions Data', got %s", resourceDef.Name)
+	}
+
+	if resourceDef.MIMEType != "application/json" {
+		t.Errorf("Expected MIME type 'application/json', got %s", resourceDef.MIMEType)
+	}
+
+	if resourceDef.Description == "" {
+		t.Error("Expected non-empty description")
+	}
+}
+
+func TestSystemsResource_Handler_InvalidURI(t *testing.T) {
+	client := spacetraders.NewClient("test-token")
+	logger := createMockLogger()
+	resource := NewSystemsResource(client, logger)
+
+	handler := resource.Handler()
+
+	// Test invalid URI
+	request := mcp.ReadResourceRequest{
+		Params: mcp.ReadResourceParams{
+			URI: "invalid://uri",
+		},
+	}
+
+	contents, err := handler(context.Background(), request)
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	if len(contents) != 1 {
+		t.Errorf("Expected 1 content item, got %d", len(contents))
+	}
+
+	textContent, ok := contents[0].(*mcp.TextResourceContents)
+	if !ok {
+		t.Error("Expected text content")
+	}
+
+	if textContent.MIMEType != "text/plain" {
+		t.Errorf("Expected MIME type 'text/plain', got %s", textContent.MIMEType)
+	}
+
+	if !contains(textContent.Text, "Invalid systems resource URI") {
+		t.Errorf("Expected error message about invalid URI, got: %s", textContent.Text)
+	}
+}
+
+func TestFactionsResource_Handler_InvalidURI(t *testing.T) {
+	client := spacetraders.NewClient("test-token")
+	logger := createMockLogger()
+	resource := NewFactionsResource(client, logger)
+
+	handler := resource.Handler()
+
+	// Test invalid URI
+	request := mcp.ReadResourceRequest{
+		Params: mcp.ReadResourceParams{
+			URI: "invalid://uri",
+		},
+	}
+
+	contents, err := handler(context.Background(), request)
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	if len(contents) != 1 {
+		t.Errorf("Expected 1 content item, got %d", len(contents))
+	}
+
+	textContent, ok := contents[0].(*mcp.TextResourceContents)
+	if !ok {
+		t.Error("Expected text content")
+	}
+
+	if textContent.MIMEType != "text/plain" {
+		t.Errorf("Expected MIME type 'text/plain', got %s", textContent.MIMEType)
+	}
+
+	if !contains(textContent.Text, "Invalid factions resource URI") {
+		t.Errorf("Expected error message about invalid URI, got: %s", textContent.Text)
+	}
+}
+
+func TestSystemsResource_parseSystemSymbol(t *testing.T) {
+	client := spacetraders.NewClient("test-token")
+	logger := createMockLogger()
+	resource := NewSystemsResource(client, logger)
+
+	// Test valid URI
+	symbol, err := resource.parseSystemSymbol("spacetraders://systems/X1-TEST")
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if symbol != "X1-TEST" {
+		t.Errorf("Expected symbol 'X1-TEST', got %s", symbol)
+	}
+
+	// Test invalid URI format
+	_, err = resource.parseSystemSymbol("invalid://uri")
+	if err == nil {
+		t.Error("Expected error for invalid URI format")
+	}
+
+	// Test empty symbol
+	_, err = resource.parseSystemSymbol("spacetraders://systems/")
+	if err == nil {
+		t.Error("Expected error for empty system symbol")
+	}
+}
+
+func TestFactionsResource_parseFactionSymbol(t *testing.T) {
+	client := spacetraders.NewClient("test-token")
+	logger := createMockLogger()
+	resource := NewFactionsResource(client, logger)
+
+	// Test valid URI
+	symbol, err := resource.parseFactionSymbol("spacetraders://factions/COSMIC")
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if symbol != "COSMIC" {
+		t.Errorf("Expected symbol 'COSMIC', got %s", symbol)
+	}
+
+	// Test invalid URI format
+	_, err = resource.parseFactionSymbol("invalid://uri")
+	if err == nil {
+		t.Error("Expected error for invalid URI format")
+	}
+
+	// Test empty symbol
+	_, err = resource.parseFactionSymbol("spacetraders://factions/")
+	if err == nil {
+		t.Error("Expected error for empty faction symbol")
+	}
 }

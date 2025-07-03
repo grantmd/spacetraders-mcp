@@ -629,6 +629,20 @@ type MarketResponse struct {
 	Data Market `json:"data"`
 }
 
+// Faction represents a faction in the SpaceTraders universe
+type Faction struct {
+	Symbol       string `json:"symbol"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	Headquarters string `json:"headquarters"`
+	Traits       []struct {
+		Symbol      string `json:"symbol"`
+		Name        string `json:"name"`
+		Description string `json:"description"`
+	} `json:"traits"`
+	IsRecruiting bool `json:"isRecruiting"`
+}
+
 // API Response wrappers
 type AgentResponse struct {
 	Data Agent `json:"data"`
@@ -667,6 +681,32 @@ type SystemWaypointsResponse struct {
 
 type ShipyardResponse struct {
 	Data Shipyard `json:"data"`
+}
+
+type SystemsResponse struct {
+	Data []System `json:"data"`
+	Meta struct {
+		Total int `json:"total"`
+		Page  int `json:"page"`
+		Limit int `json:"limit"`
+	} `json:"meta"`
+}
+
+type SystemResponse struct {
+	Data System `json:"data"`
+}
+
+type FactionsResponse struct {
+	Data []Faction `json:"data"`
+	Meta struct {
+		Total int `json:"total"`
+		Page  int `json:"page"`
+		Limit int `json:"limit"`
+	} `json:"meta"`
+}
+
+type FactionResponse struct {
+	Data Faction `json:"data"`
 }
 
 // NewClient creates a new SpaceTraders client
@@ -1239,4 +1279,104 @@ func (c *Client) JettisonCargo(shipSymbol, cargoSymbol string, units int) (*Carg
 	}
 
 	return &jettisonResp.Data.Cargo, nil
+}
+
+// GetSystems gets a list of all systems in the universe
+func (c *Client) GetSystems() ([]System, error) {
+	endpoint := "/systems"
+
+	resp, err := c.makeRequest("GET", endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var systemsResp SystemsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&systemsResp); err != nil {
+		return nil, fmt.Errorf("failed to decode systems response: %w", err)
+	}
+
+	return systemsResp.Data, nil
+}
+
+// GetSystem gets detailed information about a specific system
+func (c *Client) GetSystem(systemSymbol string) (*System, error) {
+	endpoint := fmt.Sprintf("/systems/%s", systemSymbol)
+
+	resp, err := c.makeRequest("GET", endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var systemResp SystemResponse
+	if err := json.NewDecoder(resp.Body).Decode(&systemResp); err != nil {
+		return nil, fmt.Errorf("failed to decode system response: %w", err)
+	}
+
+	return &systemResp.Data, nil
+}
+
+// GetFactions gets a list of all factions in the universe
+func (c *Client) GetFactions() ([]Faction, error) {
+	endpoint := "/factions"
+
+	resp, err := c.makeRequest("GET", endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var factionsResp FactionsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&factionsResp); err != nil {
+		return nil, fmt.Errorf("failed to decode factions response: %w", err)
+	}
+
+	return factionsResp.Data, nil
+}
+
+// GetFaction gets detailed information about a specific faction
+func (c *Client) GetFaction(factionSymbol string) (*Faction, error) {
+	endpoint := fmt.Sprintf("/factions/%s", factionSymbol)
+
+	resp, err := c.makeRequest("GET", endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var factionResp FactionResponse
+	if err := json.NewDecoder(resp.Body).Decode(&factionResp); err != nil {
+		return nil, fmt.Errorf("failed to decode faction response: %w", err)
+	}
+
+	return &factionResp.Data, nil
 }

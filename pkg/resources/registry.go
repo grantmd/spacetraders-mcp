@@ -56,10 +56,11 @@ func (r *Registry) registerResources() {
 	// Market resource
 	r.handlers = append(r.handlers, NewMarketResource(r.client, r.logger))
 
-	// TODO: Add more resources here as we implement them:
-	// - Systems resource
-	// - Faction resource
-	// etc.
+	// Systems resource
+	r.handlers = append(r.handlers, NewSystemsResource(r.client, r.logger))
+
+	// Factions resource
+	r.handlers = append(r.handlers, NewFactionsResource(r.client, r.logger))
 }
 
 // RegisterWithServer registers all resources with the MCP server

@@ -1403,3 +1403,319 @@ func TestClient_GetFactions_Error(t *testing.T) {
 		t.Error("Expected nil factions on error, got non-nil")
 	}
 }
+
+func TestClient_SellCargo(t *testing.T) {
+	// Mock sell cargo response
+	mockAgent := Agent{
+		AccountID:       "test-account",
+		Symbol:          "TEST_AGENT",
+		Headquarters:    "X1-TEST-A1",
+		Credits:         150000,
+		StartingFaction: "COSMIC",
+		ShipCount:       1,
+	}
+
+	mockCargo := Cargo{
+		Capacity: 100,
+		Units:    50,
+		Inventory: []CargoItem{
+			{
+				Symbol:      "FUEL",
+				Name:        "Fuel",
+				Description: "Ship fuel",
+				Units:       50,
+			},
+		},
+	}
+
+	mockTransaction := MarketTransaction{
+		WaypointSymbol: "X1-TEST-MARKET",
+		ShipSymbol:     "TEST_SHIP",
+		TradeSymbol:    "IRON_ORE",
+		Type:           "SELL",
+		Units:          10,
+		PricePerUnit:   100,
+		TotalPrice:     1000,
+		Timestamp:      "2023-01-01T00:00:00.000Z",
+	}
+
+	// Test server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/my/ships/TEST_SHIP/sell" {
+			t.Errorf("Expected path '/my/ships/TEST_SHIP/sell', got %s", r.URL.Path)
+		}
+		if r.Method != "POST" {
+			t.Errorf("Expected method 'POST', got %s", r.Method)
+		}
+
+		response := SellCargoResponse{
+			Data: SellCargoData{
+				Agent:       mockAgent,
+				Cargo:       mockCargo,
+				Transaction: mockTransaction,
+			},
+		}
+
+		w.WriteHeader(http.StatusCreated)
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Errorf("Failed to encode response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	client := &Client{
+		APIToken: "test-token",
+		BaseURL:  server.URL,
+	}
+
+	// Test SellCargo
+	agent, cargo, transaction, err := client.SellCargo("TEST_SHIP", "IRON_ORE", 10)
+	if err != nil {
+		t.Fatalf("SellCargo failed: %v", err)
+	}
+
+	if agent.Credits != 150000 {
+		t.Errorf("Expected agent credits 150000, got %d", agent.Credits)
+	}
+
+	if cargo.Units != 50 {
+		t.Errorf("Expected cargo units 50, got %d", cargo.Units)
+	}
+
+	if transaction.TotalPrice != 1000 {
+		t.Errorf("Expected transaction total price 1000, got %d", transaction.TotalPrice)
+	}
+}
+
+func TestClient_BuyCargo(t *testing.T) {
+	// Mock buy cargo response
+	mockAgent := Agent{
+		AccountID:       "test-account",
+		Symbol:          "TEST_AGENT",
+		Headquarters:    "X1-TEST-A1",
+		Credits:         50000,
+		StartingFaction: "COSMIC",
+		ShipCount:       1,
+	}
+
+	mockCargo := Cargo{
+		Capacity: 100,
+		Units:    75,
+		Inventory: []CargoItem{
+			{
+				Symbol:      "FUEL",
+				Name:        "Fuel",
+				Description: "Ship fuel",
+				Units:       50,
+			},
+			{
+				Symbol:      "FOOD",
+				Name:        "Food",
+				Description: "Ship provisions",
+				Units:       25,
+			},
+		},
+	}
+
+	mockTransaction := MarketTransaction{
+		WaypointSymbol: "X1-TEST-MARKET",
+		ShipSymbol:     "TEST_SHIP",
+		TradeSymbol:    "FOOD",
+		Type:           "PURCHASE",
+		Units:          25,
+		PricePerUnit:   80,
+		TotalPrice:     2000,
+		Timestamp:      "2023-01-01T00:00:00.000Z",
+	}
+
+	// Test server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/my/ships/TEST_SHIP/purchase" {
+			t.Errorf("Expected path '/my/ships/TEST_SHIP/purchase', got %s", r.URL.Path)
+		}
+		if r.Method != "POST" {
+			t.Errorf("Expected method 'POST', got %s", r.Method)
+		}
+
+		response := BuyCargoResponse{
+			Data: BuyCargoData{
+				Agent:       mockAgent,
+				Cargo:       mockCargo,
+				Transaction: mockTransaction,
+			},
+		}
+
+		w.WriteHeader(http.StatusCreated)
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Errorf("Failed to encode response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	client := &Client{
+		APIToken: "test-token",
+		BaseURL:  server.URL,
+	}
+
+	// Test BuyCargo
+	agent, cargo, transaction, err := client.BuyCargo("TEST_SHIP", "FOOD", 25)
+	if err != nil {
+		t.Fatalf("BuyCargo failed: %v", err)
+	}
+
+	if agent.Credits != 50000 {
+		t.Errorf("Expected agent credits 50000, got %d", agent.Credits)
+	}
+
+	if cargo.Units != 75 {
+		t.Errorf("Expected cargo units 75, got %d", cargo.Units)
+	}
+
+	if transaction.TotalPrice != 2000 {
+		t.Errorf("Expected transaction total price 2000, got %d", transaction.TotalPrice)
+	}
+}
+
+func TestClient_FulfillContract(t *testing.T) {
+	// Mock fulfill contract response
+	mockAgent := Agent{
+		AccountID:       "test-account",
+		Symbol:          "TEST_AGENT",
+		Headquarters:    "X1-TEST-A1",
+		Credits:         200000,
+		StartingFaction: "COSMIC",
+		ShipCount:       1,
+	}
+
+	mockContract := Contract{
+		ID:               "CONTRACT_123",
+		FactionSymbol:    "COSMIC",
+		Type:             "PROCUREMENT",
+		Accepted:         true,
+		Fulfilled:        true,
+		Expiration:       "2023-02-01T00:00:00.000Z",
+		DeadlineToAccept: "2023-01-15T00:00:00.000Z",
+		Terms: ContractTerms{
+			Deadline: "2023-01-31T00:00:00.000Z",
+			Payment: ContractPayment{
+				OnAccepted:  10000,
+				OnFulfilled: 50000,
+			},
+			Deliver: []ContractDeliverGood{
+				{
+					TradeSymbol:       "IRON_ORE",
+					DestinationSymbol: "X1-TEST-STATION",
+					UnitsRequired:     100,
+					UnitsFulfilled:    100,
+				},
+			},
+		},
+	}
+
+	// Test server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/my/contracts/CONTRACT_123/fulfill" {
+			t.Errorf("Expected path '/my/contracts/CONTRACT_123/fulfill', got %s", r.URL.Path)
+		}
+		if r.Method != "POST" {
+			t.Errorf("Expected method 'POST', got %s", r.Method)
+		}
+
+		response := FulfillContractResponse{
+			Data: FulfillContractData{
+				Agent:    mockAgent,
+				Contract: mockContract,
+			},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Errorf("Failed to encode response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	client := &Client{
+		APIToken: "test-token",
+		BaseURL:  server.URL,
+	}
+
+	// Test FulfillContract
+	agent, contract, err := client.FulfillContract("CONTRACT_123")
+	if err != nil {
+		t.Fatalf("FulfillContract failed: %v", err)
+	}
+
+	if agent.Credits != 200000 {
+		t.Errorf("Expected agent credits 200000, got %d", agent.Credits)
+	}
+
+	if !contract.Fulfilled {
+		t.Error("Expected contract to be fulfilled")
+	}
+
+	if contract.ID != "CONTRACT_123" {
+		t.Errorf("Expected contract ID 'CONTRACT_123', got %s", contract.ID)
+	}
+}
+
+func TestClient_SellCargo_Error(t *testing.T) {
+	// Test server that returns error
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		if _, err := w.Write([]byte(`{"error": "Ship not docked at marketplace"}`)); err != nil {
+			t.Errorf("Failed to write response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	client := &Client{
+		APIToken: "test-token",
+		BaseURL:  server.URL,
+	}
+
+	// Test SellCargo with error
+	agent, cargo, transaction, err := client.SellCargo("TEST_SHIP", "IRON_ORE", 10)
+	if err == nil {
+		t.Fatal("Expected error, got nil")
+	}
+	if agent != nil {
+		t.Error("Expected nil agent on error, got non-nil")
+	}
+	if cargo != nil {
+		t.Error("Expected nil cargo on error, got non-nil")
+	}
+	if transaction != nil {
+		t.Error("Expected nil transaction on error, got non-nil")
+	}
+}
+
+func TestClient_FulfillContract_Error(t *testing.T) {
+	// Test server that returns error
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		if _, err := w.Write([]byte(`{"error": "Contract requirements not met"}`)); err != nil {
+			t.Errorf("Failed to write response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	client := &Client{
+		APIToken: "test-token",
+		BaseURL:  server.URL,
+	}
+
+	// Test FulfillContract with error
+	agent, contract, err := client.FulfillContract("CONTRACT_123")
+	if err == nil {
+		t.Fatal("Expected error, got nil")
+	}
+	if agent != nil {
+		t.Error("Expected nil agent on error, got non-nil")
+	}
+	if contract != nil {
+		t.Error("Expected nil contract on error, got non-nil")
+	}
+}

@@ -525,6 +525,16 @@ type JettisonRequest struct {
 	Units  int    `json:"units"`  // Number of units to jettison
 }
 
+type SellCargoRequest struct {
+	Symbol string `json:"symbol"` // The cargo symbol to sell
+	Units  int    `json:"units"`  // Number of units to sell
+}
+
+type BuyCargoRequest struct {
+	Symbol string `json:"symbol"` // The cargo symbol to buy
+	Units  int    `json:"units"`  // Number of units to buy
+}
+
 // JumpResponse represents the response from jumping a ship
 type JumpResponse struct {
 	Data JumpData `json:"data"`
@@ -572,6 +582,35 @@ type JettisonResponse struct {
 // JettisonData contains the jettison operation results
 type JettisonData struct {
 	Cargo Cargo `json:"cargo"`
+}
+
+type SellCargoResponse struct {
+	Data SellCargoData `json:"data"`
+}
+
+type SellCargoData struct {
+	Agent       Agent             `json:"agent"`
+	Cargo       Cargo             `json:"cargo"`
+	Transaction MarketTransaction `json:"transaction"`
+}
+
+type BuyCargoResponse struct {
+	Data BuyCargoData `json:"data"`
+}
+
+type BuyCargoData struct {
+	Agent       Agent             `json:"agent"`
+	Cargo       Cargo             `json:"cargo"`
+	Transaction MarketTransaction `json:"transaction"`
+}
+
+type FulfillContractResponse struct {
+	Data FulfillContractData `json:"data"`
+}
+
+type FulfillContractData struct {
+	Agent    Agent    `json:"agent"`
+	Contract Contract `json:"contract"`
 }
 
 type JumpData struct {
@@ -1379,4 +1418,101 @@ func (c *Client) GetFaction(factionSymbol string) (*Faction, error) {
 	}
 
 	return &factionResp.Data, nil
+}
+
+// SellCargo sells cargo from a ship at a market
+func (c *Client) SellCargo(shipSymbol, cargoSymbol string, units int) (*Agent, *Cargo, *MarketTransaction, error) {
+	endpoint := fmt.Sprintf("/my/ships/%s/sell", shipSymbol)
+
+	reqBody := SellCargoRequest{
+		Symbol: cargoSymbol,
+		Units:  units,
+	}
+
+	// Marshal the request body
+	requestBody, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to marshal sell cargo request: %w", err)
+	}
+
+	resp, err := c.makeRequest("POST", endpoint, strings.NewReader(string(requestBody)))
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, nil, nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var sellResp SellCargoResponse
+	if err := json.NewDecoder(resp.Body).Decode(&sellResp); err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to decode sell cargo response: %w", err)
+	}
+
+	return &sellResp.Data.Agent, &sellResp.Data.Cargo, &sellResp.Data.Transaction, nil
+}
+
+// BuyCargo purchases cargo for a ship at a market
+func (c *Client) BuyCargo(shipSymbol, cargoSymbol string, units int) (*Agent, *Cargo, *MarketTransaction, error) {
+	endpoint := fmt.Sprintf("/my/ships/%s/purchase", shipSymbol)
+
+	reqBody := BuyCargoRequest{
+		Symbol: cargoSymbol,
+		Units:  units,
+	}
+
+	// Marshal the request body
+	requestBody, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to marshal buy cargo request: %w", err)
+	}
+
+	resp, err := c.makeRequest("POST", endpoint, strings.NewReader(string(requestBody)))
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, nil, nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var buyResp BuyCargoResponse
+	if err := json.NewDecoder(resp.Body).Decode(&buyResp); err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to decode buy cargo response: %w", err)
+	}
+
+	return &buyResp.Data.Agent, &buyResp.Data.Cargo, &buyResp.Data.Transaction, nil
+}
+
+// FulfillContract fulfills a contract by delivering the required cargo
+func (c *Client) FulfillContract(contractID string) (*Agent, *Contract, error) {
+	endpoint := fmt.Sprintf("/my/contracts/%s/fulfill", contractID)
+
+	resp, err := c.makeRequest("POST", endpoint, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var fulfillResp FulfillContractResponse
+	if err := json.NewDecoder(resp.Body).Decode(&fulfillResp); err != nil {
+		return nil, nil, fmt.Errorf("failed to decode fulfill contract response: %w", err)
+	}
+
+	return &fulfillResp.Data.Agent, &fulfillResp.Data.Contract, nil
 }

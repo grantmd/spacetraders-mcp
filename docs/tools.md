@@ -328,3 +328,88 @@ Tools are automatically available to Claude Desktop through the MCP integration.
 1. `get_contract_info` - Review contract requirements
 2. `navigate_ship` - Move to required locations
 3. `extract_resources` or trade as needed
+4. `fulfill_contract` - Complete the contract for rewards
+
+### `sell_cargo`
+
+**Purpose:** Sell cargo from a ship at a marketplace.
+
+**Parameters:**
+- `ship_symbol`: Symbol of the ship to sell cargo from
+- `cargo_symbol`: Symbol of the cargo item to sell (e.g., "IRON_ORE", "ALUMINUM_ORE", "FUEL")
+- `units`: Number of units to sell
+
+**What it does:**
+- Sells the specified cargo at the current marketplace
+- Adds credits to your account
+- Removes cargo from the ship's inventory
+- Frees up cargo space
+
+**Requirements:**
+- Ship must be docked at a waypoint with a marketplace
+- Ship must have the specified cargo in inventory
+- Marketplace must accept the cargo type
+
+**Example usage:**
+"Sell 50 units of IRON_ORE from GHOST-01"
+
+### `buy_cargo`
+
+**Purpose:** Purchase cargo for a ship at a marketplace.
+
+**Parameters:**
+- `ship_symbol`: Symbol of the ship to buy cargo for
+- `cargo_symbol`: Symbol of the cargo item to buy (e.g., "FUEL", "FOOD", "MACHINERY")
+- `units`: Number of units to buy
+
+**What it does:**
+- Purchases the specified cargo from the current marketplace
+- Deducts credits from your account
+- Adds cargo to the ship's inventory
+- Consumes cargo space
+
+**Requirements:**
+- Ship must be docked at a waypoint with a marketplace
+- You must have sufficient credits
+- Ship must have sufficient cargo space
+- Marketplace must sell the cargo type
+
+**Example usage:**
+"Buy 25 units of FUEL for GHOST-01"
+
+### `fulfill_contract`
+
+**Purpose:** Fulfill a contract by delivering all required cargo.
+
+**Parameters:**
+- `contract_id`: ID of the contract to fulfill
+
+**What it does:**
+- Completes the contract if all requirements are met
+- Awards the fulfillment payment
+- Marks the contract as fulfilled
+- Improves faction reputation
+
+**Requirements:**
+- Contract must be accepted
+- All delivery requirements must be satisfied
+- Required cargo must be delivered to specified destinations
+
+**Example usage:**
+"Fulfill contract cl9s5c5yi0001js08v5h4x8mz"
+
+## Trading Workflows
+
+**Basic Trading Loop:**
+1. `dock_ship` - Dock at a marketplace
+2. `buy_cargo` - Purchase goods at low prices
+3. `navigate_ship` - Travel to another marketplace
+4. `dock_ship` - Dock at destination
+5. `sell_cargo` - Sell goods at higher prices
+
+**Contract Trading:**
+1. `get_contract_info` - Review contract requirements
+2. `buy_cargo` - Purchase required goods
+3. `navigate_ship` - Travel to delivery location
+4. `dock_ship` - Dock at delivery destination
+5. `fulfill_contract` - Complete contract for rewards

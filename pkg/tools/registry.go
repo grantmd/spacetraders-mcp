@@ -81,10 +81,16 @@ func (r *Registry) registerTools() {
 	r.handlers = append(r.handlers, exploration.NewSystemOverviewTool(r.client, r.logger))
 	r.handlers = append(r.handlers, exploration.NewCurrentLocationTool(r.client, r.logger))
 
+	// Register Sell Cargo tool
+	r.handlers = append(r.handlers, ships.NewSellCargoTool(r.client, r.logger))
+
+	// Register Buy Cargo tool
+	r.handlers = append(r.handlers, ships.NewBuyCargoTool(r.client, r.logger))
+
+	// Register Fulfill Contract tool
+	r.handlers = append(r.handlers, contract.NewFulfillContractTool(r.client, r.logger))
+
 	// TODO: Add more tool handlers here as we implement them:
-	// - FulfillContract tool
-	// - SellCargo tool
-	// - BuyCargo tool
 	// - RepairShip tool
 	// - ScanSystems tool
 	// - ScanWaypoints tool
@@ -95,6 +101,9 @@ func (r *Registry) registerTools() {
 	// - RefuelShip tool ✅
 	// - ExtractResources tool ✅
 	// - JettisonCargo tool ✅
+	// - SellCargo tool ✅
+	// - BuyCargo tool ✅
+	// - FulfillContract tool ✅
 }
 
 // RegisterWithServer registers all tools with the MCP server

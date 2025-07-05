@@ -413,3 +413,103 @@ Tools are automatically available to Claude Desktop through the MCP integration.
 3. `navigate_ship` - Travel to delivery location
 4. `dock_ship` - Dock at delivery destination
 5. `fulfill_contract` - Complete contract for rewards
+
+### `scan_systems`
+
+**Purpose:** Scan for systems around a ship using its sensors.
+
+**Parameters:**
+- `ship_symbol`: Symbol of the ship to scan with
+
+**What it does:**
+- Scans for nearby systems using ship's sensors
+- Reveals undiscovered systems within range
+- Provides system information including type, location, and factions
+- Has a cooldown period after use
+
+**Requirements:**
+- Ship must have appropriate scanning equipment
+- Ship must not be on scan cooldown
+
+**Example usage:**
+"Scan for systems with GHOST-01"
+
+### `scan_waypoints`
+
+**Purpose:** Scan for waypoints around a ship using its sensors.
+
+**Parameters:**
+- `ship_symbol`: Symbol of the ship to scan with
+
+**What it does:**
+- Scans for nearby waypoints using ship's sensors
+- Reveals hidden waypoints and asteroid fields
+- Provides waypoint information including traits and resources
+- Has a cooldown period after use
+
+**Requirements:**
+- Ship must have appropriate scanning equipment
+- Ship must not be on scan cooldown
+
+**Example usage:**
+"Scan for waypoints with GHOST-01"
+
+### `scan_ships`
+
+**Purpose:** Scan for ships around a ship using its sensors.
+
+**Parameters:**
+- `ship_symbol`: Symbol of the ship to scan with
+
+**What it does:**
+- Scans for nearby ships using ship's sensors
+- Reveals ship information including faction, role, and equipment
+- Provides tactical assessment of detected vessels
+- Has a cooldown period after use
+
+**Requirements:**
+- Ship must have appropriate scanning equipment
+- Ship must not be on scan cooldown
+
+**Example usage:**
+"Scan for ships with GHOST-01"
+
+### `repair_ship`
+
+**Purpose:** Repair a ship at a shipyard.
+
+**Parameters:**
+- `ship_symbol`: Symbol of the ship to repair
+
+**What it does:**
+- Repairs all ship components to full integrity
+- Restores frame, reactor, engine, modules, and mounts
+- Costs credits based on damage amount
+- Returns ship to optimal operational condition
+
+**Requirements:**
+- Ship must be docked at a waypoint with a shipyard
+- You must have sufficient credits for repairs
+
+**Example usage:**
+"Repair GHOST-01"
+
+## Advanced Exploration Workflows
+
+**System Reconnaissance:**
+1. `scan_systems` - Discover nearby systems
+2. `jump_ship` or `warp_ship` - Travel to new systems
+3. `system_overview` - Get detailed system information
+4. `scan_waypoints` - Discover hidden resources
+
+**Tactical Intelligence:**
+1. `scan_ships` - Identify nearby vessels
+2. Assess threat levels and opportunities
+3. Plan movement based on detected ships
+4. Monitor faction presence and activity
+
+**Fleet Maintenance:**
+1. Monitor ship integrity regularly
+2. `repair_ship` - Maintain ships at optimal condition
+3. Plan repair schedules to minimize downtime
+4. Budget for maintenance costs

@@ -627,6 +627,55 @@ type Event struct {
 	Description string `json:"description"`
 }
 
+// Scan-related structures
+type ScanSystemsResponse struct {
+	Data ScanSystemsData `json:"data"`
+}
+
+type ScanSystemsData struct {
+	Cooldown Cooldown `json:"cooldown"`
+	Systems  []System `json:"systems"`
+}
+
+type ScanWaypointsResponse struct {
+	Data ScanWaypointsData `json:"data"`
+}
+
+type ScanWaypointsData struct {
+	Cooldown  Cooldown         `json:"cooldown"`
+	Waypoints []SystemWaypoint `json:"waypoints"`
+}
+
+type ScanShipsResponse struct {
+	Data ScanShipsData `json:"data"`
+}
+
+type ScanShipsData struct {
+	Cooldown Cooldown      `json:"cooldown"`
+	Ships    []ScannedShip `json:"ships"`
+}
+
+type ScannedShip struct {
+	Symbol       string       `json:"symbol"`
+	Registration Registration `json:"registration"`
+	Nav          Navigation   `json:"nav"`
+	Frame        Frame        `json:"frame"`
+	Reactor      Reactor      `json:"reactor"`
+	Engine       Engine       `json:"engine"`
+	Mounts       []Mount      `json:"mounts"`
+}
+
+// Repair-related structures
+type RepairShipResponse struct {
+	Data RepairShipData `json:"data"`
+}
+
+type RepairShipData struct {
+	Agent       Agent       `json:"agent"`
+	Ship        Ship        `json:"ship"`
+	Transaction Transaction `json:"transaction"`
+}
+
 // Market data structures
 type Market struct {
 	Symbol       string              `json:"symbol"`
@@ -1515,4 +1564,88 @@ func (c *Client) FulfillContract(contractID string) (*Agent, *Contract, error) {
 	}
 
 	return &fulfillResp.Data.Agent, &fulfillResp.Data.Contract, nil
+}
+
+// ScanSystems scans for systems around the ship
+func (c *Client) ScanSystems(shipSymbol string) (*ScanSystemsData, error) {
+	url := fmt.Sprintf("/my/ships/%s/scan/systems", shipSymbol)
+	resp, err := c.makeRequest("POST", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to scan systems: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	var scanResp ScanSystemsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&scanResp); err != nil {
+		return nil, fmt.Errorf("failed to decode scan systems response: %w", err)
+	}
+
+	return &scanResp.Data, nil
+}
+
+// ScanWaypoints scans for waypoints around the ship
+func (c *Client) ScanWaypoints(shipSymbol string) (*ScanWaypointsData, error) {
+	url := fmt.Sprintf("/my/ships/%s/scan/waypoints", shipSymbol)
+	resp, err := c.makeRequest("POST", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to scan waypoints: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	var scanResp ScanWaypointsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&scanResp); err != nil {
+		return nil, fmt.Errorf("failed to decode scan waypoints response: %w", err)
+	}
+
+	return &scanResp.Data, nil
+}
+
+// ScanShips scans for ships around the ship
+func (c *Client) ScanShips(shipSymbol string) (*ScanShipsData, error) {
+	url := fmt.Sprintf("/my/ships/%s/scan/ships", shipSymbol)
+	resp, err := c.makeRequest("POST", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to scan ships: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	var scanResp ScanShipsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&scanResp); err != nil {
+		return nil, fmt.Errorf("failed to decode scan ships response: %w", err)
+	}
+
+	return &scanResp.Data, nil
+}
+
+// RepairShip repairs a ship at a shipyard
+func (c *Client) RepairShip(shipSymbol string) (*Agent, *Ship, *Transaction, error) {
+	url := fmt.Sprintf("/my/ships/%s/repair", shipSymbol)
+	resp, err := c.makeRequest("POST", url, nil)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to repair ship: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, nil, nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	var repairResp RepairShipResponse
+	if err := json.NewDecoder(resp.Body).Decode(&repairResp); err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to decode repair ship response: %w", err)
+	}
+
+	return &repairResp.Data.Agent, &repairResp.Data.Ship, &repairResp.Data.Transaction, nil
 }

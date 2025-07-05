@@ -1573,7 +1573,7 @@ func (c *Client) ScanSystems(shipSymbol string) (*ScanSystemsData, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to scan systems: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusCreated {
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
@@ -1594,7 +1594,7 @@ func (c *Client) ScanWaypoints(shipSymbol string) (*ScanWaypointsData, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to scan waypoints: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusCreated {
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
@@ -1615,7 +1615,7 @@ func (c *Client) ScanShips(shipSymbol string) (*ScanShipsData, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to scan ships: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusCreated {
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
@@ -1636,7 +1636,7 @@ func (c *Client) RepairShip(shipSymbol string) (*Agent, *Ship, *Transaction, err
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to repair ship: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, nil, nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)

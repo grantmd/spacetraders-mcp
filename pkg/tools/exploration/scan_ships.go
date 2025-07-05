@@ -186,21 +186,23 @@ func (t *ScanShipsTool) Handler() func(ctx context.Context, request mcp.CallTool
 
 				// Add tactical assessment
 				textSummary += "\n**Tactical Assessment:**\n"
-				if ship.Registration.Role == "COMBAT" {
+				switch ship.Registration.Role {
+				case "COMBAT":
 					textSummary += "⚔️ **Combat vessel** - Potentially hostile\n"
-				} else if ship.Registration.Role == "HAULER" {
+				case "HAULER":
 					textSummary += "📦 **Hauler** - Likely carrying cargo\n"
-				} else if ship.Registration.Role == "EXCAVATOR" {
+				case "EXCAVATOR":
 					textSummary += "⛏️ **Mining vessel** - Focused on resource extraction\n"
-				} else if ship.Registration.Role == "EXPLORER" {
+				case "EXPLORER":
 					textSummary += "🔍 **Explorer** - Likely scouting or surveying\n"
 				}
 
-				if ship.Nav.Status == "DOCKED" {
+				switch ship.Nav.Status {
+				case "DOCKED":
 					textSummary += "🏭 Currently docked - Not immediately mobile\n"
-				} else if ship.Nav.Status == "IN_ORBIT" {
+				case "IN_ORBIT":
 					textSummary += "🌌 Currently in orbit - Ready to move\n"
-				} else if ship.Nav.Status == "IN_TRANSIT" {
+				case "IN_TRANSIT":
 					textSummary += "🚀 Currently in transit - Moving between waypoints\n"
 				}
 

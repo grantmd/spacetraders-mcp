@@ -7,12 +7,17 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"spacetraders-mcp/pkg/logging"
 	"spacetraders-mcp/pkg/client"
+	"spacetraders-mcp/pkg/logging"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
+
+// stringPtr returns a pointer to the given string
+func stringPtr(s string) *string {
+	return &s
+}
 
 func createMockLogger() *logging.Logger {
 	// Create a mock logger that doesn't require an MCP server
@@ -96,7 +101,14 @@ func TestWaypointsResource_Handler_Success(t *testing.T) {
 		},
 	}
 
-	mockResponse := client.SystemWaypointsResponse{
+	mockResponse := struct {
+		Data []client.SystemWaypoint `json:"data"`
+		Meta struct {
+			Total int `json:"total"`
+			Page  int `json:"page"`
+			Limit int `json:"limit"`
+		} `json:"meta"`
+	}{
 		Data: mockWaypoints,
 		Meta: struct {
 			Total int `json:"total"`
@@ -129,10 +141,7 @@ func TestWaypointsResource_Handler_Success(t *testing.T) {
 	defer server.Close()
 
 	// Create client with test server URL
-	client := &client.Client{
-		APIToken: "test-token",
-		BaseURL:  server.URL,
-	}
+	client := client.NewClientWithBaseURL("test-token", server.URL)
 
 	logger := createMockLogger()
 	resource := NewWaypointsResource(client, logger)
@@ -269,7 +278,9 @@ func TestShipyardResource_Handler_Success(t *testing.T) {
 		ModificationsFee: 1000,
 	}
 
-	mockResponse := client.ShipyardResponse{
+	mockResponse := struct {
+		Data client.Shipyard `json:"data"`
+	}{
 		Data: mockShipyard,
 	}
 
@@ -294,10 +305,7 @@ func TestShipyardResource_Handler_Success(t *testing.T) {
 	defer server.Close()
 
 	// Create client with test server URL
-	client := &client.Client{
-		APIToken: "test-token",
-		BaseURL:  server.URL,
-	}
+	client := client.NewClientWithBaseURL("test-token", server.URL)
 
 	logger := createMockLogger()
 	resource := NewShipyardResource(client, logger)
@@ -401,7 +409,7 @@ func contains(s, substr string) bool {
 func TestAgentResource_Handler_Success(t *testing.T) {
 	// Mock successful agent response
 	mockAgent := client.Agent{
-		AccountID:       "test-account",
+		AccountID:       stringPtr("test-account"),
 		Symbol:          "TEST_AGENT",
 		Headquarters:    "X1-TEST-HQ",
 		Credits:         50000,
@@ -409,7 +417,9 @@ func TestAgentResource_Handler_Success(t *testing.T) {
 		ShipCount:       2,
 	}
 
-	mockResponse := client.AgentResponse{
+	mockResponse := struct {
+		Data client.Agent `json:"data"`
+	}{
 		Data: mockAgent,
 	}
 
@@ -429,10 +439,7 @@ func TestAgentResource_Handler_Success(t *testing.T) {
 	defer server.Close()
 
 	// Create client with test server
-	client := &client.Client{
-		APIToken: "test-token",
-		BaseURL:  server.URL,
-	}
+	client := client.NewClientWithBaseURL("test-token", server.URL)
 	logger := createMockLogger()
 	resource := NewAgentResource(client, logger)
 
@@ -566,7 +573,9 @@ func TestShipsResource_Handler_Success(t *testing.T) {
 		},
 	}
 
-	mockResponse := client.ShipsResponse{
+	mockResponse := struct {
+		Data []client.Ship `json:"data"`
+	}{
 		Data: mockShips,
 	}
 
@@ -586,10 +595,7 @@ func TestShipsResource_Handler_Success(t *testing.T) {
 	defer server.Close()
 
 	// Create client with test server
-	client := &client.Client{
-		APIToken: "test-token",
-		BaseURL:  server.URL,
-	}
+	client := client.NewClientWithBaseURL("test-token", server.URL)
 	logger := createMockLogger()
 	resource := NewShipsResource(client, logger)
 

@@ -125,10 +125,7 @@ func TestAcceptContractTool_Handler_Success(t *testing.T) {
 	defer server.Close()
 
 	// Create client with test server URL
-	client := &client.Client{
-		APIToken: "test-token",
-		BaseURL:  server.URL,
-	}
+	client := client.NewClientWithBaseURL("test-token", server.URL)
 
 	tool := NewAcceptContractTool(client)
 	handler := tool.Handler()
@@ -216,10 +213,7 @@ func TestAcceptContractTool_Handler_APIError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := &client.Client{
-		APIToken: "test-token",
-		BaseURL:  server.URL,
-	}
+	client := client.NewClientWithBaseURL("test-token", server.URL)
 
 	tool := NewAcceptContractTool(client)
 	handler := tool.Handler()

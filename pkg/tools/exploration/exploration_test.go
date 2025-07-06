@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"spacetraders-mcp/pkg/logging"
 	"spacetraders-mcp/pkg/client"
+	"spacetraders-mcp/pkg/logging"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
@@ -43,44 +43,44 @@ func TestFindWaypointsTool_Handler_Success(t *testing.T) {
 			t.Errorf("Expected waypoints endpoint, got %s", r.URL.Path)
 		}
 
-		mockResponse := client.SystemWaypointsResponse{
-			Data: []client.SystemWaypoint{
-				{
-					Symbol: "X1-TEST-SHIPYARD",
-					Type:   "PLANET",
-					X:      10,
-					Y:      20,
-					Traits: []client.WaypointTrait{
-						{
-							Symbol:      "SHIPYARD",
-							Name:        "Shipyard",
-							Description: "A facility for building ships",
-						},
-						{
-							Symbol:      "MARKETPLACE",
-							Name:        "Marketplace",
-							Description: "A trading facility",
-						},
+		mockWaypoints := []client.SystemWaypoint{
+			{
+				Symbol: "X1-TEST-SHIPYARD",
+				Type:   "PLANET",
+				X:      10,
+				Y:      20,
+				Traits: []client.WaypointTrait{
+					{
+						Symbol:      "SHIPYARD",
+						Name:        "Shipyard",
+						Description: "A facility for building ships",
+					},
+					{
+						Symbol:      "MARKETPLACE",
+						Name:        "Marketplace",
+						Description: "A trading facility",
 					},
 				},
-				{
-					Symbol: "X1-TEST-MARKET",
-					Type:   "MOON",
-					X:      30,
-					Y:      40,
-					Traits: []client.WaypointTrait{
-						{
-							Symbol:      "MARKETPLACE",
-							Name:        "Marketplace",
-							Description: "A trading facility",
-						},
+			},
+			{
+				Symbol: "X1-TEST-MARKET",
+				Type:   "MOON",
+				X:      30,
+				Y:      40,
+				Traits: []client.WaypointTrait{
+					{
+						Symbol:      "MARKETPLACE",
+						Name:        "Marketplace",
+						Description: "A trading facility",
 					},
 				},
 			},
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(mockResponse)
+		json.NewEncoder(w).Encode(struct {
+			Data []client.SystemWaypoint `json:"data"`
+		}{Data: mockWaypoints})
 	}))
 	defer server.Close()
 
@@ -129,7 +129,9 @@ func TestFindWaypointsTool_Handler_Success(t *testing.T) {
 
 func TestFindWaypointsTool_Handler_NoResults(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		mockResponse := client.SystemWaypointsResponse{
+		mockResponse := struct {
+			Data []client.SystemWaypoint `json:"data"`
+		}{
 			Data: []client.SystemWaypoint{
 				{
 					Symbol: "X1-TEST-ASTEROID",
@@ -140,7 +142,7 @@ func TestFindWaypointsTool_Handler_NoResults(t *testing.T) {
 						{
 							Symbol:      "ASTEROID_FIELD",
 							Name:        "Asteroid Field",
-							Description: "Rich in minerals",
+							Description: "A field of asteroids",
 						},
 					},
 				},
@@ -273,7 +275,9 @@ func TestCurrentLocationTool_Tool(t *testing.T) {
 func TestCurrentLocationTool_Handler_Success(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.URL.Path, "/my/ships") {
-			mockResponse := client.ShipsResponse{
+			mockResponse := struct {
+				Data []client.Ship `json:"data"`
+			}{
 				Data: []client.Ship{
 					{
 						Symbol: "SHIP_1234",

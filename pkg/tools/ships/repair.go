@@ -144,9 +144,9 @@ func (t *RepairShipTool) Handler() func(ctx context.Context, request mcp.CallToo
 
 		// Ship condition summary
 		textSummary += "## 🛠️ Ship Condition After Repair\n\n"
-		textSummary += fmt.Sprintf("- **Frame Integrity:** %d%%\n", resp.Data.Ship.Frame.Integrity)
-		textSummary += fmt.Sprintf("- **Reactor Integrity:** %d%%\n", resp.Data.Ship.Reactor.Integrity)
-		textSummary += fmt.Sprintf("- **Engine Integrity:** %d%%\n", resp.Data.Ship.Engine.Integrity)
+		textSummary += fmt.Sprintf("- **Frame Integrity:** %.0f%%\n", resp.Data.Ship.Frame.Integrity)
+		textSummary += fmt.Sprintf("- **Reactor Integrity:** %.0f%%\n", resp.Data.Ship.Reactor.Integrity)
+		textSummary += fmt.Sprintf("- **Engine Integrity:** %.0f%%\n", resp.Data.Ship.Engine.Integrity)
 
 		// Determine overall condition
 		minIntegrity := resp.Data.Ship.Frame.Integrity
@@ -172,7 +172,7 @@ func (t *RepairShipTool) Handler() func(ctx context.Context, request mcp.CallToo
 			conditionText = "Poor"
 		}
 
-		textSummary += fmt.Sprintf("**Overall Condition:** %s %s (%d%% minimum)\n\n", conditionIcon, conditionText, minIntegrity)
+		textSummary += fmt.Sprintf("**Overall Condition:** %s %s (%.0f%% minimum)\n\n", conditionIcon, conditionText, minIntegrity)
 
 		// Add module and mount status
 		if len(resp.Data.Ship.Modules) > 0 {

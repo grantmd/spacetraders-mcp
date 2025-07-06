@@ -37,6 +37,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-1.22-
 
+      - name: Setup OpenAPI Generator and Generate Client
+        uses: ./.github/actions/setup-openapi
+        with:
+          cache-key-prefix: openapi-integration
+
       - name: Download dependencies
         run: go mod download
 

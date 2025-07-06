@@ -48,6 +48,106 @@ MCP resource handlers that provide read-only access to game data:
 #### `pkg/tools/`
 MCP tool handlers for performing actions:
 - Ship navigation and management
+- Resource extraction and trading
+- Contract management
+- Fleet operations
+
+#### `generated/`
+Auto-generated SpaceTraders API client code:
+- Generated from the official SpaceTraders OpenAPI specification
+- Not checked into version control (regenerated during builds)
+- Contains Go client code for all API endpoints
+
+## Code Generation
+
+This project uses OpenAPI Generator to create the SpaceTraders API client from the official API specification.
+
+### Prerequisites
+
+- Java 8+ (required for OpenAPI Generator)
+- OpenAPI Generator CLI (automatically downloaded by Make targets)
+
+### Generating the Client
+
+The API client is generated from the SpaceTraders OpenAPI specification:
+
+```bash
+# Generate the client (downloads spec and generates Go code)
+make generate-client
+
+# Clean generated files
+make clean-generated
+```
+
+### How Code Generation Works
+
+1. **Download Specification**: The Makefile downloads the latest OpenAPI spec from `https://spacetraders.io/SpaceTraders.json`
+2. **Generate Client**: OpenAPI Generator creates Go client code in `./generated/spacetraders/`
+3. **Configuration**: Generation is configured via `openapi-generator-config.yaml`
+4. **Integration**: The wrapper client in `pkg/client/` uses the generated code
+
+### Generated Code Structure
+
+```
+generated/spacetraders/
+├── api/                   # API endpoint implementations
+├── docs/                  # Generated documentation
+├── model_*.go            # Data models
+├── api_*.go              # API clients
+├── client.go             # Main client
+├── configuration.go      # Client configuration
+└── go.mod                # Module definition
+```
+
+### CI/CD Integration
+
+The GitHub Actions workflows automatically:
+1. Install OpenAPI Generator
+2. Generate the client code
+3. Build and test the application
+
+This ensures that:
+- Builds always use the latest API specification
+- Generated code is never stale
+- CI environments match local development
+
+### Configuration
+
+Generation behavior is controlled by `openapi-generator-config.yaml`:
+
+```yaml
+generatorName: go
+packageName: spacetraders
+additionalProperties:
+  generateInterfaces: true
+  structPrefix: true
+  enumClassPrefix: true
+```
+
+### Troubleshooting Generation
+
+If generation fails:
+
+1. **Check Java Installation**:
+   ```bash
+   java -version
+   ```
+
+2. **Verify Network Access**:
+   ```bash
+   curl -I https://spacetraders.io/SpaceTraders.json
+   ```
+
+3. **Clean and Regenerate**:
+   ```bash
+   make clean-generated
+   make generate-client
+   ```
+
+4. **Check OpenAPI Generator Version**:
+   ```bash
+   openapi-generator version
+   ```
 - Resource extraction
 - Trading operations
 - Contract handling

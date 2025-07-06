@@ -1,0 +1,97 @@
+name: 'Setup OpenAPI Generator'
+description: 'Install OpenAPI Generator CLI and generate SpaceTraders client'
+author: 'SpaceTraders MCP Team'
+
+inputs:
+  openapi-version:
+    description: 'OpenAPI Generator CLI version'
+    required: false
+    default: '7.2.0'
+  cache-key-prefix:
+    description: 'Cache key prefix for generated files'
+    required: false
+    default: 'openapi-generated'
+
+outputs:
+  generated-path:
+    description: 'Path to generated client files'
+    value: ${{ steps.generate.outputs.path }}
+  cache-hit:
+    description: 'Whether cache was hit'
+    value: ${{ steps.cache.outputs.cache-hit }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Cache OpenAPI Generator JAR
+      id: cache-jar
+      uses: actions/cache@v4
+      with:
+        path: /tmp/openapi-generator-cli.jar
+        key: openapi-generator-${{ inputs.openapi-version }}
+
+    - name: Download OpenAPI Generator
+      if: steps.cache-jar.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        echo "Downloading OpenAPI Generator CLI v${{ inputs.openapi-version }}..."
+        wget -q https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/${{ inputs.openapi-version }}/openapi-generator-cli-${{ inputs.openapi-version }}.jar -O /tmp/openapi-generator-cli.jar
+
+    - name: Install OpenAPI Generator
+      shell: bash
+      run: |
+        echo "Installing OpenAPI Generator CLI..."
+        sudo mkdir -p /opt/openapi-generator
+        sudo cp /tmp/openapi-generator-cli.jar /opt/openapi-generator/
+
+        # Create wrapper script
+        cat << 'EOF' | sudo tee /usr/local/bin/openapi-generator > /dev/null
+        #!/bin/bash
+        exec java -jar /opt/openapi-generator/openapi-generator-cli.jar "$@"
+        EOF
+        sudo chmod +x /usr/local/bin/openapi-generator
+
+        # Verify installation
+        echo "OpenAPI Generator version:"
+        openapi-generator version
+
+    - name: Cache generated client
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: ./generated
+        key: ${{ inputs.cache-key-prefix }}-${{ hashFiles('openapi-generator-config.yaml', 'Makefile') }}-${{ hashFiles('**/go.mod') }}
+        restore-keys: |
+          ${{ inputs.cache-key-prefix }}-${{ hashFiles('openapi-generator-config.yaml', 'Makefile') }}-
+          ${{ inputs.cache-key-prefix }}-
+
+    - name: Generate OpenAPI client
+      id: generate
+      shell: bash
+      run: |
+        if [ "${{ steps.cache.outputs.cache-hit }}" = "true" ]; then
+          echo "Using cached generated client"
+        else
+          echo "Generating OpenAPI client from SpaceTraders API..."
+          make generate-client
+
+          # Verify generation was successful
+          if [ ! -d "./generated/spacetraders" ]; then
+            echo "Error: Generated client directory not found"
+            exit 1
+          fi
+
+          echo "Generated client files:"
+          find ./generated -name "*.go" | head -10
+        fi
+
+        echo "path=./generated/spacetraders" >> $GITHUB_OUTPUT
+
+    - name: Verify generated client
+      shell: bash
+      run: |
+        echo "Verifying generated client can be imported..."
+        cd generated/spacetraders
+        go mod tidy
+        go mod verify
+        echo "Generated client verification complete"

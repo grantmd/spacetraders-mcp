@@ -8,19 +8,19 @@ import (
 	"time"
 
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/client"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // SystemsResource handles the systems resource
 type SystemsResource struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewSystemsResource creates a new systems resource handler
-func NewSystemsResource(client *spacetraders.Client, logger *logging.Logger) *SystemsResource {
+func NewSystemsResource(client *client.Client, logger *logging.Logger) *SystemsResource {
 	return &SystemsResource{
 		client: client,
 		logger: logger,
@@ -208,7 +208,7 @@ func (r *SystemsResource) parseSystemSymbol(uri string) (string, error) {
 }
 
 // formatSystemsList formats a list of systems for the response
-func (r *SystemsResource) formatSystemsList(systems []spacetraders.System) []map[string]interface{} {
+func (r *SystemsResource) formatSystemsList(systems []client.System) []map[string]interface{} {
 	result := make([]map[string]interface{}, len(systems))
 
 	for i, system := range systems {
@@ -229,7 +229,7 @@ func (r *SystemsResource) formatSystemsList(systems []spacetraders.System) []map
 }
 
 // formatSystemDetails formats detailed system information
-func (r *SystemsResource) formatSystemDetails(system *spacetraders.System) map[string]interface{} {
+func (r *SystemsResource) formatSystemDetails(system *client.System) map[string]interface{} {
 	// Format waypoints
 	waypoints := make([]map[string]interface{}, len(system.Waypoints))
 	for i, waypoint := range system.Waypoints {

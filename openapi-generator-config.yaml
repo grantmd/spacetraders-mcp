@@ -1,0 +1,30 @@
+generatorName: go
+outputDir: ./generated
+inputSpec: https://spacetraders.io/SpaceTraders.json
+packageName: spacetraders
+packageVersion: 1.0.0
+packageUrl: github.com/your-username/spacetraders-mcp/generated
+gitUserId: your-username
+gitRepoId: spacetraders-mcp
+additionalProperties:
+  packageName: spacetraders
+  clientPackage: spacetraders
+  modelPackage: spacetraders
+  generateInterfaces: true
+  structPrefix: true
+  enumClassPrefix: true
+  hideGenerationTimestamp: true
+  withGoCodegenComment: true
+  isGoSubmodule: true
+  withXml: false
+  prependFormOrBodyParameters: false
+  generateMarshalJSON: false
+  generateUnmarshalJSON: false
+globalProperties:
+  models: ""
+  apis: ""
+  supportingFiles: ""
+  modelTests: false
+  modelDocs: false
+  apiTests: false
+  apiDocs: false

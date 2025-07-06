@@ -7,19 +7,19 @@ import (
 	"time"
 
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/client"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // StatusTool provides a comprehensive status summary by aggregating multiple resources
 type StatusTool struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewStatusTool creates a new status summary tool
-func NewStatusTool(client *spacetraders.Client, logger *logging.Logger) *StatusTool {
+func NewStatusTool(client *client.Client, logger *logging.Logger) *StatusTool {
 	return &StatusTool{
 		client: client,
 		logger: logger,

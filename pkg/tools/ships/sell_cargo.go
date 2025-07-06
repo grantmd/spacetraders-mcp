@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"spacetraders-mcp/pkg/client"
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
 	"spacetraders-mcp/pkg/tools/utils"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -15,12 +15,12 @@ import (
 
 // SellCargoTool handles selling cargo from ships at markets
 type SellCargoTool struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewSellCargoTool creates a new sell cargo tool
-func NewSellCargoTool(client *spacetraders.Client, logger *logging.Logger) *SellCargoTool {
+func NewSellCargoTool(client *client.Client, logger *logging.Logger) *SellCargoTool {
 	return &SellCargoTool{
 		client: client,
 		logger: logger,
@@ -126,7 +126,7 @@ func (t *SellCargoTool) Handler() func(ctx context.Context, request mcp.CallTool
 
 		// Sell the cargo
 		start := time.Now()
-		agent, cargo, transaction, err := t.client.SellCargo(shipSymbol, cargoSymbol, units)
+		resp, err := t.client.SellCargo(shipSymbol, cargoSymbol, units)
 		duration := time.Since(start)
 
 		if err != nil {
@@ -141,7 +141,7 @@ func (t *SellCargoTool) Handler() func(ctx context.Context, request mcp.CallTool
 		}
 
 		ctxLogger.APICall(fmt.Sprintf("/my/ships/%s/sell", shipSymbol), 201, duration.String())
-		ctxLogger.Info("Successfully sold %d units of %s from ship %s for %d credits", units, cargoSymbol, shipSymbol, transaction.TotalPrice)
+		ctxLogger.Info("Successfully sold %d units of %s from ship %s for %d credits", units, cargoSymbol, shipSymbol, resp.Data.Transaction.TotalPrice)
 
 		// Format the response
 		result := map[string]interface{}{
@@ -151,21 +151,21 @@ func (t *SellCargoTool) Handler() func(ctx context.Context, request mcp.CallTool
 			"cargo_symbol": cargoSymbol,
 			"units_sold":   units,
 			"transaction": map[string]interface{}{
-				"waypoint_symbol": transaction.WaypointSymbol,
-				"ship_symbol":     transaction.ShipSymbol,
-				"trade_symbol":    transaction.TradeSymbol,
-				"type":            transaction.Type,
-				"units":           transaction.Units,
-				"price_per_unit":  transaction.PricePerUnit,
-				"total_price":     transaction.TotalPrice,
-				"timestamp":       transaction.Timestamp,
+				"waypoint_symbol": resp.Data.Transaction.WaypointSymbol,
+				"ship_symbol":     resp.Data.Transaction.ShipSymbol,
+				"trade_symbol":    resp.Data.Transaction.TradeSymbol,
+				"type":            resp.Data.Transaction.Type,
+				"units":           resp.Data.Transaction.Units,
+				"price_per_unit":  resp.Data.Transaction.PricePerUnit,
+				"total_price":     resp.Data.Transaction.TotalPrice,
+				"timestamp":       resp.Data.Transaction.Timestamp,
 			},
 			"cargo": map[string]interface{}{
-				"capacity": cargo.Capacity,
-				"units":    cargo.Units,
+				"capacity": resp.Data.Cargo.Capacity,
+				"units":    resp.Data.Cargo.Units,
 				"inventory": func() []map[string]interface{} {
-					inventory := make([]map[string]interface{}, len(cargo.Inventory))
-					for i, item := range cargo.Inventory {
+					inventory := make([]map[string]interface{}, len(resp.Data.Cargo.Inventory))
+					for i, item := range resp.Data.Cargo.Inventory {
 						inventory[i] = map[string]interface{}{
 							"symbol":      item.Symbol,
 							"name":        item.Name,
@@ -177,20 +177,20 @@ func (t *SellCargoTool) Handler() func(ctx context.Context, request mcp.CallTool
 				}(),
 			},
 			"agent": map[string]interface{}{
-				"credits": agent.Credits,
+				"credits": resp.Data.Agent.Credits,
 			},
 		}
 
 		jsonData := utils.FormatJSON(result)
 
 		// Calculate cargo utilization and profit
-		cargoPercent := float64(cargo.Units) / float64(cargo.Capacity) * 100
-		freedSpace := cargo.Capacity - cargo.Units
-		profitPerUnit := transaction.PricePerUnit
+		cargoPercent := float64(resp.Data.Cargo.Units) / float64(resp.Data.Cargo.Capacity) * 100
+		freedSpace := resp.Data.Cargo.Capacity - resp.Data.Cargo.Units
+		profitPerUnit := resp.Data.Transaction.PricePerUnit
 
 		// Find the sold item name
 		soldItemName := cargoSymbol
-		for _, item := range cargo.Inventory {
+		for _, item := range resp.Data.Cargo.Inventory {
 			if item.Symbol == cargoSymbol {
 				soldItemName = item.Name
 				break
@@ -202,19 +202,19 @@ func (t *SellCargoTool) Handler() func(ctx context.Context, request mcp.CallTool
 		textSummary += fmt.Sprintf("**Ship:** %s\n", shipSymbol)
 		textSummary += fmt.Sprintf("**Sold:** %d units of %s\n", units, soldItemName)
 		textSummary += fmt.Sprintf("**Price per Unit:** %d credits\n", profitPerUnit)
-		textSummary += fmt.Sprintf("**Total Revenue:** %d credits\n", transaction.TotalPrice)
-		textSummary += fmt.Sprintf("**Current Credits:** %d\n", agent.Credits)
-		textSummary += fmt.Sprintf("**Location:** %s\n\n", transaction.WaypointSymbol)
+		textSummary += fmt.Sprintf("**Total Revenue:** %d credits\n", resp.Data.Transaction.TotalPrice)
+		textSummary += fmt.Sprintf("**Current Credits:** %d\n", resp.Data.Agent.Credits)
+		textSummary += fmt.Sprintf("**Location:** %s\n\n", resp.Data.Transaction.WaypointSymbol)
 
 		// Cargo status
-		textSummary += fmt.Sprintf("**Cargo Status:** %d/%d units (%.1f%% full)\n", cargo.Units, cargo.Capacity, cargoPercent)
+		textSummary += fmt.Sprintf("**Cargo Status:** %d/%d units (%.1f%% full)\n", resp.Data.Cargo.Units, resp.Data.Cargo.Capacity, cargoPercent)
 		textSummary += fmt.Sprintf("**Available Space:** %d units\n\n", freedSpace)
 
 		// Show current cargo inventory
-		if len(cargo.Inventory) > 0 {
-			textSummary += "**Remaining Cargo Inventory:**\n"
-			for _, item := range cargo.Inventory {
-				textSummary += fmt.Sprintf("- %s: %d units\n", item.Name, item.Units)
+		if len(resp.Data.Cargo.Inventory) > 0 {
+			textSummary += "**Remaining Inventory:**\n"
+			for _, item := range resp.Data.Cargo.Inventory {
+				textSummary += fmt.Sprintf("- %s: %d units\n", item.Symbol, item.Units)
 			}
 		} else {
 			textSummary += "**Cargo Hold:** Empty - ready for new cargo!\n"
@@ -230,11 +230,11 @@ func (t *SellCargoTool) Handler() func(ctx context.Context, request mcp.CallTool
 			textSummary += "• 💭 **Consider** higher-value trade routes for better margins\n"
 		}
 
-		if freedSpace >= cargo.Capacity/2 {
+		if freedSpace >= resp.Data.Cargo.Capacity/2 {
 			textSummary += "• 📦 **Plenty of space** - ready for more cargo\n"
 			textSummary += "• ⛏️ Use `extract_resources` to mine valuable materials\n"
 			textSummary += "• 🛒 Use `buy_cargo` to purchase goods for resale\n"
-		} else if cargo.Units > 0 {
+		} else if resp.Data.Cargo.Units > 0 {
 			textSummary += "• 💼 Consider selling more cargo to free up space\n"
 		}
 
@@ -242,7 +242,7 @@ func (t *SellCargoTool) Handler() func(ctx context.Context, request mcp.CallTool
 		textSummary += "• 🗺️ Use `find_waypoints` to find more markets\n"
 
 		// Add trading tips
-		if transaction.TotalPrice >= 1000 {
+		if resp.Data.Transaction.TotalPrice >= 1000 {
 			textSummary += "\n🚀 **Pro Trading Tip:** High-value sales like this indicate profitable trade routes!\n"
 		}
 

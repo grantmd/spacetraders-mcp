@@ -6,10 +6,10 @@ import (
 	"log"
 	"os"
 
+	"spacetraders-mcp/pkg/client"
 	"spacetraders-mcp/pkg/config"
 	"spacetraders-mcp/pkg/logging"
 	"spacetraders-mcp/pkg/resources"
-	"spacetraders-mcp/pkg/spacetraders"
 	"spacetraders-mcp/pkg/tools"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -28,7 +28,7 @@ func main() {
 	}
 
 	// Create SpaceTraders client
-	client := spacetraders.NewClient(cfg.SpaceTradersAPIToken)
+	spacetradersClient := client.NewClient(cfg.SpaceTradersAPIToken)
 
 	// Create MCP server with resource and logging capabilities
 	s := server.NewMCPServer(
@@ -53,11 +53,11 @@ func main() {
 	appLogger.Info("Starting SpaceTraders MCP Server")
 
 	// Register all resources
-	resourceRegistry := resources.NewRegistry(client, appLogger)
+	resourceRegistry := resources.NewRegistry(spacetradersClient, appLogger)
 	resourceRegistry.RegisterWithServer(s)
 
 	// Register all tools (when we have them)
-	toolRegistry := tools.NewRegistry(client, appLogger)
+	toolRegistry := tools.NewRegistry(spacetradersClient, appLogger)
 	toolRegistry.RegisterWithServer(s)
 
 	// Register prompts to help guide user interactions

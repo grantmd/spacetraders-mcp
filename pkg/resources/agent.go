@@ -6,19 +6,19 @@ import (
 	"time"
 
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/client"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // AgentResource handles the agent information resource
 type AgentResource struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewAgentResource creates a new agent resource handler
-func NewAgentResource(client *spacetraders.Client, logger *logging.Logger) *AgentResource {
+func NewAgentResource(client *client.Client, logger *logging.Logger) *AgentResource {
 	return &AgentResource{
 		client: client,
 		logger: logger,

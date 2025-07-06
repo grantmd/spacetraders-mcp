@@ -9,19 +9,19 @@ import (
 	"time"
 
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/client"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // ShipyardResource handles the shipyard information resource
 type ShipyardResource struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewShipyardResource creates a new shipyard resource handler
-func NewShipyardResource(client *spacetraders.Client, logger *logging.Logger) *ShipyardResource {
+func NewShipyardResource(client *client.Client, logger *logging.Logger) *ShipyardResource {
 	return &ShipyardResource{
 		client: client,
 		logger: logger,
@@ -160,7 +160,7 @@ func (r *ShipyardResource) parseShipyardURI(uri string) (string, string, error) 
 }
 
 // getAvailableShipTypes returns a list of unique ship types available
-func (r *ShipyardResource) getAvailableShipTypes(shipyard *spacetraders.Shipyard) []string {
+func (r *ShipyardResource) getAvailableShipTypes(shipyard *client.Shipyard) []string {
 	typeSet := make(map[string]bool)
 	var types []string
 
@@ -184,7 +184,7 @@ func (r *ShipyardResource) getAvailableShipTypes(shipyard *spacetraders.Shipyard
 }
 
 // getPriceRange returns the min and max prices of available ships
-func (r *ShipyardResource) getPriceRange(ships []spacetraders.ShipyardShip) map[string]interface{} {
+func (r *ShipyardResource) getPriceRange(ships []client.ShipyardShip) map[string]interface{} {
 	if len(ships) == 0 {
 		return map[string]interface{}{
 			"min": nil,
@@ -211,7 +211,7 @@ func (r *ShipyardResource) getPriceRange(ships []spacetraders.ShipyardShip) map[
 }
 
 // getShipsByType groups ships by their type
-func (r *ShipyardResource) getShipsByType(ships []spacetraders.ShipyardShip) map[string]int {
+func (r *ShipyardResource) getShipsByType(ships []client.ShipyardShip) map[string]int {
 	counts := make(map[string]int)
 	for _, ship := range ships {
 		counts[ship.Type]++
@@ -220,7 +220,7 @@ func (r *ShipyardResource) getShipsByType(ships []spacetraders.ShipyardShip) map
 }
 
 // getShipsBySupply groups ships by their supply level
-func (r *ShipyardResource) getShipsBySupply(ships []spacetraders.ShipyardShip) map[string]int {
+func (r *ShipyardResource) getShipsBySupply(ships []client.ShipyardShip) map[string]int {
 	counts := make(map[string]int)
 	for _, ship := range ships {
 		counts[ship.Supply]++

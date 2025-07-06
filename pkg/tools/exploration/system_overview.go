@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/client"
 	"spacetraders-mcp/pkg/tools/utils"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -15,12 +15,12 @@ import (
 
 // SystemOverviewTool provides a comprehensive overview of a system
 type SystemOverviewTool struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewSystemOverviewTool creates a new system overview tool
-func NewSystemOverviewTool(client *spacetraders.Client, logger *logging.Logger) *SystemOverviewTool {
+func NewSystemOverviewTool(client *client.Client, logger *logging.Logger) *SystemOverviewTool {
 	return &SystemOverviewTool{
 		client: client,
 		logger: logger,
@@ -172,7 +172,7 @@ type SystemAnalysis struct {
 }
 
 // analyzeSystem performs comprehensive analysis of a system
-func (t *SystemOverviewTool) analyzeSystem(systemSymbol string, waypoints []spacetraders.SystemWaypoint) *SystemAnalysis {
+func (t *SystemOverviewTool) analyzeSystem(systemSymbol string, waypoints []client.SystemWaypoint) *SystemAnalysis {
 	analysis := &SystemAnalysis{
 		SystemSymbol:     systemSymbol,
 		WaypointTypes:    make(map[string]int),

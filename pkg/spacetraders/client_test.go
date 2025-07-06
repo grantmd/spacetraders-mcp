@@ -16,7 +16,7 @@ func TestNewClient(t *testing.T) {
 		t.Errorf("Expected APIToken %s, got %s", token, client.APIToken)
 	}
 
-	expectedBaseURL := "https://api.spacetraders.io/v2"
+	expectedBaseURL := "https://api.client.io/v2"
 	if client.BaseURL != expectedBaseURL {
 		t.Errorf("Expected BaseURL %s, got %s", expectedBaseURL, client.BaseURL)
 	}

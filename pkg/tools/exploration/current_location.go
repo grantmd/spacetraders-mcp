@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/client"
 	"spacetraders-mcp/pkg/tools/utils"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -14,12 +14,12 @@ import (
 
 // CurrentLocationTool analyzes where the player's ships are currently located
 type CurrentLocationTool struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewCurrentLocationTool creates a new current location analysis tool
-func NewCurrentLocationTool(client *spacetraders.Client, logger *logging.Logger) *CurrentLocationTool {
+func NewCurrentLocationTool(client *client.Client, logger *logging.Logger) *CurrentLocationTool {
 	return &CurrentLocationTool{
 		client: client,
 		logger: logger,
@@ -86,7 +86,7 @@ func (t *CurrentLocationTool) Handler() func(ctx context.Context, request mcp.Ca
 		}
 
 		// Filter ships if specific ship requested
-		var shipsToAnalyze []spacetraders.Ship
+		var shipsToAnalyze []client.Ship
 		if specificShip != "" {
 			for _, ship := range ships {
 				if ship.Symbol == specificShip {
@@ -148,7 +148,7 @@ type LocationAnalysis struct {
 }
 
 // analyzeShipLocations performs comprehensive analysis of ship locations
-func (t *CurrentLocationTool) analyzeShipLocations(ships []spacetraders.Ship, includeNearby bool) *LocationAnalysis {
+func (t *CurrentLocationTool) analyzeShipLocations(ships []client.Ship, includeNearby bool) *LocationAnalysis {
 	analysis := &LocationAnalysis{
 		ShipLocations:    []map[string]interface{}{},
 		SystemSummary:    make(map[string]map[string]interface{}),
@@ -258,7 +258,7 @@ func (t *CurrentLocationTool) getNearbyFacilities(systemSymbol string) []map[str
 }
 
 // generateRecommendations creates actionable recommendations
-func (t *CurrentLocationTool) generateRecommendations(ships []spacetraders.Ship, systemSummary map[string]map[string]interface{}, nearbyFacilities map[string][]map[string]interface{}) []string {
+func (t *CurrentLocationTool) generateRecommendations(ships []client.Ship, systemSummary map[string]map[string]interface{}, nearbyFacilities map[string][]map[string]interface{}) []string {
 	var recommendations []string
 
 	// Check for ships needing fuel

@@ -7,19 +7,19 @@ import (
 	"strings"
 
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/client"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // MarketResource handles market data
 type MarketResource struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewMarketResource creates a new market resource
-func NewMarketResource(client *spacetraders.Client, logger *logging.Logger) *MarketResource {
+func NewMarketResource(client *client.Client, logger *logging.Logger) *MarketResource {
 	return &MarketResource{
 		client: client,
 		logger: logger,
@@ -99,7 +99,7 @@ func (r *MarketResource) Handler() func(ctx context.Context, request mcp.ReadRes
 }
 
 // formatTradeGoods formats trade goods for display
-func (r *MarketResource) formatTradeGoods(goods []spacetraders.TradeGood) []map[string]interface{} {
+func (r *MarketResource) formatTradeGoods(goods []client.TradeGood) []map[string]interface{} {
 	var result []map[string]interface{}
 	for _, good := range goods {
 		result = append(result, map[string]interface{}{
@@ -112,7 +112,7 @@ func (r *MarketResource) formatTradeGoods(goods []spacetraders.TradeGood) []map[
 }
 
 // formatTradeGoodsWithPrices formats trade goods with pricing information
-func (r *MarketResource) formatTradeGoodsWithPrices(goods []spacetraders.MarketTradeGood) []map[string]interface{} {
+func (r *MarketResource) formatTradeGoodsWithPrices(goods []client.MarketTradeGood) []map[string]interface{} {
 	var result []map[string]interface{}
 	for _, good := range goods {
 		goodData := map[string]interface{}{
@@ -130,7 +130,7 @@ func (r *MarketResource) formatTradeGoodsWithPrices(goods []spacetraders.MarketT
 }
 
 // formatTransactions formats recent transactions
-func (r *MarketResource) formatTransactions(transactions []spacetraders.MarketTransaction) []map[string]interface{} {
+func (r *MarketResource) formatTransactions(transactions []client.MarketTransaction) []map[string]interface{} {
 	var result []map[string]interface{}
 	for _, transaction := range transactions {
 		result = append(result, map[string]interface{}{
@@ -148,7 +148,7 @@ func (r *MarketResource) formatTransactions(transactions []spacetraders.MarketTr
 }
 
 // analyzeMarket provides market analysis and insights
-func (r *MarketResource) analyzeMarket(market *spacetraders.Market) map[string]interface{} {
+func (r *MarketResource) analyzeMarket(market *client.Market) map[string]interface{} {
 	analysis := map[string]interface{}{
 		"total_exports":       len(market.Exports),
 		"total_imports":       len(market.Imports),
@@ -191,7 +191,7 @@ func (r *MarketResource) analyzeMarket(market *spacetraders.Market) map[string]i
 }
 
 // formatMarketAsText creates a human-readable text representation
-func (r *MarketResource) formatMarketAsText(market *spacetraders.Market, systemSymbol, waypointSymbol string) string {
+func (r *MarketResource) formatMarketAsText(market *client.Market, systemSymbol, waypointSymbol string) string {
 	var text strings.Builder
 
 	text.WriteString(fmt.Sprintf("# Market Data: %s\n\n", waypointSymbol))
@@ -230,7 +230,7 @@ func (r *MarketResource) formatMarketAsText(market *spacetraders.Market, systemS
 		text.WriteString("## 💰 Current Prices\n\n")
 
 		// Sort by sell price descending for better readability
-		sortedGoods := make([]spacetraders.MarketTradeGood, len(market.TradeGoods))
+		sortedGoods := make([]client.MarketTradeGood, len(market.TradeGoods))
 		copy(sortedGoods, market.TradeGoods)
 		sort.Slice(sortedGoods, func(i, j int) bool {
 			return sortedGoods[i].SellPrice > sortedGoods[j].SellPrice

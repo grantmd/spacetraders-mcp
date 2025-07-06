@@ -5,20 +5,20 @@ import (
 	"fmt"
 	"time"
 
+	"spacetraders-mcp/pkg/client"
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // NavigateShipTool handles navigating ships to waypoints
 type NavigateShipTool struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewNavigateShipTool creates a new navigate ship tool
-func NewNavigateShipTool(client *spacetraders.Client, logger *logging.Logger) *NavigateShipTool {
+func NewNavigateShipTool(client *client.Client, logger *logging.Logger) *NavigateShipTool {
 	return &NavigateShipTool{
 		client: client,
 		logger: logger,
@@ -93,7 +93,7 @@ func (t *NavigateShipTool) Handler() func(ctx context.Context, request mcp.CallT
 		contextLogger.Info(fmt.Sprintf("Attempting to navigate ship %s to %s", shipSymbol, waypointSymbol))
 
 		// Navigate the ship
-		nav, fuel, event, err := t.client.NavigateShip(shipSymbol, waypointSymbol)
+		resp, err := t.client.NavigateShip(shipSymbol, waypointSymbol)
 		if err != nil {
 			contextLogger.Error(fmt.Sprintf("Failed to navigate ship %s to %s: %v", shipSymbol, waypointSymbol, err))
 			return &mcp.CallToolResult{
@@ -103,6 +103,10 @@ func (t *NavigateShipTool) Handler() func(ctx context.Context, request mcp.CallT
 				IsError: true,
 			}, nil
 		}
+
+		nav := resp.Data.Nav
+		fuel := resp.Data.Fuel
+		event := resp.Data.Event
 
 		contextLogger.ToolCall("navigate_ship", true)
 		contextLogger.Info(fmt.Sprintf("Successfully started navigation for ship %s to %s", shipSymbol, waypointSymbol))
@@ -152,7 +156,7 @@ func (t *NavigateShipTool) Handler() func(ctx context.Context, request mcp.CallT
 		}
 
 		// Add event information if available
-		if event != nil {
+		if event.Symbol != "" {
 			result["event"] = map[string]interface{}{
 				"symbol":      event.Symbol,
 				"component":   event.Component,
@@ -195,7 +199,7 @@ func (t *NavigateShipTool) Handler() func(ctx context.Context, request mcp.CallT
 			textSummary += fmt.Sprintf("- **Remaining:** %d units\n", fuel.Current)
 		}
 
-		if event != nil {
+		if event.Symbol != "" {
 			textSummary += "\n**Navigation Event:**\n"
 			textSummary += fmt.Sprintf("- **Event:** %s\n", event.Name)
 			textSummary += fmt.Sprintf("- **Description:** %s\n", event.Description)

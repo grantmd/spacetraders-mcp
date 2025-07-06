@@ -5,20 +5,20 @@ import (
 	"fmt"
 	"time"
 
+	"spacetraders-mcp/pkg/client"
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // JumpShipTool handles jumping ships to different systems
 type JumpShipTool struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewJumpShipTool creates a new jump ship tool
-func NewJumpShipTool(client *spacetraders.Client, logger *logging.Logger) *JumpShipTool {
+func NewJumpShipTool(client *client.Client, logger *logging.Logger) *JumpShipTool {
 	return &JumpShipTool{
 		client: client,
 		logger: logger,
@@ -93,7 +93,7 @@ func (t *JumpShipTool) Handler() func(ctx context.Context, request mcp.CallToolR
 		contextLogger.Info(fmt.Sprintf("Attempting to jump ship %s to system %s", shipSymbol, systemSymbol))
 
 		// Jump the ship
-		nav, cooldown, event, err := t.client.JumpShip(shipSymbol, systemSymbol)
+		resp, err := t.client.JumpShip(shipSymbol, systemSymbol)
 		if err != nil {
 			contextLogger.Error(fmt.Sprintf("Failed to jump ship %s to %s: %v", shipSymbol, systemSymbol, err))
 			return &mcp.CallToolResult{
@@ -103,6 +103,10 @@ func (t *JumpShipTool) Handler() func(ctx context.Context, request mcp.CallToolR
 				IsError: true,
 			}, nil
 		}
+
+		nav := resp.Data.Nav
+		cooldown := resp.Data.Cooldown
+		event := resp.Data.Event
 
 		contextLogger.ToolCall("jump_ship", true)
 		contextLogger.Info(fmt.Sprintf("Successfully jumped ship %s to system %s", shipSymbol, systemSymbol))
@@ -146,7 +150,7 @@ func (t *JumpShipTool) Handler() func(ctx context.Context, request mcp.CallToolR
 		}
 
 		// Add event information if available
-		if event != nil {
+		if event.Symbol != "" {
 			result["event"] = map[string]interface{}{
 				"symbol":      event.Symbol,
 				"component":   event.Component,
@@ -191,7 +195,7 @@ func (t *JumpShipTool) Handler() func(ctx context.Context, request mcp.CallToolR
 			}
 		}
 
-		if event != nil {
+		if event.Symbol != "" {
 			textSummary += "\n**Jump Event:**\n"
 			textSummary += fmt.Sprintf("- **Event:** %s\n", event.Name)
 			textSummary += fmt.Sprintf("- **Description:** %s\n", event.Description)

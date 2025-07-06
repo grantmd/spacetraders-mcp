@@ -9,13 +9,13 @@ import (
 	"testing"
 
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/client"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
 func TestFindWaypointsTool_Tool(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	logger := logging.NewLogger(nil)
 	tool := NewFindWaypointsTool(client, logger)
 
@@ -43,14 +43,14 @@ func TestFindWaypointsTool_Handler_Success(t *testing.T) {
 			t.Errorf("Expected waypoints endpoint, got %s", r.URL.Path)
 		}
 
-		mockResponse := spacetraders.SystemWaypointsResponse{
-			Data: []spacetraders.SystemWaypoint{
+		mockResponse := client.SystemWaypointsResponse{
+			Data: []client.SystemWaypoint{
 				{
 					Symbol: "X1-TEST-SHIPYARD",
 					Type:   "PLANET",
 					X:      10,
 					Y:      20,
-					Traits: []spacetraders.WaypointTrait{
+					Traits: []client.WaypointTrait{
 						{
 							Symbol:      "SHIPYARD",
 							Name:        "Shipyard",
@@ -68,7 +68,7 @@ func TestFindWaypointsTool_Handler_Success(t *testing.T) {
 					Type:   "MOON",
 					X:      30,
 					Y:      40,
-					Traits: []spacetraders.WaypointTrait{
+					Traits: []client.WaypointTrait{
 						{
 							Symbol:      "MARKETPLACE",
 							Name:        "Marketplace",
@@ -84,7 +84,7 @@ func TestFindWaypointsTool_Handler_Success(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := spacetraders.NewClientWithBaseURL("test-token", server.URL)
+	client := client.NewClientWithBaseURL("test-token", server.URL)
 	logger := logging.NewLogger(nil)
 	tool := NewFindWaypointsTool(client, logger)
 
@@ -129,14 +129,14 @@ func TestFindWaypointsTool_Handler_Success(t *testing.T) {
 
 func TestFindWaypointsTool_Handler_NoResults(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		mockResponse := spacetraders.SystemWaypointsResponse{
-			Data: []spacetraders.SystemWaypoint{
+		mockResponse := client.SystemWaypointsResponse{
+			Data: []client.SystemWaypoint{
 				{
 					Symbol: "X1-TEST-ASTEROID",
 					Type:   "ASTEROID",
 					X:      10,
 					Y:      20,
-					Traits: []spacetraders.WaypointTrait{
+					Traits: []client.WaypointTrait{
 						{
 							Symbol:      "ASTEROID_FIELD",
 							Name:        "Asteroid Field",
@@ -152,7 +152,7 @@ func TestFindWaypointsTool_Handler_NoResults(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := spacetraders.NewClientWithBaseURL("test-token", server.URL)
+	client := client.NewClientWithBaseURL("test-token", server.URL)
 	logger := logging.NewLogger(nil)
 	tool := NewFindWaypointsTool(client, logger)
 
@@ -187,7 +187,7 @@ func TestFindWaypointsTool_Handler_NoResults(t *testing.T) {
 }
 
 func TestFindWaypointsTool_Handler_MissingParameters(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	logger := logging.NewLogger(nil)
 	tool := NewFindWaypointsTool(client, logger)
 
@@ -234,7 +234,7 @@ func TestFindWaypointsTool_Handler_MissingParameters(t *testing.T) {
 }
 
 func TestSystemOverviewTool_Tool(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	logger := logging.NewLogger(nil)
 	tool := NewSystemOverviewTool(client, logger)
 
@@ -254,7 +254,7 @@ func TestSystemOverviewTool_Tool(t *testing.T) {
 }
 
 func TestCurrentLocationTool_Tool(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	logger := logging.NewLogger(nil)
 	tool := NewCurrentLocationTool(client, logger)
 
@@ -273,26 +273,26 @@ func TestCurrentLocationTool_Tool(t *testing.T) {
 func TestCurrentLocationTool_Handler_Success(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.URL.Path, "/my/ships") {
-			mockResponse := spacetraders.ShipsResponse{
-				Data: []spacetraders.Ship{
+			mockResponse := client.ShipsResponse{
+				Data: []client.Ship{
 					{
 						Symbol: "SHIP_1234",
-						Registration: spacetraders.Registration{
+						Registration: client.Registration{
 							Name:          "Explorer",
 							FactionSymbol: "COSMIC",
 							Role:          "COMMAND",
 						},
-						Nav: spacetraders.Navigation{
+						Nav: client.Navigation{
 							SystemSymbol:   "X1-TEST",
 							WaypointSymbol: "X1-TEST-A1",
 							Status:         "DOCKED",
 							FlightMode:     "CRUISE",
 						},
-						Fuel: spacetraders.Fuel{
+						Fuel: client.Fuel{
 							Current:  80,
 							Capacity: 100,
 						},
-						Cargo: spacetraders.Cargo{
+						Cargo: client.Cargo{
 							Capacity: 40,
 							Units:    10,
 						},
@@ -305,7 +305,7 @@ func TestCurrentLocationTool_Handler_Success(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := spacetraders.NewClientWithBaseURL("test-token", server.URL)
+	client := client.NewClientWithBaseURL("test-token", server.URL)
 	logger := logging.NewLogger(nil)
 	tool := NewCurrentLocationTool(client, logger)
 

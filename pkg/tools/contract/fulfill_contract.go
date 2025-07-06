@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"spacetraders-mcp/pkg/client"
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
 	"spacetraders-mcp/pkg/tools/utils"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -15,12 +15,12 @@ import (
 
 // FulfillContractTool handles fulfilling contracts
 type FulfillContractTool struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewFulfillContractTool creates a new fulfill contract tool
-func NewFulfillContractTool(client *spacetraders.Client, logger *logging.Logger) *FulfillContractTool {
+func NewFulfillContractTool(client *client.Client, logger *logging.Logger) *FulfillContractTool {
 	return &FulfillContractTool{
 		client: client,
 		logger: logger,
@@ -85,7 +85,7 @@ func (t *FulfillContractTool) Handler() func(ctx context.Context, request mcp.Ca
 
 		// Fulfill the contract
 		start := time.Now()
-		agent, contract, err := t.client.FulfillContract(contractID)
+		resp, err := t.client.FulfillContract(contractID)
 		duration := time.Since(start)
 
 		if err != nil {
@@ -100,11 +100,11 @@ func (t *FulfillContractTool) Handler() func(ctx context.Context, request mcp.Ca
 		}
 
 		ctxLogger.APICall(fmt.Sprintf("/my/contracts/%s/fulfill", contractID), 200, duration.String())
-		ctxLogger.Info("Successfully fulfilled contract %s, received %d credits", contractID, contract.Terms.Payment.OnFulfilled)
+		ctxLogger.Info("Successfully fulfilled contract %s, received %d credits", contractID, resp.Data.Contract.Terms.Payment.OnFulfilled)
 
 		// Format delivery goods
-		deliveryGoods := make([]map[string]interface{}, len(contract.Terms.Deliver))
-		for i, good := range contract.Terms.Deliver {
+		deliveryGoods := make([]map[string]interface{}, len(resp.Data.Contract.Terms.Deliver))
+		for i, good := range resp.Data.Contract.Terms.Deliver {
 			deliveryGoods[i] = map[string]interface{}{
 				"trade_symbol":       good.TradeSymbol,
 				"destination_symbol": good.DestinationSymbol,
@@ -119,49 +119,49 @@ func (t *FulfillContractTool) Handler() func(ctx context.Context, request mcp.Ca
 			"message":     fmt.Sprintf("Successfully fulfilled contract %s", contractID),
 			"contract_id": contractID,
 			"contract": map[string]interface{}{
-				"id":                 contract.ID,
-				"faction_symbol":     contract.FactionSymbol,
-				"type":               contract.Type,
-				"accepted":           contract.Accepted,
-				"fulfilled":          contract.Fulfilled,
-				"expiration":         contract.Expiration,
-				"deadline_to_accept": contract.DeadlineToAccept,
+				"id":                 resp.Data.Contract.ID,
+				"faction_symbol":     resp.Data.Contract.FactionSymbol,
+				"type":               resp.Data.Contract.Type,
+				"accepted":           resp.Data.Contract.Accepted,
+				"fulfilled":          resp.Data.Contract.Fulfilled,
+				"expiration":         resp.Data.Contract.Expiration,
+				"deadline_to_accept": resp.Data.Contract.DeadlineToAccept,
 				"terms": map[string]interface{}{
-					"deadline": contract.Terms.Deadline,
+					"deadline": resp.Data.Contract.Terms.Deadline,
 					"payment": map[string]interface{}{
-						"on_accepted":  contract.Terms.Payment.OnAccepted,
-						"on_fulfilled": contract.Terms.Payment.OnFulfilled,
+						"on_accepted":  resp.Data.Contract.Terms.Payment.OnAccepted,
+						"on_fulfilled": resp.Data.Contract.Terms.Payment.OnFulfilled,
 					},
 					"deliver": deliveryGoods,
 				},
 			},
 			"agent": map[string]interface{}{
-				"credits": agent.Credits,
+				"credits": resp.Data.Agent.Credits,
 			},
 		}
 
 		jsonData := utils.FormatJSON(result)
 
 		// Calculate total payment received
-		totalPayment := contract.Terms.Payment.OnAccepted + contract.Terms.Payment.OnFulfilled
-		fulfillmentPayment := contract.Terms.Payment.OnFulfilled
+		totalPayment := resp.Data.Contract.Terms.Payment.OnAccepted + resp.Data.Contract.Terms.Payment.OnFulfilled
+		fulfillmentPayment := resp.Data.Contract.Terms.Payment.OnFulfilled
 
 		// Create formatted text summary
 		textSummary := "🎉 **Contract Fulfilled Successfully!**\n\n"
 		textSummary += fmt.Sprintf("**Contract ID:** %s\n", contractID)
-		textSummary += fmt.Sprintf("**Faction:** %s\n", contract.FactionSymbol)
-		textSummary += fmt.Sprintf("**Type:** %s\n", contract.Type)
+		textSummary += fmt.Sprintf("**Faction:** %s\n", resp.Data.Contract.FactionSymbol)
+		textSummary += fmt.Sprintf("**Type:** %s\n", resp.Data.Contract.Type)
 		textSummary += "**Status:** ✅ Fulfilled\n\n"
 
 		// Payment information
 		textSummary += "💰 **Payment Details:**\n"
 		textSummary += fmt.Sprintf("• Fulfillment Bonus: **%d credits**\n", fulfillmentPayment)
 		textSummary += fmt.Sprintf("• Total Contract Value: %d credits\n", totalPayment)
-		textSummary += fmt.Sprintf("• Your Current Credits: **%d**\n\n", agent.Credits)
+		textSummary += fmt.Sprintf("• Your Current Credits: **%d**\n\n", resp.Data.Agent.Credits)
 
 		// Delivery information
 		textSummary += "📦 **Delivery Summary:**\n"
-		for _, good := range contract.Terms.Deliver {
+		for _, good := range resp.Data.Contract.Terms.Deliver {
 			textSummary += fmt.Sprintf("• %s: %d/%d units → %s ✅\n",
 				good.TradeSymbol,
 				good.UnitsFulfilled,
@@ -171,8 +171,8 @@ func (t *FulfillContractTool) Handler() func(ctx context.Context, request mcp.Ca
 
 		// Contract timeline
 		textSummary += "\n📅 **Contract Timeline:**\n"
-		textSummary += fmt.Sprintf("• Deadline: %s\n", contract.Terms.Deadline)
-		textSummary += fmt.Sprintf("• Expiration: %s\n", contract.Expiration)
+		textSummary += fmt.Sprintf("• Deadline: %s\n", resp.Data.Contract.Terms.Deadline)
+		textSummary += fmt.Sprintf("• Expiration: %s\n", resp.Data.Contract.Expiration)
 
 		// Success celebration and next steps
 		textSummary += "\n🎊 **Congratulations!**\n"
@@ -185,7 +185,7 @@ func (t *FulfillContractTool) Handler() func(ctx context.Context, request mcp.Ca
 		textSummary += "• 📈 Build reputation with factions for better contracts\n"
 
 		// Add reputation building tip
-		textSummary += fmt.Sprintf("\n🌟 **Reputation Boost:** Completing contracts with %s improves your standing with this faction!\n", contract.FactionSymbol)
+		textSummary += fmt.Sprintf("\n🌟 **Reputation Boost:** Completing contracts with %s improves your standing with this faction!\n", resp.Data.Contract.FactionSymbol)
 
 		// Payment celebration based on amount
 		if fulfillmentPayment >= 50000 {

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"spacetraders-mcp/pkg/client"
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
 	"spacetraders-mcp/pkg/tools/utils"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -14,12 +14,12 @@ import (
 
 // ScanShipsTool allows scanning for ships around a ship
 type ScanShipsTool struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewScanShipsTool creates a new scan ships tool
-func NewScanShipsTool(client *spacetraders.Client, logger *logging.Logger) *ScanShipsTool {
+func NewScanShipsTool(client *client.Client, logger *logging.Logger) *ScanShipsTool {
 	return &ScanShipsTool{
 		client: client,
 		logger: logger,
@@ -86,18 +86,18 @@ func (t *ScanShipsTool) Handler() func(ctx context.Context, request mcp.CallTool
 		}
 
 		contextLogger.ToolCall("scan_ships", true)
-		contextLogger.Info(fmt.Sprintf("Successfully scanned %d ships with ship %s", len(scanData.Ships), shipSymbol))
+		contextLogger.Info(fmt.Sprintf("Successfully scanned %d ships with ship %s", len(scanData.Data.Ships), shipSymbol))
 
 		// Create structured response
 		result := map[string]interface{}{
 			"ship_symbol": shipSymbol,
-			"ships_found": len(scanData.Ships),
-			"cooldown":    scanData.Cooldown,
+			"ships_found": len(scanData.Data.Ships),
+			"cooldown":    scanData.Data.Cooldown,
 			"ships":       []map[string]interface{}{},
 		}
 
 		// Build ships data
-		for _, ship := range scanData.Ships {
+		for _, ship := range scanData.Data.Ships {
 			shipData := map[string]interface{}{
 				"symbol":     ship.Symbol,
 				"faction":    ship.Registration.FactionSymbol,
@@ -114,15 +114,13 @@ func (t *ScanShipsTool) Handler() func(ctx context.Context, request mcp.CallTool
 			if ship.Engine.Symbol != "" {
 				shipData["engine"] = map[string]interface{}{
 					"symbol": ship.Engine.Symbol,
-					"speed":  ship.Engine.Speed,
 				}
 			}
 
 			// Add reactor information
 			if ship.Reactor.Symbol != "" {
 				shipData["reactor"] = map[string]interface{}{
-					"symbol":       ship.Reactor.Symbol,
-					"power_output": ship.Reactor.PowerOutput,
+					"symbol": ship.Reactor.Symbol,
 				}
 			}
 
@@ -131,8 +129,7 @@ func (t *ScanShipsTool) Handler() func(ctx context.Context, request mcp.CallTool
 				mounts := []map[string]interface{}{}
 				for _, mount := range ship.Mounts {
 					mounts = append(mounts, map[string]interface{}{
-						"symbol":   mount.Symbol,
-						"strength": mount.Strength,
+						"symbol": mount.Symbol,
 					})
 				}
 				shipData["mounts"] = mounts
@@ -144,16 +141,16 @@ func (t *ScanShipsTool) Handler() func(ctx context.Context, request mcp.CallTool
 		// Create text summary
 		textSummary := fmt.Sprintf("## 🔍 Ship Scan Results for %s\n\n", shipSymbol)
 
-		if len(scanData.Ships) == 0 {
+		if len(scanData.Data.Ships) == 0 {
 			textSummary += "❌ **No ships detected** in scanning range.\n\n"
 			textSummary += "This could mean:\n"
 			textSummary += "- Your ship doesn't have appropriate scanning equipment\n"
 			textSummary += "- No other ships are within scanning range\n"
 			textSummary += "- The ship is on cooldown from previous scans\n\n"
 		} else {
-			textSummary += fmt.Sprintf("✅ **Detected %d ship(s)** in scanning range:\n\n", len(scanData.Ships))
+			textSummary += fmt.Sprintf("✅ **Detected %d ship(s)** in scanning range:\n\n", len(scanData.Data.Ships))
 
-			for i, ship := range scanData.Ships {
+			for i, ship := range scanData.Data.Ships {
 				textSummary += fmt.Sprintf("### %d. %s\n", i+1, ship.Symbol)
 				textSummary += fmt.Sprintf("**Faction:** %s\n", ship.Registration.FactionSymbol)
 				textSummary += fmt.Sprintf("**Role:** %s\n", ship.Registration.Role)
@@ -161,11 +158,11 @@ func (t *ScanShipsTool) Handler() func(ctx context.Context, request mcp.CallTool
 				textSummary += fmt.Sprintf("**Location:** %s at %s (%s)\n", ship.Nav.SystemSymbol, ship.Nav.WaypointSymbol, ship.Nav.Status)
 
 				if ship.Engine.Symbol != "" {
-					textSummary += fmt.Sprintf("**Engine:** %s (Speed: %d)\n", ship.Engine.Symbol, ship.Engine.Speed)
+					textSummary += fmt.Sprintf("- **Engine:** %s\n", ship.Engine.Symbol)
 				}
 
 				if ship.Reactor.Symbol != "" {
-					textSummary += fmt.Sprintf("**Reactor:** %s (Power: %d)\n", ship.Reactor.Symbol, ship.Reactor.PowerOutput)
+					textSummary += fmt.Sprintf("- **Reactor:** %s\n", ship.Reactor.Symbol)
 				}
 
 				if len(ship.Mounts) > 0 {
@@ -180,7 +177,7 @@ func (t *ScanShipsTool) Handler() func(ctx context.Context, request mcp.CallTool
 						case strings.Contains(mount.Symbol, "SURVEYOR"):
 							mountIcon = "📡"
 						}
-						textSummary += fmt.Sprintf("%s %s (Strength: %d)\n", mountIcon, mount.Symbol, mount.Strength)
+						textSummary += fmt.Sprintf("%s %s\n", mountIcon, mount.Symbol)
 					}
 				}
 
@@ -211,19 +208,19 @@ func (t *ScanShipsTool) Handler() func(ctx context.Context, request mcp.CallTool
 		}
 
 		// Add cooldown information
-		if scanData.Cooldown.TotalSeconds > 0 {
+		if scanData.Data.Cooldown.TotalSeconds > 0 {
 			textSummary += "## ⏳ Cooldown Information\n\n"
-			textSummary += fmt.Sprintf("**Total Cooldown:** %d seconds\n", scanData.Cooldown.TotalSeconds)
-			textSummary += fmt.Sprintf("**Remaining:** %d seconds\n", scanData.Cooldown.RemainingSeconds)
-			if scanData.Cooldown.Expiration != "" {
-				textSummary += fmt.Sprintf("**Expires:** %s\n", scanData.Cooldown.Expiration)
+			textSummary += fmt.Sprintf("**Total Cooldown:** %d seconds\n", scanData.Data.Cooldown.TotalSeconds)
+			textSummary += fmt.Sprintf("**Remaining:** %d seconds\n", scanData.Data.Cooldown.RemainingSeconds)
+			if scanData.Data.Cooldown.Expiration != "" {
+				textSummary += fmt.Sprintf("**Expires:** %s\n", scanData.Data.Cooldown.Expiration)
 			}
 			textSummary += "\n"
 		}
 
 		// Add next steps and tactical recommendations
 		textSummary += "## 🚀 Next Steps\n\n"
-		if len(scanData.Ships) > 0 {
+		if len(scanData.Data.Ships) > 0 {
 			textSummary += "**Intelligence Gathering:**\n"
 			textSummary += "- Monitor ship movements and patterns\n"
 			textSummary += "- Identify potential trading partners or threats\n"
@@ -231,7 +228,7 @@ func (t *ScanShipsTool) Handler() func(ctx context.Context, request mcp.CallTool
 
 			textSummary += "**Tactical Considerations:**\n"
 			combatShips := 0
-			for _, ship := range scanData.Ships {
+			for _, ship := range scanData.Data.Ships {
 				if ship.Registration.Role == "COMBAT" {
 					combatShips++
 				}

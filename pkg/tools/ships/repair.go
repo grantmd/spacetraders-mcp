@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"spacetraders-mcp/pkg/client"
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
 	"spacetraders-mcp/pkg/tools/utils"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -14,12 +14,12 @@ import (
 
 // RepairShipTool allows repairing a ship at a shipyard
 type RepairShipTool struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewRepairShipTool creates a new repair ship tool
-func NewRepairShipTool(client *spacetraders.Client, logger *logging.Logger) *RepairShipTool {
+func NewRepairShipTool(client *client.Client, logger *logging.Logger) *RepairShipTool {
 	return &RepairShipTool{
 		client: client,
 		logger: logger,
@@ -74,7 +74,7 @@ func (t *RepairShipTool) Handler() func(ctx context.Context, request mcp.CallToo
 		contextLogger.Info(fmt.Sprintf("Repairing ship %s", shipSymbol))
 
 		// Perform the repair
-		agent, ship, transaction, err := t.client.RepairShip(shipSymbol)
+		resp, err := t.client.RepairShip(shipSymbol)
 		if err != nil {
 			contextLogger.Error(fmt.Sprintf("Failed to repair ship %s: %v", shipSymbol, err))
 			return &mcp.CallToolResult{
@@ -86,33 +86,33 @@ func (t *RepairShipTool) Handler() func(ctx context.Context, request mcp.CallToo
 		}
 
 		contextLogger.ToolCall("repair_ship", true)
-		contextLogger.Info(fmt.Sprintf("Successfully repaired ship %s for %d credits", shipSymbol, transaction.Price))
+		contextLogger.Info(fmt.Sprintf("Successfully repaired ship %s for %d credits", shipSymbol, resp.Data.Transaction.TotalPrice))
 
 		// Create structured response
 		result := map[string]interface{}{
 			"ship_symbol": shipSymbol,
-			"repair_cost": transaction.Price,
+			"repair_cost": resp.Data.Transaction.TotalPrice,
 			"agent": map[string]interface{}{
-				"symbol":  agent.Symbol,
-				"credits": agent.Credits,
+				"symbol":  resp.Data.Agent.Symbol,
+				"credits": resp.Data.Agent.Credits,
 			},
 			"ship_condition": map[string]interface{}{
-				"frame_integrity":   ship.Frame.Integrity,
-				"reactor_integrity": ship.Reactor.Integrity,
-				"engine_integrity":  ship.Engine.Integrity,
+				"frame_integrity":   resp.Data.Ship.Frame.Integrity,
+				"reactor_integrity": resp.Data.Ship.Reactor.Integrity,
+				"engine_integrity":  resp.Data.Ship.Engine.Integrity,
 			},
 			"transaction": map[string]interface{}{
-				"waypoint_symbol": transaction.WaypointSymbol,
-				"ship_symbol":     transaction.ShipSymbol,
-				"price":           transaction.Price,
-				"timestamp":       transaction.Timestamp,
+				"waypoint_symbol": resp.Data.Transaction.WaypointSymbol,
+				"ship_symbol":     resp.Data.Transaction.ShipSymbol,
+				"price":           resp.Data.Transaction.TotalPrice,
+				"timestamp":       resp.Data.Transaction.Timestamp,
 			},
 		}
 
 		// Add module and mount integrity information
-		if len(ship.Modules) > 0 {
+		if len(resp.Data.Ship.Modules) > 0 {
 			modules := []map[string]interface{}{}
-			for _, module := range ship.Modules {
+			for _, module := range resp.Data.Ship.Modules {
 				modules = append(modules, map[string]interface{}{
 					"symbol":    module.Symbol,
 					"condition": "OPERATIONAL", // Assume operational after repair
@@ -121,9 +121,9 @@ func (t *RepairShipTool) Handler() func(ctx context.Context, request mcp.CallToo
 			result["modules"] = modules
 		}
 
-		if len(ship.Mounts) > 0 {
+		if len(resp.Data.Ship.Mounts) > 0 {
 			mounts := []map[string]interface{}{}
-			for _, mount := range ship.Mounts {
+			for _, mount := range resp.Data.Ship.Mounts {
 				mounts = append(mounts, map[string]interface{}{
 					"symbol":    mount.Symbol,
 					"condition": "OPERATIONAL", // Assume operational after repair
@@ -134,27 +134,27 @@ func (t *RepairShipTool) Handler() func(ctx context.Context, request mcp.CallToo
 
 		// Create text summary
 		textSummary := fmt.Sprintf("## 🔧 Ship Repair Complete for %s\n\n", shipSymbol)
-		textSummary += fmt.Sprintf("✅ **Ship successfully repaired** at %s\n\n", transaction.WaypointSymbol)
+		textSummary += fmt.Sprintf("✅ **Ship successfully repaired** at %s\n\n", resp.Data.Transaction.WaypointSymbol)
 
 		// Financial summary
 		textSummary += "## 💰 Financial Summary\n\n"
-		textSummary += fmt.Sprintf("**Repair Cost:** %d credits\n", transaction.Price)
-		textSummary += fmt.Sprintf("**Remaining Credits:** %d credits\n", agent.Credits)
-		textSummary += fmt.Sprintf("**Agent:** %s\n\n", agent.Symbol)
+		textSummary += fmt.Sprintf("**Repair Cost:** %d credits\n", resp.Data.Transaction.TotalPrice)
+		textSummary += fmt.Sprintf("**Remaining Credits:** %d credits\n", resp.Data.Agent.Credits)
+		textSummary += fmt.Sprintf("**Agent:** %s\n\n", resp.Data.Agent.Symbol)
 
 		// Ship condition summary
 		textSummary += "## 🛠️ Ship Condition After Repair\n\n"
-		textSummary += fmt.Sprintf("**Frame Integrity:** %d%%\n", ship.Frame.Integrity)
-		textSummary += fmt.Sprintf("**Reactor Integrity:** %d%%\n", ship.Reactor.Integrity)
-		textSummary += fmt.Sprintf("**Engine Integrity:** %d%%\n", ship.Engine.Integrity)
+		textSummary += fmt.Sprintf("- **Frame Integrity:** %d%%\n", resp.Data.Ship.Frame.Integrity)
+		textSummary += fmt.Sprintf("- **Reactor Integrity:** %d%%\n", resp.Data.Ship.Reactor.Integrity)
+		textSummary += fmt.Sprintf("- **Engine Integrity:** %d%%\n", resp.Data.Ship.Engine.Integrity)
 
 		// Determine overall condition
-		minIntegrity := ship.Frame.Integrity
-		if ship.Reactor.Integrity < minIntegrity {
-			minIntegrity = ship.Reactor.Integrity
+		minIntegrity := resp.Data.Ship.Frame.Integrity
+		if resp.Data.Ship.Reactor.Integrity < minIntegrity {
+			minIntegrity = resp.Data.Ship.Reactor.Integrity
 		}
-		if ship.Engine.Integrity < minIntegrity {
-			minIntegrity = ship.Engine.Integrity
+		if resp.Data.Ship.Engine.Integrity < minIntegrity {
+			minIntegrity = resp.Data.Ship.Engine.Integrity
 		}
 
 		conditionIcon := "🟢"
@@ -175,17 +175,17 @@ func (t *RepairShipTool) Handler() func(ctx context.Context, request mcp.CallToo
 		textSummary += fmt.Sprintf("**Overall Condition:** %s %s (%d%% minimum)\n\n", conditionIcon, conditionText, minIntegrity)
 
 		// Add module and mount status
-		if len(ship.Modules) > 0 {
+		if len(resp.Data.Ship.Modules) > 0 {
 			textSummary += "**Modules:**\n"
-			for _, module := range ship.Modules {
+			for _, module := range resp.Data.Ship.Modules {
 				textSummary += fmt.Sprintf("✅ %s - Operational\n", module.Symbol)
 			}
 			textSummary += "\n"
 		}
 
-		if len(ship.Mounts) > 0 {
+		if len(resp.Data.Ship.Mounts) > 0 {
 			textSummary += "**Mounts:**\n"
-			for _, mount := range ship.Mounts {
+			for _, mount := range resp.Data.Ship.Mounts {
 				textSummary += fmt.Sprintf("✅ %s - Operational\n", mount.Symbol)
 			}
 			textSummary += "\n"
@@ -193,9 +193,9 @@ func (t *RepairShipTool) Handler() func(ctx context.Context, request mcp.CallToo
 
 		// Transaction details
 		textSummary += "## 📋 Transaction Details\n\n"
-		textSummary += fmt.Sprintf("**Location:** %s\n", transaction.WaypointSymbol)
-		textSummary += fmt.Sprintf("**Timestamp:** %s\n", transaction.Timestamp)
-		textSummary += fmt.Sprintf("**Agent:** %s\n\n", transaction.AgentSymbol)
+		textSummary += fmt.Sprintf("**Location:** %s\n", resp.Data.Transaction.WaypointSymbol)
+		textSummary += fmt.Sprintf("**Timestamp:** %s\n", resp.Data.Transaction.Timestamp)
+		textSummary += fmt.Sprintf("**Agent:** %s\n\n", resp.Data.Agent.Symbol)
 
 		// Next steps
 		textSummary += "## 🚀 Next Steps\n\n"

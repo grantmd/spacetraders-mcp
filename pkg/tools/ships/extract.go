@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"spacetraders-mcp/pkg/client"
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
 	"spacetraders-mcp/pkg/tools/utils"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -15,12 +15,12 @@ import (
 
 // ExtractResourcesTool handles extracting resources from asteroids and mining sites
 type ExtractResourcesTool struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewExtractResourcesTool creates a new extract resources tool
-func NewExtractResourcesTool(client *spacetraders.Client, logger *logging.Logger) *ExtractResourcesTool {
+func NewExtractResourcesTool(client *client.Client, logger *logging.Logger) *ExtractResourcesTool {
 	return &ExtractResourcesTool{
 		client: client,
 		logger: logger,
@@ -91,7 +91,7 @@ func (t *ExtractResourcesTool) Handler() func(ctx context.Context, request mcp.C
 
 		// Parse arguments
 		shipSymbol := ""
-		var survey *spacetraders.Survey
+		var survey *client.Survey
 
 		if request.Params.Arguments == nil {
 			return &mcp.CallToolResult{
@@ -112,7 +112,7 @@ func (t *ExtractResourcesTool) Handler() func(ctx context.Context, request mcp.C
 			// Parse survey if provided
 			if surveyData, exists := argsMap["survey"]; exists {
 				if surveyMap, ok := surveyData.(map[string]interface{}); ok {
-					survey = &spacetraders.Survey{}
+					survey = &client.Survey{}
 
 					if sig, exists := surveyMap["signature"]; exists {
 						if sigStr, ok := sig.(string); ok {
@@ -140,12 +140,12 @@ func (t *ExtractResourcesTool) Handler() func(ctx context.Context, request mcp.C
 
 					if deposits, exists := surveyMap["deposits"]; exists {
 						if depositsArray, ok := deposits.([]interface{}); ok {
-							survey.Deposits = make([]spacetraders.SurveyDeposit, 0, len(depositsArray))
+							survey.Deposits = make([]client.SurveyDeposit, 0, len(depositsArray))
 							for _, dep := range depositsArray {
 								if depMap, ok := dep.(map[string]interface{}); ok {
 									if symbol, exists := depMap["symbol"]; exists {
 										if symbolStr, ok := symbol.(string); ok {
-											survey.Deposits = append(survey.Deposits, spacetraders.SurveyDeposit{
+											survey.Deposits = append(survey.Deposits, client.SurveyDeposit{
 												Symbol: symbolStr,
 											})
 										}
@@ -174,7 +174,7 @@ func (t *ExtractResourcesTool) Handler() func(ctx context.Context, request mcp.C
 
 		// Extract resources
 		start := time.Now()
-		cooldown, extraction, cargo, events, err := t.client.ExtractResources(shipSymbol, survey)
+		resp, err := t.client.ExtractResources(shipSymbol, survey)
 		duration := time.Since(start)
 
 		if err != nil {
@@ -187,6 +187,11 @@ func (t *ExtractResourcesTool) Handler() func(ctx context.Context, request mcp.C
 				IsError: true,
 			}, nil
 		}
+
+		cooldown := resp.Data.Cooldown
+		extraction := resp.Data.Extraction
+		cargo := resp.Data.Cargo
+		events := resp.Data.Events
 
 		ctxLogger.APICall(fmt.Sprintf("/my/ships/%s/extract", shipSymbol), 201, duration.String())
 		ctxLogger.Info("Successfully extracted %d units of %s", extraction.Yield.Units, extraction.Yield.Symbol)

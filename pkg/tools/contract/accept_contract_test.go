@@ -5,14 +5,14 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/client"
 	"testing"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
 func TestAcceptContractTool_Tool(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	tool := NewAcceptContractTool(client)
 
 	mcpTool := tool.Tool()
@@ -60,20 +60,20 @@ func TestAcceptContractTool_Tool(t *testing.T) {
 
 func TestAcceptContractTool_Handler_Success(t *testing.T) {
 	// Mock successful contract acceptance
-	mockContract := spacetraders.Contract{
+	mockContract := client.Contract{
 		ID:            "test-contract-123",
 		FactionSymbol: "COSMIC",
 		Type:          "PROCUREMENT",
 		Accepted:      true,
 		Fulfilled:     false,
 		Expiration:    "2024-12-31T23:59:59Z",
-		Terms: spacetraders.ContractTerms{
+		Terms: client.ContractTerms{
 			Deadline: "2024-12-30T23:59:59Z",
-			Payment: spacetraders.ContractPayment{
+			Payment: client.ContractPayment{
 				OnAccepted:  10000,
 				OnFulfilled: 50000,
 			},
-			Deliver: []spacetraders.ContractDeliverGood{
+			Deliver: []client.ContractDeliverGood{
 				{
 					TradeSymbol:       "IRON_ORE",
 					DestinationSymbol: "X1-TEST-STATION",
@@ -84,17 +84,17 @@ func TestAcceptContractTool_Handler_Success(t *testing.T) {
 		},
 	}
 
-	mockAgent := spacetraders.Agent{
+	mockAgent := client.Agent{
 		Symbol:          "TEST_AGENT",
 		Credits:         110000,
 		ShipCount:       1,
 		StartingFaction: "COSMIC",
 	}
 
-	mockResponse := spacetraders.AcceptContractResponse{
+	mockResponse := client.AcceptContractResponse{
 		Data: struct {
-			Contract spacetraders.Contract `json:"contract"`
-			Agent    spacetraders.Agent    `json:"agent"`
+			Contract client.Contract `json:"contract"`
+			Agent    client.Agent    `json:"agent"`
 		}{
 			Contract: mockContract,
 			Agent:    mockAgent,
@@ -125,7 +125,7 @@ func TestAcceptContractTool_Handler_Success(t *testing.T) {
 	defer server.Close()
 
 	// Create client with test server URL
-	client := &spacetraders.Client{
+	client := &client.Client{
 		APIToken: "test-token",
 		BaseURL:  server.URL,
 	}
@@ -216,7 +216,7 @@ func TestAcceptContractTool_Handler_APIError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := &spacetraders.Client{
+	client := &client.Client{
 		APIToken: "test-token",
 		BaseURL:  server.URL,
 	}
@@ -258,7 +258,7 @@ func TestAcceptContractTool_Handler_APIError(t *testing.T) {
 }
 
 func TestAcceptContractTool_Handler_MissingContractID(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	tool := NewAcceptContractTool(client)
 	handler := tool.Handler()
 
@@ -290,7 +290,7 @@ func TestAcceptContractTool_Handler_MissingContractID(t *testing.T) {
 }
 
 func TestAcceptContractTool_Handler_EmptyContractID(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	tool := NewAcceptContractTool(client)
 	handler := tool.Handler()
 
@@ -325,7 +325,7 @@ func TestAcceptContractTool_Handler_EmptyContractID(t *testing.T) {
 }
 
 func TestAcceptContractTool_Handler_InvalidContractIDType(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	tool := NewAcceptContractTool(client)
 	handler := tool.Handler()
 

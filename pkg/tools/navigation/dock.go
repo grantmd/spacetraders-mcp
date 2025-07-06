@@ -4,20 +4,20 @@ import (
 	"context"
 	"fmt"
 
+	"spacetraders-mcp/pkg/client"
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // DockShipTool handles docking ships at waypoints
 type DockShipTool struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewDockShipTool creates a new dock ship tool
-func NewDockShipTool(client *spacetraders.Client, logger *logging.Logger) *DockShipTool {
+func NewDockShipTool(client *client.Client, logger *logging.Logger) *DockShipTool {
 	return &DockShipTool{
 		client: client,
 		logger: logger,
@@ -84,53 +84,53 @@ func (t *DockShipTool) Handler() func(ctx context.Context, request mcp.CallToolR
 		}
 
 		contextLogger.ToolCall("dock_ship", true)
-		contextLogger.Info(fmt.Sprintf("Successfully docked ship %s at %s", shipSymbol, nav.WaypointSymbol))
+		contextLogger.Info(fmt.Sprintf("Successfully docked ship %s at %s", shipSymbol, nav.Data.Nav.WaypointSymbol))
 
 		// Create structured response
 		result := map[string]interface{}{
 			"success":     true,
 			"ship_symbol": shipSymbol,
 			"navigation": map[string]interface{}{
-				"system_symbol":   nav.SystemSymbol,
-				"waypoint_symbol": nav.WaypointSymbol,
-				"status":          nav.Status,
-				"flight_mode":     nav.FlightMode,
+				"system_symbol":   nav.Data.Nav.SystemSymbol,
+				"waypoint_symbol": nav.Data.Nav.WaypointSymbol,
+				"status":          nav.Data.Nav.Status,
+				"flight_mode":     nav.Data.Nav.FlightMode,
 			},
 		}
 
 		// Add route information if available
-		if nav.Route.Destination.Symbol != "" {
+		if nav.Data.Nav.Route.Destination.Symbol != "" {
 			result["route"] = map[string]interface{}{
 				"destination": map[string]interface{}{
-					"symbol": nav.Route.Destination.Symbol,
-					"type":   nav.Route.Destination.Type,
-					"x":      nav.Route.Destination.X,
-					"y":      nav.Route.Destination.Y,
+					"symbol": nav.Data.Nav.Route.Destination.Symbol,
+					"type":   nav.Data.Nav.Route.Destination.Type,
+					"x":      nav.Data.Nav.Route.Destination.X,
+					"y":      nav.Data.Nav.Route.Destination.Y,
 				},
 				"origin": map[string]interface{}{
-					"symbol": nav.Route.Origin.Symbol,
-					"type":   nav.Route.Origin.Type,
-					"x":      nav.Route.Origin.X,
-					"y":      nav.Route.Origin.Y,
+					"symbol": nav.Data.Nav.Route.Origin.Symbol,
+					"type":   nav.Data.Nav.Route.Origin.Type,
+					"x":      nav.Data.Nav.Route.Origin.X,
+					"y":      nav.Data.Nav.Route.Origin.Y,
 				},
-				"departure_time": nav.Route.DepartureTime,
-				"arrival":        nav.Route.Arrival,
+				"departure_time": nav.Data.Nav.Route.DepartureTime,
+				"arrival":        nav.Data.Nav.Route.Arrival,
 			}
 		}
 
 		// Create text summary
 		textSummary := "## Ship Dock Successful\n\n"
 		textSummary += fmt.Sprintf("**Ship:** %s\n", shipSymbol)
-		textSummary += fmt.Sprintf("**Status:** %s\n", nav.Status)
-		textSummary += fmt.Sprintf("**Location:** %s (%s)\n", nav.WaypointSymbol, nav.SystemSymbol)
-		textSummary += fmt.Sprintf("**Flight Mode:** %s\n", nav.FlightMode)
+		textSummary += fmt.Sprintf("**Status:** %s\n", nav.Data.Nav.Status)
+		textSummary += fmt.Sprintf("**Location:** %s (%s)\n", nav.Data.Nav.WaypointSymbol, nav.Data.Nav.SystemSymbol)
+		textSummary += fmt.Sprintf("**Flight Mode:** %s\n", nav.Data.Nav.FlightMode)
 
-		if nav.Route.Destination.Symbol != "" {
+		if nav.Data.Nav.Route.Destination.Symbol != "" {
 			textSummary += "\n**Current Route:**\n"
-			textSummary += fmt.Sprintf("- From: %s (%s)\n", nav.Route.Origin.Symbol, nav.Route.Origin.Type)
-			textSummary += fmt.Sprintf("- To: %s (%s)\n", nav.Route.Destination.Symbol, nav.Route.Destination.Type)
-			textSummary += fmt.Sprintf("- Departure: %s\n", nav.Route.DepartureTime)
-			textSummary += fmt.Sprintf("- Arrival: %s\n", nav.Route.Arrival)
+			textSummary += fmt.Sprintf("- From: %s (%s)\n", nav.Data.Nav.Route.Origin.Symbol, nav.Data.Nav.Route.Origin.Type)
+			textSummary += fmt.Sprintf("- To: %s (%s)\n", nav.Data.Nav.Route.Destination.Symbol, nav.Data.Nav.Route.Destination.Type)
+			textSummary += fmt.Sprintf("- Departure: %s\n", nav.Data.Nav.Route.DepartureTime)
+			textSummary += fmt.Sprintf("- Arrival: %s\n", nav.Data.Nav.Route.Arrival)
 		}
 
 		textSummary += "\n**Available Actions:**\n"

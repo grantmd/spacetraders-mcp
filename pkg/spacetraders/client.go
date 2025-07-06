@@ -801,7 +801,7 @@ type FactionResponse struct {
 func NewClient(apiToken string) *Client {
 	return &Client{
 		APIToken: apiToken,
-		BaseURL:  "https://api.spacetraders.io/v2",
+		BaseURL:  "https://api.client.io/v2",
 	}
 }
 

@@ -9,19 +9,19 @@ import (
 	"time"
 
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/client"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // WaypointsResource handles the system waypoints information resource
 type WaypointsResource struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewWaypointsResource creates a new waypoints resource handler
-func NewWaypointsResource(client *spacetraders.Client, logger *logging.Logger) *WaypointsResource {
+func NewWaypointsResource(client *client.Client, logger *logging.Logger) *WaypointsResource {
 	return &WaypointsResource{
 		client: client,
 		logger: logger,
@@ -78,7 +78,7 @@ func (r *WaypointsResource) Handler() func(ctx context.Context, request mcp.Read
 		ctxLogger.Info("Successfully retrieved %d waypoints for system %s", len(waypoints), systemSymbol)
 
 		// Group waypoints by type for better organization
-		waypointsByType := make(map[string][]spacetraders.SystemWaypoint)
+		waypointsByType := make(map[string][]client.SystemWaypoint)
 		for _, waypoint := range waypoints {
 			waypointsByType[waypoint.Type] = append(waypointsByType[waypoint.Type], waypoint)
 		}
@@ -152,7 +152,7 @@ func (r *WaypointsResource) parseSystemSymbol(uri string) (string, error) {
 }
 
 // getWaypointTypeCounts returns a count of waypoints by type
-func (r *WaypointsResource) getWaypointTypeCounts(waypoints []spacetraders.SystemWaypoint) map[string]int {
+func (r *WaypointsResource) getWaypointTypeCounts(waypoints []client.SystemWaypoint) map[string]int {
 	counts := make(map[string]int)
 	for _, waypoint := range waypoints {
 		counts[waypoint.Type]++
@@ -161,7 +161,7 @@ func (r *WaypointsResource) getWaypointTypeCounts(waypoints []spacetraders.Syste
 }
 
 // getShipyardWaypoints returns waypoints that have shipyards
-func (r *WaypointsResource) getShipyardWaypoints(waypoints []spacetraders.SystemWaypoint) []string {
+func (r *WaypointsResource) getShipyardWaypoints(waypoints []client.SystemWaypoint) []string {
 	var shipyards []string
 	for _, waypoint := range waypoints {
 		for _, trait := range waypoint.Traits {
@@ -175,7 +175,7 @@ func (r *WaypointsResource) getShipyardWaypoints(waypoints []spacetraders.System
 }
 
 // getMarketWaypoints returns waypoints that have markets
-func (r *WaypointsResource) getMarketWaypoints(waypoints []spacetraders.SystemWaypoint) []string {
+func (r *WaypointsResource) getMarketWaypoints(waypoints []client.SystemWaypoint) []string {
 	var markets []string
 	for _, waypoint := range waypoints {
 		for _, trait := range waypoint.Traits {

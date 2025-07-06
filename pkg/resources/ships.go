@@ -6,19 +6,19 @@ import (
 	"time"
 
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/client"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // ShipsResource handles the ships information resource
 type ShipsResource struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewShipsResource creates a new ships resource handler
-func NewShipsResource(client *spacetraders.Client, logger *logging.Logger) *ShipsResource {
+func NewShipsResource(client *client.Client, logger *logging.Logger) *ShipsResource {
 	return &ShipsResource{
 		client: client,
 		logger: logger,

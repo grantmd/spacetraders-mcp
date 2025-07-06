@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"spacetraders-mcp/pkg/client"
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
 	"spacetraders-mcp/pkg/tools/utils"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -15,12 +15,12 @@ import (
 
 // JettisonCargoTool handles jettisoning cargo from ships
 type JettisonCargoTool struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewJettisonCargoTool creates a new jettison cargo tool
-func NewJettisonCargoTool(client *spacetraders.Client, logger *logging.Logger) *JettisonCargoTool {
+func NewJettisonCargoTool(client *client.Client, logger *logging.Logger) *JettisonCargoTool {
 	return &JettisonCargoTool{
 		client: client,
 		logger: logger,
@@ -126,7 +126,7 @@ func (t *JettisonCargoTool) Handler() func(ctx context.Context, request mcp.Call
 
 		// Jettison the cargo
 		start := time.Now()
-		cargo, err := t.client.JettisonCargo(shipSymbol, cargoSymbol, units)
+		resp, err := t.client.JettisonCargo(shipSymbol, cargoSymbol, units)
 		duration := time.Since(start)
 
 		if err != nil {
@@ -139,6 +139,8 @@ func (t *JettisonCargoTool) Handler() func(ctx context.Context, request mcp.Call
 				IsError: true,
 			}, nil
 		}
+
+		cargo := resp.Data.Cargo
 
 		ctxLogger.APICall(fmt.Sprintf("/my/ships/%s/jettison", shipSymbol), 200, duration.String())
 		ctxLogger.Info("Successfully jettisoned %d units of %s from ship %s", units, cargoSymbol, shipSymbol)

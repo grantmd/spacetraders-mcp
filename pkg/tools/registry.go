@@ -3,7 +3,7 @@ package tools
 import (
 	"context"
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/client"
 	"spacetraders-mcp/pkg/tools/contract"
 	"spacetraders-mcp/pkg/tools/exploration"
 	"spacetraders-mcp/pkg/tools/info"
@@ -23,13 +23,13 @@ type ToolHandler interface {
 
 // Registry manages all MCP tools
 type Registry struct {
-	client   *spacetraders.Client
+	client   *client.Client
 	logger   *logging.Logger
 	handlers []ToolHandler
 }
 
 // NewRegistry creates a new tool registry
-func NewRegistry(client *spacetraders.Client, logger *logging.Logger) *Registry {
+func NewRegistry(client *client.Client, logger *logging.Logger) *Registry {
 	registry := &Registry{
 		client:   client,
 		logger:   logger,

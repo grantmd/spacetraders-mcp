@@ -6,19 +6,19 @@ import (
 	"strings"
 
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/client"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // FleetAnalysisTool analyzes fleet capabilities vs contract requirements
 type FleetAnalysisTool struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewFleetAnalysisTool creates a new fleet analysis tool
-func NewFleetAnalysisTool(client *spacetraders.Client, logger *logging.Logger) *FleetAnalysisTool {
+func NewFleetAnalysisTool(client *client.Client, logger *logging.Logger) *FleetAnalysisTool {
 	return &FleetAnalysisTool{
 		client: client,
 		logger: logger,
@@ -183,7 +183,7 @@ type MaterialRequirement struct {
 }
 
 // analyzeFleet analyzes current fleet capabilities
-func (t *FleetAnalysisTool) analyzeFleet(ships []spacetraders.Ship) FleetAnalysis {
+func (t *FleetAnalysisTool) analyzeFleet(ships []client.Ship) FleetAnalysis {
 	analysis := FleetAnalysis{
 		ShipsByType: make(map[string]int),
 	}
@@ -219,7 +219,7 @@ func (t *FleetAnalysisTool) analyzeFleet(ships []spacetraders.Ship) FleetAnalysi
 }
 
 // analyzeContractRequirements analyzes what contracts need
-func (t *FleetAnalysisTool) analyzeContractRequirements(contracts []spacetraders.Contract) ContractRequirements {
+func (t *FleetAnalysisTool) analyzeContractRequirements(contracts []client.Contract) ContractRequirements {
 	requirements := ContractRequirements{
 		ActiveContracts: make([]ContractRequirement, 0),
 	}

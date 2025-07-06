@@ -4,20 +4,20 @@ import (
 	"context"
 	"fmt"
 
+	"spacetraders-mcp/pkg/client"
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // PatchNavTool handles changing ship navigation settings
 type PatchNavTool struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewPatchNavTool creates a new patch nav tool
-func NewPatchNavTool(client *spacetraders.Client, logger *logging.Logger) *PatchNavTool {
+func NewPatchNavTool(client *client.Client, logger *logging.Logger) *PatchNavTool {
 	return &PatchNavTool{
 		client: client,
 		logger: logger,
@@ -129,39 +129,39 @@ func (t *PatchNavTool) Handler() func(ctx context.Context, request mcp.CallToolR
 			"success":     true,
 			"ship_symbol": shipSymbol,
 			"navigation": map[string]interface{}{
-				"system_symbol":   nav.SystemSymbol,
-				"waypoint_symbol": nav.WaypointSymbol,
-				"status":          nav.Status,
-				"flight_mode":     nav.FlightMode,
+				"system_symbol":   nav.Data.SystemSymbol,
+				"waypoint_symbol": nav.Data.WaypointSymbol,
+				"status":          nav.Data.Status,
+				"flight_mode":     nav.Data.FlightMode,
 			},
 		}
 
 		// Add route information if available
-		if nav.Route.Destination.Symbol != "" {
+		if nav.Data.Route.Destination.Symbol != "" {
 			result["route"] = map[string]interface{}{
 				"destination": map[string]interface{}{
-					"symbol": nav.Route.Destination.Symbol,
-					"type":   nav.Route.Destination.Type,
-					"x":      nav.Route.Destination.X,
-					"y":      nav.Route.Destination.Y,
+					"symbol": nav.Data.Route.Destination.Symbol,
+					"type":   nav.Data.Route.Destination.Type,
+					"x":      nav.Data.Route.Destination.X,
+					"y":      nav.Data.Route.Destination.Y,
 				},
 				"origin": map[string]interface{}{
-					"symbol": nav.Route.Origin.Symbol,
-					"type":   nav.Route.Origin.Type,
-					"x":      nav.Route.Origin.X,
-					"y":      nav.Route.Origin.Y,
+					"symbol": nav.Data.Route.Origin.Symbol,
+					"type":   nav.Data.Route.Origin.Type,
+					"x":      nav.Data.Route.Origin.X,
+					"y":      nav.Data.Route.Origin.Y,
 				},
-				"departure_time": nav.Route.DepartureTime,
-				"arrival":        nav.Route.Arrival,
+				"departure_time": nav.Data.Route.DepartureTime,
+				"arrival":        nav.Data.Route.Arrival,
 			}
 		}
 
 		// Create text summary with flight mode descriptions
 		textSummary := "## Flight Mode Updated\n\n"
 		textSummary += fmt.Sprintf("**Ship:** %s\n", shipSymbol)
-		textSummary += fmt.Sprintf("**Flight Mode:** %s\n", nav.FlightMode)
-		textSummary += fmt.Sprintf("**Status:** %s\n", nav.Status)
-		textSummary += fmt.Sprintf("**Location:** %s (%s)\n", nav.WaypointSymbol, nav.SystemSymbol)
+		textSummary += fmt.Sprintf("**Flight Mode:** %s\n", nav.Data.FlightMode)
+		textSummary += fmt.Sprintf("**Status:** %s\n", nav.Data.Status)
+		textSummary += fmt.Sprintf("**Location:** %s (%s)\n", nav.Data.WaypointSymbol, nav.Data.SystemSymbol)
 
 		// Add flight mode description
 		modeDescriptions := map[string]string{
@@ -170,16 +170,16 @@ func (t *PatchNavTool) Handler() func(ctx context.Context, request mcp.CallToolR
 			"CRUISE":  "Balanced speed and fuel consumption",
 			"BURN":    "Fastest speed, highest fuel consumption, shortest travel times",
 		}
-		if desc, exists := modeDescriptions[nav.FlightMode]; exists {
+		if desc, exists := modeDescriptions[nav.Data.FlightMode]; exists {
 			textSummary += fmt.Sprintf("**Mode Description:** %s\n", desc)
 		}
 
-		if nav.Route.Destination.Symbol != "" {
+		if nav.Data.Route.Destination.Symbol != "" {
 			textSummary += "\n**Current Route:**\n"
-			textSummary += fmt.Sprintf("- From: %s (%s)\n", nav.Route.Origin.Symbol, nav.Route.Origin.Type)
-			textSummary += fmt.Sprintf("- To: %s (%s)\n", nav.Route.Destination.Symbol, nav.Route.Destination.Type)
-			textSummary += fmt.Sprintf("- Departure: %s\n", nav.Route.DepartureTime)
-			textSummary += fmt.Sprintf("- Arrival: %s\n", nav.Route.Arrival)
+			textSummary += fmt.Sprintf("- From: %s (%s)\n", nav.Data.Route.Origin.Symbol, nav.Data.Route.Origin.Type)
+			textSummary += fmt.Sprintf("- To: %s (%s)\n", nav.Data.Route.Destination.Symbol, nav.Data.Route.Destination.Type)
+			textSummary += fmt.Sprintf("- Departure: %s\n", nav.Data.Route.DepartureTime)
+			textSummary += fmt.Sprintf("- Arrival: %s\n", nav.Data.Route.Arrival)
 			textSummary += "\n**Note:** The arrival time may have changed due to the flight mode change.\n"
 		}
 

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"spacetraders-mcp/pkg/client"
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
 	"spacetraders-mcp/pkg/tools/utils"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -14,12 +14,12 @@ import (
 
 // ScanWaypointsTool allows scanning for waypoints around a ship
 type ScanWaypointsTool struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewScanWaypointsTool creates a new scan waypoints tool
-func NewScanWaypointsTool(client *spacetraders.Client, logger *logging.Logger) *ScanWaypointsTool {
+func NewScanWaypointsTool(client *client.Client, logger *logging.Logger) *ScanWaypointsTool {
 	return &ScanWaypointsTool{
 		client: client,
 		logger: logger,
@@ -86,18 +86,18 @@ func (t *ScanWaypointsTool) Handler() func(ctx context.Context, request mcp.Call
 		}
 
 		contextLogger.ToolCall("scan_waypoints", true)
-		contextLogger.Info(fmt.Sprintf("Successfully scanned %d waypoints with ship %s", len(scanData.Waypoints), shipSymbol))
+		contextLogger.Info(fmt.Sprintf("Successfully scanned %d waypoints with ship %s", len(scanData.Data.Waypoints), shipSymbol))
 
 		// Create structured response
 		result := map[string]interface{}{
 			"ship_symbol":     shipSymbol,
-			"waypoints_found": len(scanData.Waypoints),
-			"cooldown":        scanData.Cooldown,
+			"waypoints_found": len(scanData.Data.Waypoints),
+			"cooldown":        scanData.Data.Cooldown,
 			"waypoints":       []map[string]interface{}{},
 		}
 
 		// Build waypoints data
-		for _, waypoint := range scanData.Waypoints {
+		for _, waypoint := range scanData.Data.Waypoints {
 			waypointData := map[string]interface{}{
 				"symbol": waypoint.Symbol,
 				"type":   waypoint.Type,
@@ -115,18 +115,7 @@ func (t *ScanWaypointsTool) Handler() func(ctx context.Context, request mcp.Call
 				})
 			}
 
-			// Add modifiers if available
-			if len(waypoint.Modifiers) > 0 {
-				modifiers := []map[string]interface{}{}
-				for _, modifier := range waypoint.Modifiers {
-					modifiers = append(modifiers, map[string]interface{}{
-						"symbol":      modifier.Symbol,
-						"name":        modifier.Name,
-						"description": modifier.Description,
-					})
-				}
-				waypointData["modifiers"] = modifiers
-			}
+			// ScannedWaypoint doesn't include modifiers field
 
 			// Add orbital information if available
 			if len(waypoint.Orbitals) > 0 {
@@ -148,16 +137,16 @@ func (t *ScanWaypointsTool) Handler() func(ctx context.Context, request mcp.Call
 		// Create text summary
 		textSummary := fmt.Sprintf("## 🔍 Waypoint Scan Results for %s\n\n", shipSymbol)
 
-		if len(scanData.Waypoints) == 0 {
+		if len(scanData.Data.Waypoints) == 0 {
 			textSummary += "❌ **No waypoints detected** in scanning range.\n\n"
 			textSummary += "This could mean:\n"
 			textSummary += "- Your ship doesn't have appropriate scanning equipment\n"
 			textSummary += "- No undiscovered waypoints are within scanning range\n"
 			textSummary += "- The ship is on cooldown from previous scans\n\n"
 		} else {
-			textSummary += fmt.Sprintf("✅ **Detected %d waypoint(s)** in scanning range:\n\n", len(scanData.Waypoints))
+			textSummary += fmt.Sprintf("✅ **Detected %d waypoint(s)** in scanning range:\n\n", len(scanData.Data.Waypoints))
 
-			for i, waypoint := range scanData.Waypoints {
+			for i, waypoint := range scanData.Data.Waypoints {
 				textSummary += fmt.Sprintf("### %d. %s (%s)\n", i+1, waypoint.Symbol, waypoint.Type)
 				textSummary += fmt.Sprintf("**Location:** (%d, %d)\n", waypoint.X, waypoint.Y)
 
@@ -182,12 +171,7 @@ func (t *ScanWaypointsTool) Handler() func(ctx context.Context, request mcp.Call
 					}
 				}
 
-				if len(waypoint.Modifiers) > 0 {
-					textSummary += "**Modifiers:**\n"
-					for _, modifier := range waypoint.Modifiers {
-						textSummary += fmt.Sprintf("⚠️ %s - %s\n", modifier.Name, modifier.Description)
-					}
-				}
+				// ScannedWaypoint doesn't include modifiers field
 
 				if len(waypoint.Orbitals) > 0 {
 					textSummary += "**Orbitals:** "
@@ -198,7 +182,7 @@ func (t *ScanWaypointsTool) Handler() func(ctx context.Context, request mcp.Call
 					textSummary += strings.Join(orbitalNames, ", ") + "\n"
 				}
 
-				if waypoint.Faction.Symbol != "" {
+				if waypoint.Faction != nil && waypoint.Faction.Symbol != "" {
 					textSummary += fmt.Sprintf("**Faction:** %s\n", waypoint.Faction.Symbol)
 				}
 
@@ -207,21 +191,20 @@ func (t *ScanWaypointsTool) Handler() func(ctx context.Context, request mcp.Call
 		}
 
 		// Add cooldown information
-		if scanData.Cooldown.TotalSeconds > 0 {
+		if scanData.Data.Cooldown.TotalSeconds > 0 {
 			textSummary += "## ⏳ Cooldown Information\n\n"
-			textSummary += fmt.Sprintf("**Total Cooldown:** %d seconds\n", scanData.Cooldown.TotalSeconds)
-			textSummary += fmt.Sprintf("**Remaining:** %d seconds\n", scanData.Cooldown.RemainingSeconds)
-			if scanData.Cooldown.Expiration != "" {
-				textSummary += fmt.Sprintf("**Expires:** %s\n", scanData.Cooldown.Expiration)
+			textSummary += fmt.Sprintf("**Total Cooldown:** %d seconds\n", scanData.Data.Cooldown.TotalSeconds)
+			textSummary += fmt.Sprintf("**Remaining:** %d seconds\n", scanData.Data.Cooldown.RemainingSeconds)
+			if scanData.Data.Cooldown.Expiration != "" {
+				textSummary += fmt.Sprintf("**Expires:** %s\n", scanData.Data.Cooldown.Expiration)
 			}
-			textSummary += "\n"
 		}
 
 		// Add next steps
 		textSummary += "## 🚀 Next Steps\n\n"
-		if len(scanData.Waypoints) > 0 {
-			textSummary += "To explore discovered waypoints:\n"
-			for _, waypoint := range scanData.Waypoints {
+		if len(scanData.Data.Waypoints) > 0 {
+			textSummary += "**Explore discovered waypoints:**\n"
+			for _, waypoint := range scanData.Data.Waypoints {
 				textSummary += fmt.Sprintf("- Navigate to %s: `navigate_ship` tool\n", waypoint.Symbol)
 
 				// Add specific recommendations based on traits

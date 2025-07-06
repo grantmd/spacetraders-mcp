@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"spacetraders-mcp/pkg/client"
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
 	"spacetraders-mcp/pkg/tools/utils"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -15,12 +15,12 @@ import (
 
 // RefuelShipTool handles refueling ships at fuel stations
 type RefuelShipTool struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewRefuelShipTool creates a new refuel ship tool
-func NewRefuelShipTool(client *spacetraders.Client, logger *logging.Logger) *RefuelShipTool {
+func NewRefuelShipTool(client *client.Client, logger *logging.Logger) *RefuelShipTool {
 	return &RefuelShipTool{
 		client: client,
 		logger: logger,
@@ -126,7 +126,11 @@ func (t *RefuelShipTool) Handler() func(ctx context.Context, request mcp.CallToo
 
 		// Refuel the ship
 		start := time.Now()
-		agent, fuel, transaction, err := t.client.RefuelShip(shipSymbol, units, fromCargo)
+		var unitsPtr *int
+		if units > 0 {
+			unitsPtr = &units
+		}
+		resp, err := t.client.RefuelShip(shipSymbol, unitsPtr, fromCargo)
 		duration := time.Since(start)
 
 		if err != nil {
@@ -149,60 +153,60 @@ func (t *RefuelShipTool) Handler() func(ctx context.Context, request mcp.CallToo
 			"message":     fmt.Sprintf("Successfully refueled ship %s", shipSymbol),
 			"ship_symbol": shipSymbol,
 			"fuel": map[string]interface{}{
-				"current":  fuel.Current,
-				"capacity": fuel.Capacity,
+				"current":  resp.Data.Fuel.Current,
+				"capacity": resp.Data.Fuel.Capacity,
 			},
 			"transaction": map[string]interface{}{
-				"waypoint_symbol": transaction.WaypointSymbol,
-				"price":           transaction.Price,
-				"timestamp":       transaction.Timestamp,
+				"waypoint_symbol": resp.Data.Transaction.WaypointSymbol,
+				"price":           resp.Data.Transaction.TotalPrice,
+				"timestamp":       resp.Data.Transaction.Timestamp,
 			},
 			"agent": map[string]interface{}{
-				"credits": agent.Credits,
+				"credits": resp.Data.Agent.Credits,
 			},
 		}
 
 		// Add fuel consumption details if available
-		if fuel.Consumed.Amount > 0 {
+		if resp.Data.Fuel.Consumed.Amount > 0 {
 			result["fuel_consumed"] = map[string]interface{}{
-				"amount":    fuel.Consumed.Amount,
-				"timestamp": fuel.Consumed.Timestamp,
+				"amount":    resp.Data.Fuel.Consumed.Amount,
+				"timestamp": resp.Data.Fuel.Consumed.Timestamp,
 			}
 		}
 
 		jsonData := utils.FormatJSON(result)
 
 		// Calculate fuel purchased and cost per unit
-		fuelPurchased := fuel.Current - (fuel.Capacity - transaction.Price) // This is an approximation
+		fuelPurchased := resp.Data.Fuel.Current - (resp.Data.Fuel.Capacity - resp.Data.Transaction.TotalPrice) // This is an approximation
 		if units > 0 {
 			fuelPurchased = units
 		}
 
 		costPerUnit := 0
 		if fuelPurchased > 0 {
-			costPerUnit = transaction.Price / fuelPurchased
+			costPerUnit = resp.Data.Transaction.TotalPrice / fuelPurchased
 		}
 
 		// Create formatted text summary
 		textSummary := "⛽ **Ship Refuel Successful!**\n\n"
 		textSummary += fmt.Sprintf("**Ship:** %s\n", shipSymbol)
-		textSummary += fmt.Sprintf("**Location:** %s\n", transaction.WaypointSymbol)
-		textSummary += fmt.Sprintf("**Fuel Status:** %d/%d units", fuel.Current, fuel.Capacity)
+		textSummary += fmt.Sprintf("**Location:** %s\n", resp.Data.Transaction.WaypointSymbol)
+		textSummary += fmt.Sprintf("**Fuel Status:** %d/%d units", resp.Data.Fuel.Current, resp.Data.Fuel.Capacity)
 
-		if fuel.Current == fuel.Capacity {
+		if resp.Data.Fuel.Current == resp.Data.Fuel.Capacity {
 			textSummary += " (Full tank! ⛽)\n"
 		} else {
-			fuelPercentage := float64(fuel.Current) / float64(fuel.Capacity) * 100
+			fuelPercentage := float64(resp.Data.Fuel.Current) / float64(resp.Data.Fuel.Capacity) * 100
 			textSummary += fmt.Sprintf(" (%.1f%% full)\n", fuelPercentage)
 		}
 
-		textSummary += fmt.Sprintf("**Cost:** %d credits", transaction.Price)
+		textSummary += fmt.Sprintf("**Cost:** %d credits", resp.Data.Transaction.TotalPrice)
 		if fuelPurchased > 0 && costPerUnit > 0 {
 			textSummary += fmt.Sprintf(" (%d credits per unit)", costPerUnit)
 		}
 		textSummary += "\n"
 
-		textSummary += fmt.Sprintf("**Remaining Credits:** %d\n", agent.Credits)
+		textSummary += fmt.Sprintf("**Remaining Credits:** %d\n", resp.Data.Agent.Credits)
 
 		if fromCargo {
 			textSummary += "\n**Source:** Refueled from ship's cargo inventory\n"
@@ -210,8 +214,8 @@ func (t *RefuelShipTool) Handler() func(ctx context.Context, request mcp.CallToo
 			textSummary += "\n**Source:** Purchased fuel from local marketplace\n"
 		}
 
-		if fuel.Current < fuel.Capacity {
-			remainingCapacity := fuel.Capacity - fuel.Current
+		if resp.Data.Fuel.Current < resp.Data.Fuel.Capacity {
+			remainingCapacity := resp.Data.Fuel.Capacity - resp.Data.Fuel.Current
 			textSummary += fmt.Sprintf("\n💡 **Note:** Ship can still hold %d more fuel units if needed.\n", remainingCapacity)
 		}
 

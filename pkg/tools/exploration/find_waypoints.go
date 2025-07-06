@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/client"
 	"spacetraders-mcp/pkg/tools/utils"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -14,12 +14,12 @@ import (
 
 // FindWaypointsTool helps find waypoints by traits and facilities
 type FindWaypointsTool struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewFindWaypointsTool creates a new waypoint search tool
-func NewFindWaypointsTool(client *spacetraders.Client, logger *logging.Logger) *FindWaypointsTool {
+func NewFindWaypointsTool(client *client.Client, logger *logging.Logger) *FindWaypointsTool {
 	return &FindWaypointsTool{
 		client: client,
 		logger: logger,
@@ -114,7 +114,7 @@ func (t *FindWaypointsTool) Handler() func(ctx context.Context, request mcp.Call
 		}
 
 		// Filter waypoints by trait and optionally by type
-		var matchingWaypoints []spacetraders.SystemWaypoint
+		var matchingWaypoints []client.SystemWaypoint
 		for _, waypoint := range waypoints {
 			// Check waypoint type filter
 			if waypointType != "" && waypoint.Type != waypointType {

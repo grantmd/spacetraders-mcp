@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"spacetraders-mcp/pkg/client"
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
 	"spacetraders-mcp/pkg/tools/utils"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -15,12 +15,12 @@ import (
 
 // BuyCargoTool handles purchasing cargo for ships at markets
 type BuyCargoTool struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewBuyCargoTool creates a new buy cargo tool
-func NewBuyCargoTool(client *spacetraders.Client, logger *logging.Logger) *BuyCargoTool {
+func NewBuyCargoTool(client *client.Client, logger *logging.Logger) *BuyCargoTool {
 	return &BuyCargoTool{
 		client: client,
 		logger: logger,
@@ -126,7 +126,7 @@ func (t *BuyCargoTool) Handler() func(ctx context.Context, request mcp.CallToolR
 
 		// Buy the cargo
 		start := time.Now()
-		agent, cargo, transaction, err := t.client.BuyCargo(shipSymbol, cargoSymbol, units)
+		resp, err := t.client.BuyCargo(shipSymbol, cargoSymbol, units)
 		duration := time.Since(start)
 
 		if err != nil {
@@ -139,6 +139,10 @@ func (t *BuyCargoTool) Handler() func(ctx context.Context, request mcp.CallToolR
 				IsError: true,
 			}, nil
 		}
+
+		transaction := resp.Data.Transaction
+		cargo := resp.Data.Cargo
+		agent := resp.Data.Agent
 
 		ctxLogger.APICall(fmt.Sprintf("/my/ships/%s/purchase", shipSymbol), 201, duration.String())
 		ctxLogger.Info("Successfully bought %d units of %s for ship %s, spent %d credits", units, cargoSymbol, shipSymbol, transaction.TotalPrice)

@@ -2,8 +2,8 @@ package resources
 
 import (
 	"context"
+	"spacetraders-mcp/pkg/client"
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -17,13 +17,13 @@ type ResourceHandler interface {
 
 // Registry manages all MCP resources
 type Registry struct {
-	client   *spacetraders.Client
+	client   *client.Client
 	logger   *logging.Logger
 	handlers []ResourceHandler
 }
 
 // NewRegistry creates a new resource registry
-func NewRegistry(client *spacetraders.Client, logger *logging.Logger) *Registry {
+func NewRegistry(client *client.Client, logger *logging.Logger) *Registry {
 	registry := &Registry{
 		client:   client,
 		logger:   logger,

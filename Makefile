@@ -52,6 +52,7 @@ clean:
 	rm -f spacetraders-mcp-test
 	rm -f coverage.out
 	rm -f coverage.html
+	rm -rf ./generated
 
 # Development mode - build and run with example request
 dev: build
@@ -99,6 +100,17 @@ quick-test: build
 	@echo "Testing agent info resource..."
 	@echo '{"jsonrpc": "2.0", "id": 1, "method": "resources/read", "params": {"uri": "spacetraders://agent/info"}}' | ./spacetraders-mcp 2>/dev/null | jq .
 
+# Generate OpenAPI client from remote spec
+generate-client:
+	@echo "Generating OpenAPI client..."
+	openapi-generator generate -i https://spacetraders.io/SpaceTraders.json -g go -o ./generated/spacetraders --additional-properties=packageName=spacetraders,clientPackage=spacetraders,modelPackage=spacetraders,generateInterfaces=true,structPrefix=true,enumClassPrefix=true,hideGenerationTimestamp=true,withGoCodegenComment=true,isGoSubmodule=true,withXml=false,prependFormOrBodyParameters=false,generateMarshalJSON=false,generateUnmarshalJSON=false
+	@echo "Generated client available in ./generated/spacetraders"
+
+# Clean generated files
+clean-generated:
+	@echo "Cleaning generated files..."
+	rm -rf ./generated
+
 # Show help
 help:
 	@echo "SpaceTraders MCP Server - Available targets:"
@@ -119,6 +131,8 @@ help:
 	@echo "  bench              Run benchmarks"
 	@echo "  install-dev-deps   Install development dependencies"
 	@echo "  quick-test         Quick test with real API (requires SPACETRADERS_API_TOKEN)"
+	@echo "  generate-client    Generate OpenAPI client from remote spec"
+	@echo "  clean-generated    Clean generated files"
 	@echo "  help               Show this help message"
 	@echo ""
 	@echo "Environment variables:"
@@ -130,3 +144,4 @@ help:
 	@echo "  make test-unit                       # Run unit tests only"
 	@echo "  SPACETRADERS_API_TOKEN=xyz make test-full # Run tests with real API"
 	@echo "  make quick-test                      # Quick API test"
+	@echo "  make generate-client                 # Generate OpenAPI client"

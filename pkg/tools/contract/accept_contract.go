@@ -4,18 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/client"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // AcceptContractTool handles accepting contracts
 type AcceptContractTool struct {
-	client *spacetraders.Client
+	client *client.Client
 }
 
 // NewAcceptContractTool creates a new AcceptContractTool
-func NewAcceptContractTool(client *spacetraders.Client) *AcceptContractTool {
+func NewAcceptContractTool(client *client.Client) *AcceptContractTool {
 	return &AcceptContractTool{
 		client: client,
 	}
@@ -63,7 +63,7 @@ func (t *AcceptContractTool) Handler() func(ctx context.Context, request mcp.Cal
 		}
 
 		// Accept the contract
-		contract, agent, err := t.client.AcceptContract(contractID)
+		resp, err := t.client.AcceptContract(contractID)
 		if err != nil {
 			return &mcp.CallToolResult{
 				IsError: true,
@@ -78,26 +78,27 @@ func (t *AcceptContractTool) Handler() func(ctx context.Context, request mcp.Cal
 			"success": true,
 			"message": fmt.Sprintf("Successfully accepted contract %s", contractID),
 			"contract": map[string]interface{}{
-				"id":         contract.ID,
-				"faction":    contract.FactionSymbol,
-				"type":       contract.Type,
-				"accepted":   contract.Accepted,
-				"fulfilled":  contract.Fulfilled,
-				"expiration": contract.Expiration,
+				"id":         resp.Data.Contract.ID,
+				"faction":    resp.Data.Contract.FactionSymbol,
+				"type":       resp.Data.Contract.Type,
+				"accepted":   resp.Data.Contract.Accepted,
+				"fulfilled":  resp.Data.Contract.Fulfilled,
+				"expiration": resp.Data.Contract.Expiration,
+				"deadline":   resp.Data.Contract.DeadlineToAccept,
 				"terms": map[string]interface{}{
-					"deadline": contract.Terms.Deadline,
+					"deadline": resp.Data.Contract.Terms.Deadline,
 					"payment": map[string]interface{}{
-						"on_accepted":  contract.Terms.Payment.OnAccepted,
-						"on_fulfilled": contract.Terms.Payment.OnFulfilled,
+						"on_accepted":  resp.Data.Contract.Terms.Payment.OnAccepted,
+						"on_fulfilled": resp.Data.Contract.Terms.Payment.OnFulfilled,
 					},
-					"deliver": contract.Terms.Deliver,
+					"deliver": resp.Data.Contract.Terms.Deliver,
 				},
 			},
 			"agent": map[string]interface{}{
-				"symbol":  agent.Symbol,
-				"credits": agent.Credits,
-				"ships":   agent.ShipCount,
-				"faction": agent.StartingFaction,
+				"symbol":  resp.Data.Agent.Symbol,
+				"credits": resp.Data.Agent.Credits,
+				"ships":   resp.Data.Agent.ShipCount,
+				"faction": resp.Data.Agent.StartingFaction,
 			},
 		}
 

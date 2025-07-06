@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/client"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -20,7 +20,7 @@ func createMockLogger() *logging.Logger {
 }
 
 func TestAgentResource_Resource(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	logger := createMockLogger()
 	resource := NewAgentResource(client, logger)
 
@@ -43,7 +43,7 @@ func TestAgentResource_Resource(t *testing.T) {
 }
 
 func TestWaypointsResource_Resource(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	logger := createMockLogger()
 	resource := NewWaypointsResource(client, logger)
 
@@ -67,13 +67,13 @@ func TestWaypointsResource_Resource(t *testing.T) {
 
 func TestWaypointsResource_Handler_Success(t *testing.T) {
 	// Mock successful waypoints response
-	mockWaypoints := []spacetraders.SystemWaypoint{
+	mockWaypoints := []client.SystemWaypoint{
 		{
 			Symbol: "X1-TEST-A1",
 			Type:   "PLANET",
 			X:      10,
 			Y:      20,
-			Traits: []spacetraders.WaypointTrait{
+			Traits: []client.WaypointTrait{
 				{
 					Symbol:      "MARKETPLACE",
 					Name:        "Marketplace",
@@ -86,7 +86,7 @@ func TestWaypointsResource_Handler_Success(t *testing.T) {
 			Type:   "MOON",
 			X:      15,
 			Y:      25,
-			Traits: []spacetraders.WaypointTrait{
+			Traits: []client.WaypointTrait{
 				{
 					Symbol:      "SHIPYARD",
 					Name:        "Shipyard",
@@ -96,7 +96,7 @@ func TestWaypointsResource_Handler_Success(t *testing.T) {
 		},
 	}
 
-	mockResponse := spacetraders.SystemWaypointsResponse{
+	mockResponse := client.SystemWaypointsResponse{
 		Data: mockWaypoints,
 		Meta: struct {
 			Total int `json:"total"`
@@ -129,7 +129,7 @@ func TestWaypointsResource_Handler_Success(t *testing.T) {
 	defer server.Close()
 
 	// Create client with test server URL
-	client := &spacetraders.Client{
+	client := &client.Client{
 		APIToken: "test-token",
 		BaseURL:  server.URL,
 	}
@@ -185,7 +185,7 @@ func TestWaypointsResource_Handler_Success(t *testing.T) {
 }
 
 func TestWaypointsResource_Handler_InvalidURI(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	logger := createMockLogger()
 	resource := NewWaypointsResource(client, logger)
 	handler := resource.Handler()
@@ -220,7 +220,7 @@ func TestWaypointsResource_Handler_InvalidURI(t *testing.T) {
 }
 
 func TestShipyardResource_Resource(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	logger := createMockLogger()
 	resource := NewShipyardResource(client, logger)
 
@@ -244,19 +244,19 @@ func TestShipyardResource_Resource(t *testing.T) {
 
 func TestShipyardResource_Handler_Success(t *testing.T) {
 	// Mock successful shipyard response
-	mockShipyard := spacetraders.Shipyard{
+	mockShipyard := client.Shipyard{
 		Symbol: "X1-TEST-SHIPYARD",
-		ShipTypes: []spacetraders.ShipyardShipType{
+		ShipTypes: []client.ShipyardShipType{
 			{Type: "SHIP_PROBE"},
 		},
-		Ships: []spacetraders.ShipyardShip{
+		Ships: []client.ShipyardShip{
 			{
 				Type:          "SHIP_PROBE",
 				Name:          "Probe",
 				Description:   "A small exploration vessel",
 				Supply:        "ABUNDANT",
 				PurchasePrice: 50000,
-				Frame: spacetraders.ShipyardShipFrame{
+				Frame: client.ShipyardShipFrame{
 					Symbol:         "FRAME_PROBE",
 					Name:           "Probe Frame",
 					Description:    "Small frame for probe ships",
@@ -269,7 +269,7 @@ func TestShipyardResource_Handler_Success(t *testing.T) {
 		ModificationsFee: 1000,
 	}
 
-	mockResponse := spacetraders.ShipyardResponse{
+	mockResponse := client.ShipyardResponse{
 		Data: mockShipyard,
 	}
 
@@ -294,7 +294,7 @@ func TestShipyardResource_Handler_Success(t *testing.T) {
 	defer server.Close()
 
 	// Create client with test server URL
-	client := &spacetraders.Client{
+	client := &client.Client{
 		APIToken: "test-token",
 		BaseURL:  server.URL,
 	}
@@ -354,7 +354,7 @@ func TestShipyardResource_Handler_Success(t *testing.T) {
 }
 
 func TestShipyardResource_Handler_InvalidURI(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	logger := createMockLogger()
 	resource := NewShipyardResource(client, logger)
 	handler := resource.Handler()
@@ -400,7 +400,7 @@ func contains(s, substr string) bool {
 
 func TestAgentResource_Handler_Success(t *testing.T) {
 	// Mock successful agent response
-	mockAgent := spacetraders.Agent{
+	mockAgent := client.Agent{
 		AccountID:       "test-account",
 		Symbol:          "TEST_AGENT",
 		Headquarters:    "X1-TEST-HQ",
@@ -409,7 +409,7 @@ func TestAgentResource_Handler_Success(t *testing.T) {
 		ShipCount:       2,
 	}
 
-	mockResponse := spacetraders.AgentResponse{
+	mockResponse := client.AgentResponse{
 		Data: mockAgent,
 	}
 
@@ -429,7 +429,7 @@ func TestAgentResource_Handler_Success(t *testing.T) {
 	defer server.Close()
 
 	// Create client with test server
-	client := &spacetraders.Client{
+	client := &client.Client{
 		APIToken: "test-token",
 		BaseURL:  server.URL,
 	}
@@ -490,7 +490,7 @@ func TestAgentResource_Handler_Success(t *testing.T) {
 }
 
 func TestAgentResource_Handler_InvalidURI(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	logger := createMockLogger()
 	resource := NewAgentResource(client, logger)
 
@@ -528,7 +528,7 @@ func TestAgentResource_Handler_InvalidURI(t *testing.T) {
 }
 
 func TestShipsResource_Resource(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	logger := createMockLogger()
 	resource := NewShipsResource(client, logger)
 
@@ -547,10 +547,10 @@ func TestShipsResource_Resource(t *testing.T) {
 
 func TestShipsResource_Handler_Success(t *testing.T) {
 	// Mock ships response
-	mockShips := []spacetraders.Ship{
+	mockShips := []client.Ship{
 		{
 			Symbol: "TEST_SHIP_1",
-			Registration: spacetraders.Registration{
+			Registration: client.Registration{
 				Name:          "Test Ship 1",
 				FactionSymbol: "TEST_FACTION",
 				Role:          "COMMAND",
@@ -558,7 +558,7 @@ func TestShipsResource_Handler_Success(t *testing.T) {
 		},
 		{
 			Symbol: "TEST_SHIP_2",
-			Registration: spacetraders.Registration{
+			Registration: client.Registration{
 				Name:          "Test Ship 2",
 				FactionSymbol: "TEST_FACTION",
 				Role:          "HAULER",
@@ -566,7 +566,7 @@ func TestShipsResource_Handler_Success(t *testing.T) {
 		},
 	}
 
-	mockResponse := spacetraders.ShipsResponse{
+	mockResponse := client.ShipsResponse{
 		Data: mockShips,
 	}
 
@@ -586,7 +586,7 @@ func TestShipsResource_Handler_Success(t *testing.T) {
 	defer server.Close()
 
 	// Create client with test server
-	client := &spacetraders.Client{
+	client := &client.Client{
 		APIToken: "test-token",
 		BaseURL:  server.URL,
 	}
@@ -644,7 +644,7 @@ func TestShipsResource_Handler_Success(t *testing.T) {
 }
 
 func TestContractsResource_Resource(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	logger := createMockLogger()
 	resource := NewContractsResource(client, logger)
 
@@ -662,7 +662,7 @@ func TestContractsResource_Resource(t *testing.T) {
 }
 
 func TestRegistry_NewRegistry(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	logger := createMockLogger()
 	registry := NewRegistry(client, logger)
 
@@ -705,7 +705,7 @@ func TestRegistry_NewRegistry(t *testing.T) {
 }
 
 func TestRegistry_RegisterWithServer(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	logger := createMockLogger()
 	registry := NewRegistry(client, logger)
 
@@ -727,7 +727,7 @@ func TestRegistry_RegisterWithServer(t *testing.T) {
 }
 
 func TestResourceHandler_Interface(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	logger := createMockLogger()
 
 	// Verify all resource types implement ResourceHandler interface
@@ -739,7 +739,7 @@ func TestResourceHandler_Interface(t *testing.T) {
 }
 
 func TestSystemsResource_Resource(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	logger := createMockLogger()
 	resource := NewSystemsResource(client, logger)
 
@@ -763,7 +763,7 @@ func TestSystemsResource_Resource(t *testing.T) {
 }
 
 func TestFactionsResource_Resource(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	logger := createMockLogger()
 	resource := NewFactionsResource(client, logger)
 
@@ -787,7 +787,7 @@ func TestFactionsResource_Resource(t *testing.T) {
 }
 
 func TestSystemsResource_Handler_InvalidURI(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	logger := createMockLogger()
 	resource := NewSystemsResource(client, logger)
 
@@ -824,7 +824,7 @@ func TestSystemsResource_Handler_InvalidURI(t *testing.T) {
 }
 
 func TestFactionsResource_Handler_InvalidURI(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	logger := createMockLogger()
 	resource := NewFactionsResource(client, logger)
 
@@ -861,7 +861,7 @@ func TestFactionsResource_Handler_InvalidURI(t *testing.T) {
 }
 
 func TestSystemsResource_parseSystemSymbol(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	logger := createMockLogger()
 	resource := NewSystemsResource(client, logger)
 
@@ -888,7 +888,7 @@ func TestSystemsResource_parseSystemSymbol(t *testing.T) {
 }
 
 func TestFactionsResource_parseFactionSymbol(t *testing.T) {
-	client := spacetraders.NewClient("test-token")
+	client := client.NewClient("test-token")
 	logger := createMockLogger()
 	resource := NewFactionsResource(client, logger)
 

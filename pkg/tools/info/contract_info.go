@@ -7,19 +7,19 @@ import (
 	"time"
 
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/client"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // ContractInfoTool provides detailed information about contracts
 type ContractInfoTool struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewContractInfoTool creates a new contract info tool
-func NewContractInfoTool(client *spacetraders.Client, logger *logging.Logger) *ContractInfoTool {
+func NewContractInfoTool(client *client.Client, logger *logging.Logger) *ContractInfoTool {
 	return &ContractInfoTool{
 		client: client,
 		logger: logger,
@@ -94,7 +94,7 @@ func (t *ContractInfoTool) Handler() func(ctx context.Context, request mcp.CallT
 		ctxLogger.Info("Successfully retrieved %d contracts", len(contracts))
 
 		// Filter contracts if needed
-		var filteredContracts []spacetraders.Contract
+		var filteredContracts []client.Contract
 		for _, contract := range contracts {
 			// Skip fulfilled contracts unless explicitly requested
 			if contract.Fulfilled && !includeFulfilled {
@@ -187,7 +187,7 @@ func (t *ContractInfoTool) Handler() func(ctx context.Context, request mcp.CallT
 }
 
 // formatContractDetails formats detailed information for a single contract
-func (t *ContractInfoTool) formatContractDetails(contract spacetraders.Contract) string {
+func (t *ContractInfoTool) formatContractDetails(contract client.Contract) string {
 	var details strings.Builder
 
 	// Header with status

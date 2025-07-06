@@ -8,19 +8,19 @@ import (
 	"time"
 
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
+	"spacetraders-mcp/pkg/client"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // FactionsResource handles the factions resource
 type FactionsResource struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewFactionsResource creates a new factions resource handler
-func NewFactionsResource(client *spacetraders.Client, logger *logging.Logger) *FactionsResource {
+func NewFactionsResource(client *client.Client, logger *logging.Logger) *FactionsResource {
 	return &FactionsResource{
 		client: client,
 		logger: logger,
@@ -208,7 +208,7 @@ func (r *FactionsResource) parseFactionSymbol(uri string) (string, error) {
 }
 
 // formatFactionsList formats a list of factions for the response
-func (r *FactionsResource) formatFactionsList(factions []spacetraders.Faction) []map[string]interface{} {
+func (r *FactionsResource) formatFactionsList(factions []client.Faction) []map[string]interface{} {
 	result := make([]map[string]interface{}, len(factions))
 
 	for i, faction := range factions {
@@ -235,7 +235,7 @@ func (r *FactionsResource) formatFactionsList(factions []spacetraders.Faction) [
 }
 
 // formatFactionDetails formats detailed faction information
-func (r *FactionsResource) formatFactionDetails(faction *spacetraders.Faction) map[string]interface{} {
+func (r *FactionsResource) formatFactionDetails(faction *client.Faction) map[string]interface{} {
 	// Format traits
 	traits := make([]map[string]interface{}, len(faction.Traits))
 	for i, trait := range faction.Traits {

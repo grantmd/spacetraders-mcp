@@ -5,20 +5,20 @@ import (
 	"fmt"
 	"time"
 
+	"spacetraders-mcp/pkg/client"
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // WarpShipTool handles warping ships to waypoints
 type WarpShipTool struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewWarpShipTool creates a new warp ship tool
-func NewWarpShipTool(client *spacetraders.Client, logger *logging.Logger) *WarpShipTool {
+func NewWarpShipTool(client *client.Client, logger *logging.Logger) *WarpShipTool {
 	return &WarpShipTool{
 		client: client,
 		logger: logger,
@@ -93,7 +93,7 @@ func (t *WarpShipTool) Handler() func(ctx context.Context, request mcp.CallToolR
 		contextLogger.Info(fmt.Sprintf("Attempting to warp ship %s to %s", shipSymbol, waypointSymbol))
 
 		// Warp the ship
-		nav, fuel, event, err := t.client.WarpShip(shipSymbol, waypointSymbol)
+		resp, err := t.client.WarpShip(shipSymbol, waypointSymbol)
 		if err != nil {
 			contextLogger.Error(fmt.Sprintf("Failed to warp ship %s to %s: %v", shipSymbol, waypointSymbol, err))
 			return &mcp.CallToolResult{
@@ -112,76 +112,76 @@ func (t *WarpShipTool) Handler() func(ctx context.Context, request mcp.CallToolR
 			"success":     true,
 			"ship_symbol": shipSymbol,
 			"navigation": map[string]interface{}{
-				"system_symbol":   nav.SystemSymbol,
-				"waypoint_symbol": nav.WaypointSymbol,
-				"status":          nav.Status,
-				"flight_mode":     nav.FlightMode,
+				"system_symbol":   resp.Data.Nav.SystemSymbol,
+				"waypoint_symbol": resp.Data.Nav.WaypointSymbol,
+				"status":          resp.Data.Nav.Status,
+				"flight_mode":     resp.Data.Nav.FlightMode,
 			},
 			"fuel": map[string]interface{}{
-				"current":  fuel.Current,
-				"capacity": fuel.Capacity,
+				"current":  resp.Data.Fuel.Current,
+				"capacity": resp.Data.Fuel.Capacity,
 			},
 		}
 
 		// Add route information
-		if nav.Route.Destination.Symbol != "" {
+		if resp.Data.Nav.Route.Destination.Symbol != "" {
 			result["route"] = map[string]interface{}{
 				"destination": map[string]interface{}{
-					"symbol": nav.Route.Destination.Symbol,
-					"type":   nav.Route.Destination.Type,
-					"x":      nav.Route.Destination.X,
-					"y":      nav.Route.Destination.Y,
+					"symbol": resp.Data.Nav.Route.Destination.Symbol,
+					"type":   resp.Data.Nav.Route.Destination.Type,
+					"x":      resp.Data.Nav.Route.Destination.X,
+					"y":      resp.Data.Nav.Route.Destination.Y,
 				},
 				"origin": map[string]interface{}{
-					"symbol": nav.Route.Origin.Symbol,
-					"type":   nav.Route.Origin.Type,
-					"x":      nav.Route.Origin.X,
-					"y":      nav.Route.Origin.Y,
+					"symbol": resp.Data.Nav.Route.Origin.Symbol,
+					"type":   resp.Data.Nav.Route.Origin.Type,
+					"x":      resp.Data.Nav.Route.Origin.X,
+					"y":      resp.Data.Nav.Route.Origin.Y,
 				},
-				"departure_time": nav.Route.DepartureTime,
-				"arrival":        nav.Route.Arrival,
+				"departure_time": resp.Data.Nav.Route.DepartureTime,
+				"arrival":        resp.Data.Nav.Route.Arrival,
 			}
 		}
 
 		// Add fuel consumption information if available
-		if fuel.Consumed.Amount > 0 {
+		if resp.Data.Fuel.Consumed.Amount > 0 {
 			result["fuel_consumed"] = map[string]interface{}{
-				"amount":    fuel.Consumed.Amount,
-				"timestamp": fuel.Consumed.Timestamp,
+				"amount":    resp.Data.Fuel.Consumed.Amount,
+				"timestamp": resp.Data.Fuel.Consumed.Timestamp,
 			}
 		}
 
 		// Add event information if available
-		if event != nil {
+		if resp.Data.Event.Symbol != "" {
 			result["event"] = map[string]interface{}{
-				"symbol":      event.Symbol,
-				"component":   event.Component,
-				"name":        event.Name,
-				"description": event.Description,
+				"symbol":      resp.Data.Event.Symbol,
+				"component":   resp.Data.Event.Component,
+				"name":        resp.Data.Event.Name,
+				"description": resp.Data.Event.Description,
 			}
 		}
 
 		// Create text summary
 		textSummary := "## Ship Warp Initiated\n\n"
 		textSummary += fmt.Sprintf("**Ship:** %s\n", shipSymbol)
-		textSummary += fmt.Sprintf("**Status:** %s\n", nav.Status)
-		textSummary += fmt.Sprintf("**Current Location:** %s (%s)\n", nav.WaypointSymbol, nav.SystemSymbol)
-		textSummary += fmt.Sprintf("**Flight Mode:** %s\n", nav.FlightMode)
-		textSummary += fmt.Sprintf("**Fuel:** %d/%d units\n", fuel.Current, fuel.Capacity)
+		textSummary += fmt.Sprintf("**Status:** %s\n", resp.Data.Nav.Status)
+		textSummary += fmt.Sprintf("**Current Location:** %s (%s)\n", resp.Data.Nav.WaypointSymbol, resp.Data.Nav.SystemSymbol)
+		textSummary += fmt.Sprintf("**Flight Mode:** %s\n", resp.Data.Nav.FlightMode)
+		textSummary += fmt.Sprintf("**Fuel:** %d/%d units\n", resp.Data.Fuel.Current, resp.Data.Fuel.Capacity)
 
-		if nav.Route.Destination.Symbol != "" {
+		if resp.Data.Nav.Route.Destination.Symbol != "" {
 			textSummary += "\n**Warp Route Details:**\n"
 			textSummary += fmt.Sprintf("- **From:** %s (%s) at coordinates (%d, %d)\n",
-				nav.Route.Origin.Symbol, nav.Route.Origin.Type, nav.Route.Origin.X, nav.Route.Origin.Y)
+				resp.Data.Nav.Route.Origin.Symbol, resp.Data.Nav.Route.Origin.Type, resp.Data.Nav.Route.Origin.X, resp.Data.Nav.Route.Origin.Y)
 			textSummary += fmt.Sprintf("- **To:** %s (%s) at coordinates (%d, %d)\n",
-				nav.Route.Destination.Symbol, nav.Route.Destination.Type, nav.Route.Destination.X, nav.Route.Destination.Y)
-			textSummary += fmt.Sprintf("- **Departure:** %s\n", nav.Route.DepartureTime)
-			textSummary += fmt.Sprintf("- **Arrival:** %s\n", nav.Route.Arrival)
+				resp.Data.Nav.Route.Destination.Symbol, resp.Data.Nav.Route.Destination.Type, resp.Data.Nav.Route.Destination.X, resp.Data.Nav.Route.Destination.Y)
+			textSummary += fmt.Sprintf("- **Departure:** %s\n", resp.Data.Nav.Route.DepartureTime)
+			textSummary += fmt.Sprintf("- **Arrival:** %s\n", resp.Data.Nav.Route.Arrival)
 
 			// Calculate travel time if possible
-			if nav.Route.DepartureTime != "" && nav.Route.Arrival != "" {
-				if departureTime, err := time.Parse(time.RFC3339, nav.Route.DepartureTime); err == nil {
-					if arrivalTime, err := time.Parse(time.RFC3339, nav.Route.Arrival); err == nil {
+			if resp.Data.Nav.Route.DepartureTime != "" && resp.Data.Nav.Route.Arrival != "" {
+				if departureTime, err := time.Parse(time.RFC3339, resp.Data.Nav.Route.DepartureTime); err == nil {
+					if arrivalTime, err := time.Parse(time.RFC3339, resp.Data.Nav.Route.Arrival); err == nil {
 						duration := arrivalTime.Sub(departureTime)
 						textSummary += fmt.Sprintf("- **Warp Time:** %s\n", duration.String())
 					}
@@ -189,26 +189,25 @@ func (t *WarpShipTool) Handler() func(ctx context.Context, request mcp.CallToolR
 			}
 		}
 
-		if fuel.Consumed.Amount > 0 {
+		if resp.Data.Fuel.Consumed.Amount > 0 {
 			textSummary += "\n**Fuel Consumption:**\n"
-			textSummary += fmt.Sprintf("- **Amount Used:** %d units\n", fuel.Consumed.Amount)
-			textSummary += fmt.Sprintf("- **Remaining:** %d units\n", fuel.Current)
+			textSummary += fmt.Sprintf("- **Amount Used:** %d units\n", resp.Data.Fuel.Consumed.Amount)
+			textSummary += fmt.Sprintf("- **Remaining:** %d units\n", resp.Data.Fuel.Current)
 			textSummary += "- **Efficiency:** Warp drives consume significant fuel for inter-system travel\n"
 		}
 
-		if event != nil {
+		if resp.Data.Event.Symbol != "" {
 			textSummary += "\n**Warp Event:**\n"
-			textSummary += fmt.Sprintf("- **Event:** %s\n", event.Name)
-			textSummary += fmt.Sprintf("- **Description:** %s\n", event.Description)
-			if event.Component != "" {
-				textSummary += fmt.Sprintf("- **Component:** %s\n", event.Component)
+			textSummary += fmt.Sprintf("- **Event:** %s\n", resp.Data.Event.Name)
+			textSummary += fmt.Sprintf("- **Description:** %s\n", resp.Data.Event.Description)
+			if resp.Data.Event.Component != "" {
+				textSummary += fmt.Sprintf("- **Component:** %s\n", resp.Data.Event.Component)
 			}
 		}
 
-		if nav.Status == "IN_TRANSIT" {
+		if resp.Data.Nav.Status == "IN_TRANSIT" {
 			textSummary += "\n**Status:** The ship is currently warping through space. It will automatically arrive at the destination system at the scheduled time.\n"
 			textSummary += "Warp travel allows ships to move between different star systems much faster than conventional navigation.\n"
-			textSummary += "Use the `get_status_summary` tool to check the current status of all your ships.\n"
 		}
 
 		textSummary += "\n**Important Notes:**\n"

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"spacetraders-mcp/pkg/client"
 	"spacetraders-mcp/pkg/logging"
-	"spacetraders-mcp/pkg/spacetraders"
 	"spacetraders-mcp/pkg/tools/utils"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -15,12 +15,12 @@ import (
 
 // PurchaseShipTool handles ship purchasing at shipyards
 type PurchaseShipTool struct {
-	client *spacetraders.Client
+	client *client.Client
 	logger *logging.Logger
 }
 
 // NewPurchaseShipTool creates a new ship purchase tool
-func NewPurchaseShipTool(client *spacetraders.Client, logger *logging.Logger) *PurchaseShipTool {
+func NewPurchaseShipTool(client *client.Client, logger *logging.Logger) *PurchaseShipTool {
 	return &PurchaseShipTool{
 		client: client,
 		logger: logger,
@@ -104,7 +104,11 @@ func (t *PurchaseShipTool) Handler() func(ctx context.Context, request mcp.CallT
 
 		// Purchase the ship
 		start := time.Now()
-		ship, agent, transaction, err := t.client.PurchaseShip(shipType, waypointSymbol)
+		req := client.PurchaseShipRequest{
+			ShipType:       shipType,
+			WaypointSymbol: waypointSymbol,
+		}
+		resp, err := t.client.PurchaseShip(req)
 		duration := time.Since(start)
 
 		if err != nil {
@@ -119,38 +123,37 @@ func (t *PurchaseShipTool) Handler() func(ctx context.Context, request mcp.CallT
 		}
 
 		ctxLogger.APICall("/my/ships", 201, duration.String())
-		ctxLogger.Info("Successfully purchased ship %s for %d credits", ship.Symbol, transaction.Price)
+		ctxLogger.Info("Successfully purchased ship %s for %d credits", resp.Data.Ship.Symbol, resp.Data.Transaction.Price)
 
 		// Format the response
 		result := map[string]interface{}{
 			"success": true,
-			"message": fmt.Sprintf("Successfully purchased %s at %s", shipType, waypointSymbol),
 			"ship": map[string]interface{}{
-				"symbol": ship.Symbol,
+				"symbol": resp.Data.Ship.Symbol,
 				"type":   shipType,
-				"name":   ship.Registration.Name,
-				"role":   ship.Registration.Role,
+				"name":   resp.Data.Ship.Registration.Name,
+				"role":   resp.Data.Ship.Registration.Role,
 				"location": map[string]interface{}{
-					"system":   ship.Nav.SystemSymbol,
-					"waypoint": ship.Nav.WaypointSymbol,
-					"status":   ship.Nav.Status,
+					"system":   resp.Data.Ship.Nav.SystemSymbol,
+					"waypoint": resp.Data.Ship.Nav.WaypointSymbol,
+					"status":   resp.Data.Ship.Nav.Status,
 				},
 				"specs": map[string]interface{}{
-					"cargo_capacity": ship.Cargo.Capacity,
-					"fuel_capacity":  ship.Fuel.Capacity,
+					"cargo_capacity": resp.Data.Ship.Cargo.Capacity,
+					"fuel_capacity":  resp.Data.Ship.Fuel.Capacity,
 					"crew": map[string]interface{}{
-						"current":  ship.Crew.Current,
-						"capacity": ship.Crew.Capacity,
+						"current":  resp.Data.Ship.Crew.Current,
+						"capacity": resp.Data.Ship.Crew.Capacity,
 					},
 				},
 			},
 			"transaction": map[string]interface{}{
-				"price":     transaction.Price,
-				"timestamp": transaction.Timestamp,
+				"price":     resp.Data.Transaction.Price,
+				"timestamp": resp.Data.Transaction.Timestamp,
 			},
 			"agent": map[string]interface{}{
-				"credits":   agent.Credits,
-				"shipCount": agent.ShipCount,
+				"credits":   resp.Data.Agent.Credits,
+				"shipCount": resp.Data.Agent.ShipCount,
 			},
 		}
 
@@ -158,18 +161,18 @@ func (t *PurchaseShipTool) Handler() func(ctx context.Context, request mcp.CallT
 
 		// Create formatted text summary
 		textSummary := "🚢 **Ship Purchase Successful!**\n\n"
-		textSummary += fmt.Sprintf("**New Ship:** %s (%s)\n", ship.Symbol, ship.Registration.Name)
+		textSummary += fmt.Sprintf("**New Ship:** %s (%s)\n", resp.Data.Ship.Symbol, resp.Data.Ship.Registration.Name)
 		textSummary += fmt.Sprintf("**Type:** %s\n", shipType)
-		textSummary += fmt.Sprintf("**Role:** %s\n", ship.Registration.Role)
-		textSummary += fmt.Sprintf("**Location:** %s (Status: %s)\n", ship.Nav.WaypointSymbol, ship.Nav.Status)
-		textSummary += fmt.Sprintf("**Cost:** %d credits\n", transaction.Price)
-		textSummary += fmt.Sprintf("**Remaining Credits:** %d\n", agent.Credits)
-		textSummary += fmt.Sprintf("**Total Ships:** %d\n\n", agent.ShipCount)
+		textSummary += fmt.Sprintf("**Role:** %s\n", resp.Data.Ship.Registration.Role)
+		textSummary += fmt.Sprintf("**Location:** %s (Status: %s)\n", resp.Data.Ship.Nav.WaypointSymbol, resp.Data.Ship.Nav.Status)
+		textSummary += fmt.Sprintf("**Cost:** %d credits\n", resp.Data.Transaction.Price)
+		textSummary += fmt.Sprintf("**Remaining Credits:** %d\n", resp.Data.Agent.Credits)
+		textSummary += fmt.Sprintf("**Total Ships:** %d\n\n", resp.Data.Agent.ShipCount)
 
 		textSummary += "**Ship Specifications:**\n"
-		textSummary += fmt.Sprintf("• Cargo Capacity: %d units\n", ship.Cargo.Capacity)
-		textSummary += fmt.Sprintf("• Fuel Capacity: %d units\n", ship.Fuel.Capacity)
-		textSummary += fmt.Sprintf("• Crew Capacity: %d/%d\n\n", ship.Crew.Current, ship.Crew.Capacity)
+		textSummary += fmt.Sprintf("• Cargo Capacity: %d units\n", resp.Data.Ship.Cargo.Capacity)
+		textSummary += fmt.Sprintf("• Fuel Capacity: %d units\n", resp.Data.Ship.Fuel.Capacity)
+		textSummary += fmt.Sprintf("• Crew Capacity: %d/%d\n\n", resp.Data.Ship.Crew.Current, resp.Data.Ship.Crew.Capacity)
 
 		textSummary += "💡 **Next Steps:**\n"
 		textSummary += "• Use `get_status_summary` to see your updated fleet\n"

@@ -95,6 +95,50 @@ func (c *Client) GetAllShips() ([]Ship, error) {
 	return allShips, nil
 }
 
+// GetShip returns details for a specific ship
+func (c *Client) GetShip(shipSymbol string) (*Ship, error) {
+	resp, _, err := c.apiClient.FleetAPI.GetMyShip(c.ctx, shipSymbol).Execute()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get ship: %w", err)
+	}
+
+	ship := Ship{
+		Symbol:       resp.Data.Symbol,
+		Registration: convertRegistration(resp.Data.Registration),
+		Nav:          convertNavigation(resp.Data.Nav),
+		Crew:         convertCrew(resp.Data.Crew),
+		Frame:        convertFrame(resp.Data.Frame),
+		Reactor:      convertReactor(resp.Data.Reactor),
+		Engine:       convertEngine(resp.Data.Engine),
+		Cooldown:     convertCooldown(resp.Data.Cooldown),
+		Modules:      convertModules(resp.Data.Modules),
+		Mounts:       convertMounts(resp.Data.Mounts),
+		Cargo:        convertCargo(resp.Data.Cargo),
+		Fuel:         convertFuel(resp.Data.Fuel),
+	}
+
+	return &ship, nil
+}
+
+// GetShipCooldown returns cooldown information for a specific ship
+func (c *Client) GetShipCooldown(shipSymbol string) (*Cooldown, error) {
+	resp, httpResp, err := c.apiClient.FleetAPI.GetShipCooldown(c.ctx, shipSymbol).Execute()
+	if err != nil {
+		// Check if it's a 204 (no content) response, which means no cooldown
+		if httpResp != nil && httpResp.StatusCode == 204 {
+			return nil, nil // No cooldown active
+		}
+		return nil, fmt.Errorf("failed to get ship cooldown: %w", err)
+	}
+
+	if resp == nil {
+		return nil, nil // No cooldown active
+	}
+
+	cooldown := convertCooldown(resp.Data)
+	return &cooldown, nil
+}
+
 // GetAllContracts returns all contracts for the agent
 func (c *Client) GetAllContracts() ([]Contract, error) {
 	var allContracts []Contract

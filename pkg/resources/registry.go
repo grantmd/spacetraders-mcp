@@ -61,6 +61,12 @@ func (r *Registry) registerResources() {
 
 	// Factions resource
 	r.handlers = append(r.handlers, NewFactionsResource(r.client, r.logger))
+
+	// Individual ship resource
+	r.handlers = append(r.handlers, NewShipResource(r.client, r.logger))
+
+	// Ship cooldown resource
+	r.handlers = append(r.handlers, NewShipCooldownResource(r.client, r.logger))
 }
 
 // RegisterWithServer registers all resources with the MCP server

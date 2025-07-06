@@ -359,6 +359,404 @@ func TestIntegration_ShipsResource(t *testing.T) {
 	}
 }
 
+func TestIntegration_IndividualShipResource(t *testing.T) {
+	// Skip if no API token is available
+	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
+		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
+	}
+
+	// First get the ships list to get a valid ship symbol
+	shipsResponse := callMCPServer(t, `{"jsonrpc": "2.0", "id": 1, "method": "resources/read", "params": {"uri": "spacetraders://ships/list"}}`)
+
+	var mcpResponse MCPResponse
+	if err := json.Unmarshal(shipsResponse, &mcpResponse); err != nil {
+		t.Fatalf("Failed to parse ships response: %v", err)
+	}
+
+	if mcpResponse.Error != nil {
+		t.Fatalf("Server returned error for ships list: %v", mcpResponse.Error)
+	}
+
+	// Parse the ships response to get a ship symbol
+	resultBytes, err := json.Marshal(mcpResponse.Result)
+	if err != nil {
+		t.Fatalf("Failed to marshal ships result: %v", err)
+	}
+
+	var readResult ResourceReadResult
+	if err := json.Unmarshal(resultBytes, &readResult); err != nil {
+		t.Fatalf("Failed to parse ships read result: %v", err)
+	}
+
+	if len(readResult.Contents) != 1 {
+		t.Fatalf("Expected 1 content item, got %d", len(readResult.Contents))
+	}
+
+	content := readResult.Contents[0]
+	if content.MIMEType == "text/plain" {
+		if strings.Contains(content.Text, "Error") {
+			t.Skipf("API error (likely invalid token): %s", content.Text)
+		}
+		return
+	}
+
+	// Parse the JSON content to get ship symbols
+	var shipsData map[string]interface{}
+	if err := json.Unmarshal([]byte(content.Text), &shipsData); err != nil {
+		t.Fatalf("Failed to parse ships JSON: %v", err)
+	}
+
+	ships, ok := shipsData["ships"].([]interface{})
+	if !ok {
+		t.Fatal("Expected ships array in response")
+	}
+
+	if len(ships) == 0 {
+		t.Skip("No ships found, skipping individual ship resource test")
+	}
+
+	// Get the first ship symbol
+	firstShip := ships[0].(map[string]interface{})
+	shipSymbol := firstShip["symbol"].(string)
+
+	// Test individual ship resource
+	shipURI := fmt.Sprintf("spacetraders://ships/%s", shipSymbol)
+	shipRequest := fmt.Sprintf(`{"jsonrpc": "2.0", "id": 1, "method": "resources/read", "params": {"uri": "%s"}}`, shipURI)
+
+	response := callMCPServer(t, shipRequest)
+
+	var shipResponse MCPResponse
+	if err := json.Unmarshal(response, &shipResponse); err != nil {
+		t.Fatalf("Failed to parse ship response: %v", err)
+	}
+
+	if shipResponse.Error != nil {
+		t.Fatalf("Server returned error for ship resource: %v", shipResponse.Error)
+	}
+
+	// Parse the ship resource result
+	shipResultBytes, err := json.Marshal(shipResponse.Result)
+	if err != nil {
+		t.Fatalf("Failed to marshal ship result: %v", err)
+	}
+
+	var shipReadResult ResourceReadResult
+	if err := json.Unmarshal(shipResultBytes, &shipReadResult); err != nil {
+		t.Fatalf("Failed to parse ship read result: %v", err)
+	}
+
+	if len(shipReadResult.Contents) != 1 {
+		t.Fatalf("Expected 1 content item, got %d", len(shipReadResult.Contents))
+	}
+
+	shipContent := shipReadResult.Contents[0]
+	if shipContent.URI != shipURI {
+		t.Errorf("Expected URI %s, got %s", shipURI, shipContent.URI)
+	}
+
+	if shipContent.MIMEType == "text/plain" {
+		if strings.Contains(shipContent.Text, "Error") {
+			t.Skipf("API error: %s", shipContent.Text)
+		}
+		return
+	}
+
+	if shipContent.MIMEType != "application/json" {
+		t.Errorf("Expected MIME type application/json, got %s", shipContent.MIMEType)
+	}
+
+	// Parse the JSON content to verify structure
+	var shipData map[string]interface{}
+	if err := json.Unmarshal([]byte(shipContent.Text), &shipData); err != nil {
+		t.Fatalf("Failed to parse ship JSON: %v", err)
+	}
+
+	// Verify expected structure
+	if _, ok := shipData["ship"]; !ok {
+		t.Error("Expected 'ship' field in response")
+	}
+
+	if _, ok := shipData["analysis"]; !ok {
+		t.Error("Expected 'analysis' field in response")
+	}
+
+	if _, ok := shipData["capabilities"]; !ok {
+		t.Error("Expected 'capabilities' field in response")
+	}
+
+	if _, ok := shipData["recommendations"]; !ok {
+		t.Error("Expected 'recommendations' field in response")
+	}
+
+	if _, ok := shipData["meta"]; !ok {
+		t.Error("Expected 'meta' field in response")
+	}
+
+	// Verify ship symbol matches
+	if ship, ok := shipData["ship"].(map[string]interface{}); ok {
+		if symbol, ok := ship["symbol"].(string); ok {
+			if symbol != shipSymbol {
+				t.Errorf("Expected ship symbol %s, got %s", shipSymbol, symbol)
+			}
+		} else {
+			t.Error("Expected ship symbol field")
+		}
+	} else {
+		t.Error("Expected ship object")
+	}
+}
+
+func TestIntegration_ShipCooldownResource(t *testing.T) {
+	// Skip if no API token is available
+	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
+		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
+	}
+
+	// First get the ships list to get a valid ship symbol
+	shipsResponse := callMCPServer(t, `{"jsonrpc": "2.0", "id": 1, "method": "resources/read", "params": {"uri": "spacetraders://ships/list"}}`)
+
+	var mcpResponse MCPResponse
+	if err := json.Unmarshal(shipsResponse, &mcpResponse); err != nil {
+		t.Fatalf("Failed to parse ships response: %v", err)
+	}
+
+	if mcpResponse.Error != nil {
+		t.Fatalf("Server returned error for ships list: %v", mcpResponse.Error)
+	}
+
+	// Parse the ships response to get a ship symbol
+	resultBytes, err := json.Marshal(mcpResponse.Result)
+	if err != nil {
+		t.Fatalf("Failed to marshal ships result: %v", err)
+	}
+
+	var readResult ResourceReadResult
+	if err := json.Unmarshal(resultBytes, &readResult); err != nil {
+		t.Fatalf("Failed to parse ships read result: %v", err)
+	}
+
+	if len(readResult.Contents) != 1 {
+		t.Fatalf("Expected 1 content item, got %d", len(readResult.Contents))
+	}
+
+	content := readResult.Contents[0]
+	if content.MIMEType == "text/plain" {
+		if strings.Contains(content.Text, "Error") {
+			t.Skipf("API error (likely invalid token): %s", content.Text)
+		}
+		return
+	}
+
+	// Parse the JSON content to get ship symbols
+	var shipsData map[string]interface{}
+	if err := json.Unmarshal([]byte(content.Text), &shipsData); err != nil {
+		t.Fatalf("Failed to parse ships JSON: %v", err)
+	}
+
+	ships, ok := shipsData["ships"].([]interface{})
+	if !ok {
+		t.Fatal("Expected ships array in response")
+	}
+
+	if len(ships) == 0 {
+		t.Skip("No ships found, skipping cooldown resource test")
+	}
+
+	// Get the first ship symbol
+	firstShip := ships[0].(map[string]interface{})
+	shipSymbol := firstShip["symbol"].(string)
+
+	// Test ship cooldown resource
+	cooldownURI := fmt.Sprintf("spacetraders://ships/%s/cooldown", shipSymbol)
+	cooldownRequest := fmt.Sprintf(`{"jsonrpc": "2.0", "id": 1, "method": "resources/read", "params": {"uri": "%s"}}`, cooldownURI)
+
+	response := callMCPServer(t, cooldownRequest)
+
+	var cooldownResponse MCPResponse
+	if err := json.Unmarshal(response, &cooldownResponse); err != nil {
+		t.Fatalf("Failed to parse cooldown response: %v", err)
+	}
+
+	if cooldownResponse.Error != nil {
+		t.Fatalf("Server returned error for cooldown resource: %v", cooldownResponse.Error)
+	}
+
+	// Parse the cooldown resource result
+	cooldownResultBytes, err := json.Marshal(cooldownResponse.Result)
+	if err != nil {
+		t.Fatalf("Failed to marshal cooldown result: %v", err)
+	}
+
+	var cooldownReadResult ResourceReadResult
+	if err := json.Unmarshal(cooldownResultBytes, &cooldownReadResult); err != nil {
+		t.Fatalf("Failed to parse cooldown read result: %v", err)
+	}
+
+	if len(cooldownReadResult.Contents) != 1 {
+		t.Fatalf("Expected 1 content item, got %d", len(cooldownReadResult.Contents))
+	}
+
+	cooldownContent := cooldownReadResult.Contents[0]
+	if cooldownContent.URI != cooldownURI {
+		t.Errorf("Expected URI %s, got %s", cooldownURI, cooldownContent.URI)
+	}
+
+	if cooldownContent.MIMEType == "text/plain" {
+		if strings.Contains(cooldownContent.Text, "Error") {
+			t.Skipf("API error: %s", cooldownContent.Text)
+		}
+		return
+	}
+
+	if cooldownContent.MIMEType != "application/json" {
+		t.Errorf("Expected MIME type application/json, got %s", cooldownContent.MIMEType)
+	}
+
+	// Parse the JSON content to verify structure
+	var cooldownData map[string]interface{}
+	if err := json.Unmarshal([]byte(cooldownContent.Text), &cooldownData); err != nil {
+		t.Fatalf("Failed to parse cooldown JSON: %v", err)
+	}
+
+	// Verify expected structure
+	if _, ok := cooldownData["ship_symbol"]; !ok {
+		t.Error("Expected 'ship_symbol' field in response")
+	}
+
+	if _, ok := cooldownData["cooldown"]; !ok {
+		t.Error("Expected 'cooldown' field in response")
+	}
+
+	if _, ok := cooldownData["status"]; !ok {
+		t.Error("Expected 'status' field in response")
+	}
+
+	if _, ok := cooldownData["actions"]; !ok {
+		t.Error("Expected 'actions' field in response")
+	}
+
+	if _, ok := cooldownData["recommendations"]; !ok {
+		t.Error("Expected 'recommendations' field in response")
+	}
+
+	if _, ok := cooldownData["meta"]; !ok {
+		t.Error("Expected 'meta' field in response")
+	}
+
+	// Verify ship symbol matches
+	if symbol, ok := cooldownData["ship_symbol"].(string); ok {
+		if symbol != shipSymbol {
+			t.Errorf("Expected ship symbol %s, got %s", shipSymbol, symbol)
+		}
+	} else {
+		t.Error("Expected ship_symbol field")
+	}
+
+	// Verify cooldown structure
+	if cooldown, ok := cooldownData["cooldown"].(map[string]interface{}); ok {
+		if _, ok := cooldown["active"]; !ok {
+			t.Error("Expected 'active' field in cooldown")
+		}
+		if _, ok := cooldown["remaining_seconds"]; !ok {
+			t.Error("Expected 'remaining_seconds' field in cooldown")
+		}
+	} else {
+		t.Error("Expected cooldown object")
+	}
+}
+
+func TestIntegration_ShipResourceInvalidShip(t *testing.T) {
+	// Skip if no API token is available
+	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
+		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
+	}
+
+	// Test with invalid ship symbol
+	invalidShipURI := "spacetraders://ships/INVALID-SHIP-SYMBOL"
+	invalidRequest := fmt.Sprintf(`{"jsonrpc": "2.0", "id": 1, "method": "resources/read", "params": {"uri": "%s"}}`, invalidShipURI)
+
+	response := callMCPServer(t, invalidRequest)
+
+	var mcpResponse MCPResponse
+	if err := json.Unmarshal(response, &mcpResponse); err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+
+	if mcpResponse.Error != nil {
+		t.Fatalf("Server returned error: %v", mcpResponse.Error)
+	}
+
+	// Parse the resource result
+	resultBytes, err := json.Marshal(mcpResponse.Result)
+	if err != nil {
+		t.Fatalf("Failed to marshal result: %v", err)
+	}
+
+	var readResult ResourceReadResult
+	if err := json.Unmarshal(resultBytes, &readResult); err != nil {
+		t.Fatalf("Failed to parse read result: %v", err)
+	}
+
+	if len(readResult.Contents) != 1 {
+		t.Fatalf("Expected 1 content item, got %d", len(readResult.Contents))
+	}
+
+	content := readResult.Contents[0]
+	if content.MIMEType != "text/plain" {
+		t.Errorf("Expected MIME type text/plain for error, got %s", content.MIMEType)
+	}
+
+	if !strings.Contains(content.Text, "Error") {
+		t.Errorf("Expected error message in response, got: %s", content.Text)
+	}
+}
+
+func TestIntegration_ShipResourceInvalidURI(t *testing.T) {
+	// Skip if no API token is available
+	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
+		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
+	}
+
+	// Test with malformed URI
+	invalidURI := "spacetraders://ships/"
+	invalidRequest := fmt.Sprintf(`{"jsonrpc": "2.0", "id": 1, "method": "resources/read", "params": {"uri": "%s"}}`, invalidURI)
+
+	response := callMCPServer(t, invalidRequest)
+
+	var mcpResponse MCPResponse
+	if err := json.Unmarshal(response, &mcpResponse); err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+
+	if mcpResponse.Error != nil {
+		t.Fatalf("Server returned error: %v", mcpResponse.Error)
+	}
+
+	// Parse the resource result
+	resultBytes, err := json.Marshal(mcpResponse.Result)
+	if err != nil {
+		t.Fatalf("Failed to marshal result: %v", err)
+	}
+
+	var readResult ResourceReadResult
+	if err := json.Unmarshal(resultBytes, &readResult); err != nil {
+		t.Fatalf("Failed to parse read result: %v", err)
+	}
+
+	if len(readResult.Contents) != 1 {
+		t.Fatalf("Expected 1 content item, got %d", len(readResult.Contents))
+	}
+
+	content := readResult.Contents[0]
+	if content.MIMEType != "text/plain" {
+		t.Errorf("Expected MIME type text/plain for error, got %s", content.MIMEType)
+	}
+
+	if !strings.Contains(content.Text, "Invalid") {
+		t.Errorf("Expected invalid URI message in response, got: %s", content.Text)
+	}
+}
+
 func TestIntegration_ContractsResource(t *testing.T) {
 	// Skip if no API token is available
 	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
@@ -1056,4 +1454,166 @@ func TestIntegration_AcceptContractToolRegistration(t *testing.T) {
 	}
 
 	t.Log("AcceptContract tool is properly registered with correct schema")
+}
+
+func TestIntegration_DeliverContractTool(t *testing.T) {
+	// Skip if no API token is available
+	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
+		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
+	}
+
+	// Test calling the deliver_contract tool with dummy parameters
+	toolRequest := `{
+		"jsonrpc": "2.0",
+		"id": 1,
+		"method": "tools/call",
+		"params": {
+			"name": "deliver_contract",
+			"arguments": {
+				"contract_id": "dummy-contract-id",
+				"ship_symbol": "dummy-ship",
+				"trade_symbol": "IRON_ORE",
+				"units": 10
+			}
+		}
+	}`
+
+	response := callMCPServer(t, toolRequest)
+
+	var mcpResponse MCPResponse
+	if err := json.Unmarshal(response, &mcpResponse); err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+
+	// The tool should execute but likely fail with API error due to dummy data
+	// We're testing that the tool is registered and accepts the correct parameters
+	if mcpResponse.Error != nil {
+		// This is expected for dummy data
+		t.Logf("Expected error for dummy data: %v", mcpResponse.Error)
+		return
+	}
+
+	// If we get a result, parse it to verify structure
+	if mcpResponse.Result != nil {
+		resultBytes, err := json.Marshal(mcpResponse.Result)
+		if err != nil {
+			t.Fatalf("Failed to marshal result: %v", err)
+		}
+
+		var toolResult map[string]interface{}
+		if err := json.Unmarshal(resultBytes, &toolResult); err != nil {
+			t.Fatalf("Failed to parse tool result: %v", err)
+		}
+
+		// Check for content field
+		if content, ok := toolResult["content"]; ok {
+			if contentArray, ok := content.([]interface{}); ok && len(contentArray) > 0 {
+				t.Log("DeliverContract tool returned content (likely error message for dummy data)")
+			}
+		}
+	}
+}
+
+func TestIntegration_DeliverContractToolRegistration(t *testing.T) {
+	// Skip if no API token is available
+	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
+		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
+	}
+
+	// Test that the deliver_contract tool is properly registered
+	toolsResponse := callMCPServer(t, `{"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}`)
+
+	var mcpResponse MCPResponse
+	if err := json.Unmarshal(toolsResponse, &mcpResponse); err != nil {
+		t.Fatalf("Failed to parse tools list response: %v", err)
+	}
+
+	if mcpResponse.Error != nil {
+		t.Fatalf("Server returned error for tools list: %v", mcpResponse.Error)
+	}
+
+	// Parse the tools list result
+	resultBytes, err := json.Marshal(mcpResponse.Result)
+	if err != nil {
+		t.Fatalf("Failed to marshal tools result: %v", err)
+	}
+
+	var toolsResult map[string]interface{}
+	if err := json.Unmarshal(resultBytes, &toolsResult); err != nil {
+		t.Fatalf("Failed to parse tools result: %v", err)
+	}
+
+	tools, ok := toolsResult["tools"].([]interface{})
+	if !ok {
+		t.Fatal("Expected tools array in response")
+	}
+
+	// Find the deliver_contract tool
+	var deliverContractTool map[string]interface{}
+	for _, tool := range tools {
+		if toolMap, ok := tool.(map[string]interface{}); ok {
+			if name, ok := toolMap["name"].(string); ok && name == "deliver_contract" {
+				deliverContractTool = toolMap
+				break
+			}
+		}
+	}
+
+	if deliverContractTool == nil {
+		t.Fatal("deliver_contract tool not found in tools list")
+	}
+
+	// Verify tool properties
+	if name := deliverContractTool["name"]; name != "deliver_contract" {
+		t.Errorf("Expected tool name 'deliver_contract', got %v", name)
+	}
+
+	description, ok := deliverContractTool["description"].(string)
+	if !ok {
+		t.Fatal("Tool should have a description")
+	}
+
+	if !strings.Contains(description, "deliver") || !strings.Contains(description, "contract") {
+		t.Error("Tool description should mention delivering goods to contracts")
+	}
+
+	// Verify input schema
+	inputSchema, ok := deliverContractTool["inputSchema"].(map[string]interface{})
+	if !ok {
+		t.Fatal("Tool should have inputSchema")
+	}
+
+	properties, ok := inputSchema["properties"].(map[string]interface{})
+	if !ok {
+		t.Fatal("inputSchema should have properties")
+	}
+
+	// Check required properties
+	requiredProps := []string{"contract_id", "ship_symbol", "trade_symbol", "units"}
+	for _, prop := range requiredProps {
+		if _, ok := properties[prop]; !ok {
+			t.Errorf("inputSchema should have %s property", prop)
+		}
+	}
+
+	// Verify required fields
+	required, ok := inputSchema["required"].([]interface{})
+	if !ok {
+		t.Fatal("inputSchema should have required array")
+	}
+
+	for _, requiredProp := range requiredProps {
+		found := false
+		for _, req := range required {
+			if req == requiredProp {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("%s should be required in inputSchema", requiredProp)
+		}
+	}
+
+	t.Log("DeliverContract tool is properly registered with correct schema")
 }

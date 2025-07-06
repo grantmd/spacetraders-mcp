@@ -11,6 +11,8 @@ A Model Context Protocol (MCP) server that provides seamless integration between
 - **🛠️ Automated Actions**: Execute complex operations through natural language
 - **🗺️ Smart Exploration**: Intelligent system mapping and facility discovery
 - **📈 Strategic Analysis**: Contract optimization and fleet management recommendations
+- **🚢 Advanced Ship Management**: Individual ship monitoring with real-time cooldown tracking
+- **📦 Contract Workflow**: Complete contract delivery system with incremental goods delivery
 
 ## 🚀 Quick Start
 
@@ -75,6 +77,7 @@ Once configured, try these commands:
 Detailed documentation is available in the `docs/` folder:
 
 - **[Resources](docs/resources.md)** - Available data resources and how to use them
+- **[Ship Resources](docs/SHIP_RESOURCES.md)** - Individual ship monitoring and cooldown tracking
 - **[Tools](docs/tools.md)** - Actions you can perform through Claude
 - **[Prompts](docs/prompts.md)** - Intelligent assistance for common tasks
 - **[Integration](docs/integration.md)** - Claude Desktop setup and configuration
@@ -90,22 +93,50 @@ Detailed documentation is available in the `docs/` folder:
 ### Game Management
 - Check agent status, credits, and fleet overview
 - Monitor ship locations, cargo, and fuel levels
+- **Real-time ship cooldown monitoring** - Know exactly when ships are ready for actions
+- **Individual ship analysis** - Comprehensive ship status with operational recommendations
 - Review and manage contracts
+- **Incremental contract delivery** - Deliver goods to contracts in multiple trips
 - Track system exploration progress
 
 ### Strategic Operations
 - Navigate ships between waypoints and systems
 - Extract resources and manage cargo
+- **Smart cooldown management** - Plan actions around ship availability
+- **Fleet coordination** - Monitor multiple ships' operational status
 - Find optimal trading routes and opportunities
 - Purchase and configure new ships
+- **Complete contract workflows** - Accept, deliver, and fulfill contracts efficiently
 
 ### Intelligent Assistance
 - Get recommendations based on your current situation
+- **Operational status analysis** - Understand what each ship can do right now
+- **Capability detection** - Automatic identification of ship roles (mining, trading, etc.)
 - Analyze systems for facilities and resources
 - Optimize contract selection and completion strategies
+- **Action planning** - Get suggestions based on ship cooldowns and capabilities
 - Plan fleet composition and expansion
 
 ## 🔗 Example Workflows
+
+**Contract Delivery Workflow:**
+```
+1. "Check my contracts" - Review available and accepted contracts
+2. "Show me ship TRADER-1 status" - Check ship location and cargo capacity
+3. "Navigate TRADER-1 to the delivery location"
+4. "Buy the required goods for the contract"
+5. "Deliver goods to contract CONTRACT_123" - Incremental delivery
+6. "Check cooldown for TRADER-1" - Monitor when ready for next action
+7. "Fulfill the contract" - Complete and claim rewards
+```
+
+**Fleet Cooldown Management:**
+```
+1. "Show me all ship cooldowns" - Monitor fleet availability
+2. "Which ships are ready for mining?" - Find available extraction ships
+3. "Check ship MINER-1 detailed status" - Comprehensive operational analysis
+4. "Plan next actions based on cooldowns" - Strategic fleet coordination
+```
 
 **System Exploration:**
 ```

@@ -59,7 +59,7 @@ func (r *WaypointsResource) Handler() func(ctx context.Context, request mcp.Read
 
 		// Get waypoints information from the API
 		start := time.Now()
-		waypoints, err := r.client.GetSystemWaypoints(systemSymbol)
+		waypoints, err := r.client.GetAllSystemWaypoints(systemSymbol)
 		duration := time.Since(start)
 
 		if err != nil {

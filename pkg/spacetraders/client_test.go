@@ -568,7 +568,7 @@ func indexOfSubstring(s, substr string) int {
 	return -1
 }
 
-func TestClient_GetSystemWaypoints(t *testing.T) {
+func TestClient_GetAllSystemWaypoints(t *testing.T) {
 	// Mock waypoints response
 	mockWaypoints := []SystemWaypoint{
 		{
@@ -640,10 +640,10 @@ func TestClient_GetSystemWaypoints(t *testing.T) {
 		BaseURL:  server.URL,
 	}
 
-	// Test GetSystemWaypoints
-	waypoints, err := client.GetSystemWaypoints("X1-TEST")
+	// Test GetAllSystemWaypoints
+	waypoints, err := client.GetAllSystemWaypoints("X1-TEST")
 	if err != nil {
-		t.Fatalf("GetSystemWaypoints returned error: %v", err)
+		t.Fatalf("GetAllSystemWaypoints returned error: %v", err)
 	}
 
 	// Verify response
@@ -676,7 +676,7 @@ func TestClient_GetSystemWaypoints(t *testing.T) {
 	}
 }
 
-func TestClient_GetSystemWaypoints_Error(t *testing.T) {
+func TestClient_GetAllSystemWaypoints_Error(t *testing.T) {
 	// Test server that returns error
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
@@ -691,7 +691,7 @@ func TestClient_GetSystemWaypoints_Error(t *testing.T) {
 		BaseURL:  server.URL,
 	}
 
-	waypoints, err := client.GetSystemWaypoints("INVALID-SYSTEM")
+	waypoints, err := client.GetAllSystemWaypoints("INVALID-SYSTEM")
 	if err == nil {
 		t.Fatal("Expected error for invalid system, got nil")
 	}

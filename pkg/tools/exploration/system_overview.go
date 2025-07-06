@@ -86,7 +86,7 @@ func (t *SystemOverviewTool) Handler() func(ctx context.Context, request mcp.Cal
 		contextLogger.Info(fmt.Sprintf("Generating overview for system %s", systemSymbol))
 
 		// Get waypoints from the system
-		waypoints, err := t.client.GetSystemWaypoints(systemSymbol)
+		waypoints, err := t.client.GetAllSystemWaypoints(systemSymbol)
 		if err != nil {
 			contextLogger.Error(fmt.Sprintf("Failed to get waypoints for system %s: %v", systemSymbol, err))
 			return &mcp.CallToolResult{

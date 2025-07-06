@@ -950,34 +950,47 @@ func (c *Client) AcceptContract(contractID string) (*Contract, *Agent, error) {
 	return &acceptResp.Data.Contract, &acceptResp.Data.Agent, nil
 }
 
-// GetSystemWaypoints fetches all waypoints in a system
-func (c *Client) GetSystemWaypoints(systemSymbol string) ([]SystemWaypoint, error) {
-	endpoint := fmt.Sprintf("/systems/%s/waypoints", systemSymbol)
+// GetAllSystemWaypoints fetches all waypoints in a system with pagination
+func (c *Client) GetAllSystemWaypoints(systemSymbol string) ([]SystemWaypoint, error) {
+	var allWaypoints []SystemWaypoint
+	page := 1
+	limit := 20 // SpaceTraders default page size
 
-	resp, err := c.makeRequest("GET", endpoint, nil)
-	if err != nil {
-		return nil, err
+	for {
+		endpoint := fmt.Sprintf("/systems/%s/waypoints?page=%d&limit=%d", systemSymbol, page, limit)
+
+		resp, err := c.makeRequest("GET", endpoint, nil)
+		if err != nil {
+			return nil, err
+		}
+		defer func() { _ = resp.Body.Close() }()
+
+		if resp.StatusCode != http.StatusOK {
+			body, _ := io.ReadAll(resp.Body)
+			return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read response body: %w", err)
+		}
+
+		var waypointsResp SystemWaypointsResponse
+		if err := json.Unmarshal(body, &waypointsResp); err != nil {
+			return nil, fmt.Errorf("failed to parse response: %w", err)
+		}
+
+		allWaypoints = append(allWaypoints, waypointsResp.Data...)
+
+		// Check if we have all waypoints
+		if len(allWaypoints) >= waypointsResp.Meta.Total {
+			break
+		}
+
+		page++
 	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
 
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	var waypointsResp SystemWaypointsResponse
-	if err := json.Unmarshal(body, &waypointsResp); err != nil {
-		return nil, fmt.Errorf("failed to parse response: %w", err)
-	}
-
-	return waypointsResp.Data, nil
+	return allWaypoints, nil
 }
 
 // GetShipyard fetches shipyard information for a waypoint

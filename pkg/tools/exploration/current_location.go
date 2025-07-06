@@ -225,7 +225,7 @@ func (t *CurrentLocationTool) analyzeShipLocations(ships []spacetraders.Ship, in
 
 // getNearbyFacilities gets key facilities in a system
 func (t *CurrentLocationTool) getNearbyFacilities(systemSymbol string) []map[string]interface{} {
-	waypoints, err := t.client.GetSystemWaypoints(systemSymbol)
+	waypoints, err := t.client.GetAllSystemWaypoints(systemSymbol)
 	if err != nil {
 		return []map[string]interface{}{}
 	}

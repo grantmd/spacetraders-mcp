@@ -2,8 +2,8 @@ package tools
 
 import (
 	"context"
-	"spacetraders-mcp/pkg/logging"
 	"spacetraders-mcp/pkg/client"
+	"spacetraders-mcp/pkg/logging"
 	"spacetraders-mcp/pkg/tools/contract"
 	"spacetraders-mcp/pkg/tools/exploration"
 	"spacetraders-mcp/pkg/tools/info"
@@ -86,6 +86,9 @@ func (r *Registry) registerTools() {
 
 	// Register Buy Cargo tool
 	r.handlers = append(r.handlers, ships.NewBuyCargoTool(r.client, r.logger))
+
+	// Register Deliver Contract tool
+	r.handlers = append(r.handlers, contract.NewDeliverContractTool(r.client, r.logger))
 
 	// Register Fulfill Contract tool
 	r.handlers = append(r.handlers, contract.NewFulfillContractTool(r.client, r.logger))

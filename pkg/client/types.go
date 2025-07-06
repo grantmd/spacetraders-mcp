@@ -523,6 +523,17 @@ type BuyCargoData struct {
 	Transaction MarketTransaction `json:"transaction"`
 }
 
+// DeliverContractResponse represents deliver contract response
+type DeliverContractResponse struct {
+	Data DeliverContractData `json:"data"`
+}
+
+// DeliverContractData represents deliver contract data
+type DeliverContractData struct {
+	Contract Contract `json:"contract"`
+	Cargo    Cargo    `json:"cargo"`
+}
+
 // FulfillContractResponse represents fulfill contract response
 type FulfillContractResponse struct {
 	Data FulfillContractData `json:"data"`

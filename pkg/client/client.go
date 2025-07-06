@@ -476,6 +476,42 @@ func (c *Client) BuyCargo(shipSymbol, symbol string, units int) (*BuyCargoRespon
 	}, nil
 }
 
+// DeliverContract delivers goods to a contract
+func (c *Client) DeliverContract(contractID, shipSymbol, tradeSymbol string, units int) (*DeliverContractResponse, error) {
+	req := spacetraders.DeliverContractRequest{
+		ShipSymbol:  shipSymbol,
+		TradeSymbol: tradeSymbol,
+		Units:       int32(units),
+	}
+
+	resp, _, err := c.apiClient.ContractsAPI.DeliverContract(c.ctx, contractID).DeliverContractRequest(req).Execute()
+	if err != nil {
+		return nil, fmt.Errorf("failed to deliver contract goods: %w", err)
+	}
+
+	var expiration, deadlineToAccept string
+	expiration = resp.Data.Contract.Expiration.Format("2006-01-02T15:04:05.000Z")
+	if resp.Data.Contract.DeadlineToAccept != nil {
+		deadlineToAccept = resp.Data.Contract.DeadlineToAccept.Format("2006-01-02T15:04:05.000Z")
+	}
+
+	return &DeliverContractResponse{
+		Data: DeliverContractData{
+			Contract: Contract{
+				ID:               resp.Data.Contract.Id,
+				FactionSymbol:    resp.Data.Contract.FactionSymbol,
+				Type:             resp.Data.Contract.Type,
+				Terms:            convertContractTerms(resp.Data.Contract.Terms),
+				Accepted:         resp.Data.Contract.Accepted,
+				Fulfilled:        resp.Data.Contract.Fulfilled,
+				Expiration:       expiration,
+				DeadlineToAccept: deadlineToAccept,
+			},
+			Cargo: convertCargo(resp.Data.Cargo),
+		},
+	}, nil
+}
+
 // FulfillContract fulfills a contract
 func (c *Client) FulfillContract(contractID string) (*FulfillContractResponse, error) {
 	resp, _, err := c.apiClient.ContractsAPI.FulfillContract(c.ctx, contractID).Execute()

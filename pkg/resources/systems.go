@@ -67,7 +67,7 @@ func (r *SystemsResource) handleSystemsList(ctx context.Context, request mcp.Rea
 
 	// Get systems from the API
 	start := time.Now()
-	systems, err := r.client.GetSystems()
+	systems, err := r.client.GetAllSystems()
 	duration := time.Since(start)
 
 	if err != nil {

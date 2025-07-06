@@ -55,7 +55,7 @@ func (r *ShipsResource) Handler() func(ctx context.Context, request mcp.ReadReso
 
 		// Get ships information from the API
 		start := time.Now()
-		ships, err := r.client.GetShips()
+		ships, err := r.client.GetAllShips()
 		duration := time.Since(start)
 
 		if err != nil {

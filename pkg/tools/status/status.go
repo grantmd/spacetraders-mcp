@@ -107,7 +107,7 @@ func (t *StatusTool) Handler() func(ctx context.Context, request mcp.CallToolReq
 		// Get ships if requested
 		if includeShips {
 			ctxLogger.Debug("Fetching ships information")
-			ships, err := t.client.GetShips()
+			ships, err := t.client.GetAllShips()
 			if err != nil {
 				ctxLogger.Error("Failed to fetch ships: %v", err)
 				summary["ships"] = map[string]interface{}{
@@ -142,7 +142,7 @@ func (t *StatusTool) Handler() func(ctx context.Context, request mcp.CallToolReq
 		// Get contracts if requested
 		if includeContracts {
 			ctxLogger.Debug("Fetching contracts information")
-			contracts, err := t.client.GetContracts()
+			contracts, err := t.client.GetAllContracts()
 			if err != nil {
 				ctxLogger.Error("Failed to fetch contracts: %v", err)
 				summary["contracts"] = map[string]interface{}{

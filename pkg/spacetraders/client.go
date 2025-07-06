@@ -862,60 +862,90 @@ func (c *Client) GetAgent() (*Agent, error) {
 	return &agentResp.Data, nil
 }
 
-// GetShips fetches all ships for the agent
-func (c *Client) GetShips() ([]Ship, error) {
-	resp, err := c.makeRequest("GET", "/my/ships", nil)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
+// GetAllShips fetches all ships for the agent with pagination
+func (c *Client) GetAllShips() ([]Ship, error) {
+	var allShips []Ship
+	page := 1
+	limit := 20 // SpaceTraders default page size
 
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	for {
+		endpoint := fmt.Sprintf("/my/ships?page=%d&limit=%d", page, limit)
+
+		resp, err := c.makeRequest("GET", endpoint, nil)
+		if err != nil {
+			return nil, err
+		}
+		defer func() { _ = resp.Body.Close() }()
+
+		if resp.StatusCode != http.StatusOK {
+			body, _ := io.ReadAll(resp.Body)
+			return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read response body: %w", err)
+		}
+
+		var shipsResp ShipsResponse
+		if err := json.Unmarshal(body, &shipsResp); err != nil {
+			return nil, fmt.Errorf("failed to parse response: %w", err)
+		}
+
+		allShips = append(allShips, shipsResp.Data...)
+
+		// Check if we have all ships
+		if len(allShips) >= shipsResp.Meta.Total {
+			break
+		}
+
+		page++
 	}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	var shipsResp ShipsResponse
-	if err := json.Unmarshal(body, &shipsResp); err != nil {
-		return nil, fmt.Errorf("failed to parse response: %w", err)
-	}
-
-	return shipsResp.Data, nil
+	return allShips, nil
 }
 
-// GetContracts fetches all contracts for the agent
-func (c *Client) GetContracts() ([]Contract, error) {
-	resp, err := c.makeRequest("GET", "/my/contracts", nil)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
+// GetAllContracts fetches all contracts for the agent with pagination
+func (c *Client) GetAllContracts() ([]Contract, error) {
+	var allContracts []Contract
+	page := 1
+	limit := 20 // SpaceTraders default page size
 
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	for {
+		endpoint := fmt.Sprintf("/my/contracts?page=%d&limit=%d", page, limit)
+
+		resp, err := c.makeRequest("GET", endpoint, nil)
+		if err != nil {
+			return nil, err
+		}
+		defer func() { _ = resp.Body.Close() }()
+
+		if resp.StatusCode != http.StatusOK {
+			body, _ := io.ReadAll(resp.Body)
+			return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read response body: %w", err)
+		}
+
+		var contractsResp ContractsResponse
+		if err := json.Unmarshal(body, &contractsResp); err != nil {
+			return nil, fmt.Errorf("failed to parse response: %w", err)
+		}
+
+		allContracts = append(allContracts, contractsResp.Data...)
+
+		// Check if we have all contracts
+		if len(allContracts) >= contractsResp.Meta.Total {
+			break
+		}
+
+		page++
 	}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	var contractsResp ContractsResponse
-	if err := json.Unmarshal(body, &contractsResp); err != nil {
-		return nil, fmt.Errorf("failed to parse response: %w", err)
-	}
-
-	return contractsResp.Data, nil
+	return allContracts, nil
 }
 
 // AcceptContract accepts a contract by its ID
@@ -1382,29 +1412,42 @@ func (c *Client) JettisonCargo(shipSymbol, cargoSymbol string, units int) (*Carg
 	return &jettisonResp.Data.Cargo, nil
 }
 
-// GetSystems gets a list of all systems in the universe
-func (c *Client) GetSystems() ([]System, error) {
-	endpoint := "/systems"
+// GetAllSystems gets a list of all systems in the universe with pagination
+func (c *Client) GetAllSystems() ([]System, error) {
+	var allSystems []System
+	page := 1
+	limit := 20 // SpaceTraders default page size
 
-	resp, err := c.makeRequest("GET", endpoint, nil)
-	if err != nil {
-		return nil, err
+	for {
+		endpoint := fmt.Sprintf("/systems?page=%d&limit=%d", page, limit)
+
+		resp, err := c.makeRequest("GET", endpoint, nil)
+		if err != nil {
+			return nil, err
+		}
+		defer func() { _ = resp.Body.Close() }()
+
+		if resp.StatusCode != http.StatusOK {
+			body, _ := io.ReadAll(resp.Body)
+			return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+		}
+
+		var systemsResp SystemsResponse
+		if err := json.NewDecoder(resp.Body).Decode(&systemsResp); err != nil {
+			return nil, fmt.Errorf("failed to decode systems response: %w", err)
+		}
+
+		allSystems = append(allSystems, systemsResp.Data...)
+
+		// Check if we have all systems
+		if len(allSystems) >= systemsResp.Meta.Total {
+			break
+		}
+
+		page++
 	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
 
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
-	}
-
-	var systemsResp SystemsResponse
-	if err := json.NewDecoder(resp.Body).Decode(&systemsResp); err != nil {
-		return nil, fmt.Errorf("failed to decode systems response: %w", err)
-	}
-
-	return systemsResp.Data, nil
+	return allSystems, nil
 }
 
 // GetSystem gets detailed information about a specific system
@@ -1432,29 +1475,42 @@ func (c *Client) GetSystem(systemSymbol string) (*System, error) {
 	return &systemResp.Data, nil
 }
 
-// GetFactions gets a list of all factions in the universe
-func (c *Client) GetFactions() ([]Faction, error) {
-	endpoint := "/factions"
+// GetAllFactions gets a list of all factions in the universe with pagination
+func (c *Client) GetAllFactions() ([]Faction, error) {
+	var allFactions []Faction
+	page := 1
+	limit := 20 // SpaceTraders default page size
 
-	resp, err := c.makeRequest("GET", endpoint, nil)
-	if err != nil {
-		return nil, err
+	for {
+		endpoint := fmt.Sprintf("/factions?page=%d&limit=%d", page, limit)
+
+		resp, err := c.makeRequest("GET", endpoint, nil)
+		if err != nil {
+			return nil, err
+		}
+		defer func() { _ = resp.Body.Close() }()
+
+		if resp.StatusCode != http.StatusOK {
+			body, _ := io.ReadAll(resp.Body)
+			return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+		}
+
+		var factionsResp FactionsResponse
+		if err := json.NewDecoder(resp.Body).Decode(&factionsResp); err != nil {
+			return nil, fmt.Errorf("failed to decode factions response: %w", err)
+		}
+
+		allFactions = append(allFactions, factionsResp.Data...)
+
+		// Check if we have all factions
+		if len(allFactions) >= factionsResp.Meta.Total {
+			break
+		}
+
+		page++
 	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
 
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
-	}
-
-	var factionsResp FactionsResponse
-	if err := json.NewDecoder(resp.Body).Decode(&factionsResp); err != nil {
-		return nil, fmt.Errorf("failed to decode factions response: %w", err)
-	}
-
-	return factionsResp.Data, nil
+	return allFactions, nil
 }
 
 // GetFaction gets detailed information about a specific faction

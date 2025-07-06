@@ -67,7 +67,7 @@ func (r *FactionsResource) handleFactionsList(ctx context.Context, request mcp.R
 
 	// Get factions from the API
 	start := time.Now()
-	factions, err := r.client.GetFactions()
+	factions, err := r.client.GetAllFactions()
 	duration := time.Since(start)
 
 	if err != nil {

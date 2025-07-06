@@ -63,7 +63,7 @@ func (t *FleetAnalysisTool) Handler() func(ctx context.Context, request mcp.Call
 		}
 
 		// Get current fleet
-		ships, err := t.client.GetShips()
+		ships, err := t.client.GetAllShips()
 		if err != nil {
 			ctxLogger.Error("Failed to fetch ships: %v", err)
 			return &mcp.CallToolResult{
@@ -75,7 +75,7 @@ func (t *FleetAnalysisTool) Handler() func(ctx context.Context, request mcp.Call
 		}
 
 		// Get current contracts
-		contracts, err := t.client.GetContracts()
+		contracts, err := t.client.GetAllContracts()
 		if err != nil {
 			ctxLogger.Error("Failed to fetch contracts: %v", err)
 			return &mcp.CallToolResult{

@@ -76,7 +76,7 @@ func (t *ContractInfoTool) Handler() func(ctx context.Context, request mcp.CallT
 
 		// Get contracts from API
 		start := time.Now()
-		contracts, err := t.client.GetContracts()
+		contracts, err := t.client.GetAllContracts()
 		duration := time.Since(start)
 
 		if err != nil {

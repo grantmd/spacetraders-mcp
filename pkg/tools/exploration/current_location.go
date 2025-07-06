@@ -74,7 +74,7 @@ func (t *CurrentLocationTool) Handler() func(ctx context.Context, request mcp.Ca
 		contextLogger.Info("Analyzing current ship locations")
 
 		// Get all ships
-		ships, err := t.client.GetShips()
+		ships, err := t.client.GetAllShips()
 		if err != nil {
 			contextLogger.Error(fmt.Sprintf("Failed to get ships: %v", err))
 			return &mcp.CallToolResult{

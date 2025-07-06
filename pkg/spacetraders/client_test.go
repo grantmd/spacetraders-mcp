@@ -125,7 +125,7 @@ func TestClient_GetAgent_Error(t *testing.T) {
 	}
 }
 
-func TestClient_GetShips(t *testing.T) {
+func TestClient_GetAllShips(t *testing.T) {
 	// Mock ships response
 	mockShips := []Ship{
 		{
@@ -195,10 +195,10 @@ func TestClient_GetShips(t *testing.T) {
 		BaseURL:  server.URL,
 	}
 
-	// Test GetShips
-	ships, err := client.GetShips()
+	// Test GetAllShips
+	ships, err := client.GetAllShips()
 	if err != nil {
-		t.Fatalf("GetShips returned error: %v", err)
+		t.Fatalf("GetAllShips returned error: %v", err)
 	}
 
 	// Verify response
@@ -215,7 +215,7 @@ func TestClient_GetShips(t *testing.T) {
 	}
 }
 
-func TestClient_GetContracts(t *testing.T) {
+func TestClient_GetAllContracts(t *testing.T) {
 	// Mock contracts response
 	mockContracts := []Contract{
 		{
@@ -281,10 +281,10 @@ func TestClient_GetContracts(t *testing.T) {
 		BaseURL:  server.URL,
 	}
 
-	// Test GetContracts
-	contracts, err := client.GetContracts()
+	// Test GetAllContracts
+	contracts, err := client.GetAllContracts()
 	if err != nil {
-		t.Fatalf("GetContracts returned error: %v", err)
+		t.Fatalf("GetAllContracts returned error: %v", err)
 	}
 
 	// Verify response
@@ -1086,7 +1086,7 @@ func TestClient_PurchaseShip_ShipNotAvailable(t *testing.T) {
 	}
 }
 
-func TestClient_GetSystems(t *testing.T) {
+func TestClient_GetAllSystems(t *testing.T) {
 	// Mock systems response
 	mockSystems := []System{
 		{
@@ -1140,10 +1140,10 @@ func TestClient_GetSystems(t *testing.T) {
 		BaseURL:  server.URL,
 	}
 
-	// Test GetSystems
-	systems, err := client.GetSystems()
+	// Test GetAllSystems
+	systems, err := client.GetAllSystems()
 	if err != nil {
-		t.Fatalf("GetSystems failed: %v", err)
+		t.Fatalf("GetAllSystems failed: %v", err)
 	}
 
 	if len(systems) != 1 {
@@ -1213,7 +1213,7 @@ func TestClient_GetSystem(t *testing.T) {
 	}
 }
 
-func TestClient_GetFactions(t *testing.T) {
+func TestClient_GetAllFactions(t *testing.T) {
 	// Mock factions response
 	mockFactions := []Faction{
 		{
@@ -1270,10 +1270,10 @@ func TestClient_GetFactions(t *testing.T) {
 		BaseURL:  server.URL,
 	}
 
-	// Test GetFactions
-	factions, err := client.GetFactions()
+	// Test GetAllFactions
+	factions, err := client.GetAllFactions()
 	if err != nil {
-		t.Fatalf("GetFactions failed: %v", err)
+		t.Fatalf("GetAllFactions failed: %v", err)
 	}
 
 	if len(factions) != 1 {
@@ -1354,7 +1354,7 @@ func TestClient_GetFaction(t *testing.T) {
 	}
 }
 
-func TestClient_GetSystems_Error(t *testing.T) {
+func TestClient_GetAllSystems_Error(t *testing.T) {
 	// Test server that returns error
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -1369,8 +1369,8 @@ func TestClient_GetSystems_Error(t *testing.T) {
 		BaseURL:  server.URL,
 	}
 
-	// Test GetSystems with error
-	systems, err := client.GetSystems()
+	// Test GetAllSystems with error
+	systems, err := client.GetAllSystems()
 	if err == nil {
 		t.Fatal("Expected error, got nil")
 	}
@@ -1379,7 +1379,7 @@ func TestClient_GetSystems_Error(t *testing.T) {
 	}
 }
 
-func TestClient_GetFactions_Error(t *testing.T) {
+func TestClient_GetAllFactions_Error(t *testing.T) {
 	// Test server that returns error
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
@@ -1394,8 +1394,8 @@ func TestClient_GetFactions_Error(t *testing.T) {
 		BaseURL:  server.URL,
 	}
 
-	// Test GetFactions with error
-	factions, err := client.GetFactions()
+	// Test GetAllFactions with error
+	factions, err := client.GetAllFactions()
 	if err == nil {
 		t.Fatal("Expected error, got nil")
 	}

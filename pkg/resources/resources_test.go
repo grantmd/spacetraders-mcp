@@ -264,6 +264,7 @@ func TestShipyardResource_Handler_Success(t *testing.T) {
 				Name:          "Probe",
 				Description:   "A small exploration vessel",
 				Supply:        "ABUNDANT",
+				Activity:      "STRONG",
 				PurchasePrice: 50000,
 				Frame: client.ShipyardShipFrame{
 					Symbol:         "FRAME_PROBE",
@@ -272,6 +273,45 @@ func TestShipyardResource_Handler_Success(t *testing.T) {
 					ModuleSlots:    2,
 					MountingPoints: 1,
 					FuelCapacity:   400,
+					Condition:      1.0,
+					Integrity:      1.0,
+					Requirements: client.ShipRequirements{
+						Power: 1,
+						Crew:  1,
+						Slots: 1,
+					},
+				},
+				Reactor: client.ShipyardShipReactor{
+					Symbol:      "REACTOR_SOLAR_I",
+					Name:        "Solar Reactor I",
+					Description: "Basic solar reactor",
+					Condition:   1.0,
+					Integrity:   1.0,
+					PowerOutput: 40,
+					Requirements: client.ShipRequirements{
+						Power: 0,
+						Crew:  0,
+						Slots: 1,
+					},
+				},
+				Engine: client.ShipyardShipEngine{
+					Symbol:      "ENGINE_IMPULSE_DRIVE_I",
+					Name:        "Impulse Drive I",
+					Description: "Basic impulse drive",
+					Condition:   1.0,
+					Integrity:   1.0,
+					Speed:       30,
+					Requirements: client.ShipRequirements{
+						Power: 1,
+						Crew:  0,
+						Slots: 1,
+					},
+				},
+				Modules: []client.ShipyardShipModule{},
+				Mounts:  []client.ShipyardShipMount{},
+				Crew: client.ShipyardShipCrew{
+					Required: 1,
+					Capacity: 3,
 				},
 			},
 		},
@@ -562,6 +602,93 @@ func TestShipsResource_Handler_Success(t *testing.T) {
 				FactionSymbol: "TEST_FACTION",
 				Role:          "COMMAND",
 			},
+			Nav: client.Navigation{
+				SystemSymbol:   "X1-TEST",
+				WaypointSymbol: "X1-TEST-A1",
+				Route: client.Route{
+					Destination: client.Waypoint{
+						Symbol: "X1-TEST-A1",
+						Type:   "PLANET",
+						X:      10,
+						Y:      20,
+					},
+					Origin: client.Waypoint{
+						Symbol: "X1-TEST-A1",
+						Type:   "PLANET",
+						X:      10,
+						Y:      20,
+					},
+					DepartureTime: "2024-01-01T00:00:00.000Z",
+					Arrival:       "2024-01-01T00:00:00.000Z",
+				},
+				Status:     "DOCKED",
+				FlightMode: "CRUISE",
+			},
+			Crew: client.Crew{
+				Current:  3,
+				Required: 3,
+				Capacity: 5,
+				Rotation: "STRICT",
+				Morale:   100,
+				Wages:    0,
+			},
+			Frame: client.Frame{
+				Symbol:         "FRAME_PROBE",
+				Name:           "Probe Frame",
+				Description:    "Small frame for probe ships",
+				ModuleSlots:    2,
+				MountingPoints: 1,
+				FuelCapacity:   400,
+				Condition:      1.0,
+				Integrity:      1.0,
+				Requirements: client.ShipRequirements{
+					Power: 1,
+					Crew:  1,
+					Slots: 1,
+				},
+			},
+			Reactor: client.Reactor{
+				Symbol:      "REACTOR_SOLAR_I",
+				Name:        "Solar Reactor I",
+				Description: "Basic solar reactor",
+				Condition:   1.0,
+				Integrity:   1.0,
+				PowerOutput: 40,
+				Requirements: client.ShipRequirements{
+					Power: 0,
+					Crew:  0,
+					Slots: 1,
+				},
+			},
+			Engine: client.Engine{
+				Symbol:      "ENGINE_IMPULSE_DRIVE_I",
+				Name:        "Impulse Drive I",
+				Description: "Basic impulse drive",
+				Condition:   1.0,
+				Integrity:   1.0,
+				Speed:       30,
+				Requirements: client.ShipRequirements{
+					Power: 1,
+					Crew:  0,
+					Slots: 1,
+				},
+			},
+			Cooldown: client.Cooldown{
+				ShipSymbol:       "TEST_SHIP_1",
+				TotalSeconds:     0,
+				RemainingSeconds: 0,
+			},
+			Modules: []client.Module{},
+			Mounts:  []client.Mount{},
+			Cargo: client.Cargo{
+				Capacity:  40,
+				Units:     0,
+				Inventory: []client.CargoItem{},
+			},
+			Fuel: client.Fuel{
+				Current:  100,
+				Capacity: 100,
+			},
 		},
 		{
 			Symbol: "TEST_SHIP_2",
@@ -570,13 +697,114 @@ func TestShipsResource_Handler_Success(t *testing.T) {
 				FactionSymbol: "TEST_FACTION",
 				Role:          "HAULER",
 			},
+			Nav: client.Navigation{
+				SystemSymbol:   "X1-TEST",
+				WaypointSymbol: "X1-TEST-B2",
+				Route: client.Route{
+					Destination: client.Waypoint{
+						Symbol: "X1-TEST-B2",
+						Type:   "MOON",
+						X:      15,
+						Y:      25,
+					},
+					Origin: client.Waypoint{
+						Symbol: "X1-TEST-B2",
+						Type:   "MOON",
+						X:      15,
+						Y:      25,
+					},
+					DepartureTime: "2024-01-01T00:00:00.000Z",
+					Arrival:       "2024-01-01T00:00:00.000Z",
+				},
+				Status:     "DOCKED",
+				FlightMode: "CRUISE",
+			},
+			Crew: client.Crew{
+				Current:  2,
+				Required: 2,
+				Capacity: 4,
+				Rotation: "STRICT",
+				Morale:   100,
+				Wages:    0,
+			},
+			Frame: client.Frame{
+				Symbol:         "FRAME_HAULER",
+				Name:           "Hauler Frame",
+				Description:    "Frame for hauler ships",
+				ModuleSlots:    3,
+				MountingPoints: 2,
+				FuelCapacity:   600,
+				Condition:      1.0,
+				Integrity:      1.0,
+				Requirements: client.ShipRequirements{
+					Power: 2,
+					Crew:  2,
+					Slots: 1,
+				},
+			},
+			Reactor: client.Reactor{
+				Symbol:      "REACTOR_SOLAR_I",
+				Name:        "Solar Reactor I",
+				Description: "Basic solar reactor",
+				Condition:   1.0,
+				Integrity:   1.0,
+				PowerOutput: 40,
+				Requirements: client.ShipRequirements{
+					Power: 0,
+					Crew:  0,
+					Slots: 1,
+				},
+			},
+			Engine: client.Engine{
+				Symbol:      "ENGINE_IMPULSE_DRIVE_I",
+				Name:        "Impulse Drive I",
+				Description: "Basic impulse drive",
+				Condition:   1.0,
+				Integrity:   1.0,
+				Speed:       30,
+				Requirements: client.ShipRequirements{
+					Power: 1,
+					Crew:  0,
+					Slots: 1,
+				},
+			},
+			Cooldown: client.Cooldown{
+				ShipSymbol:       "TEST_SHIP_2",
+				TotalSeconds:     0,
+				RemainingSeconds: 0,
+			},
+			Modules: []client.Module{},
+			Mounts:  []client.Mount{},
+			Cargo: client.Cargo{
+				Capacity:  80,
+				Units:     0,
+				Inventory: []client.CargoItem{},
+			},
+			Fuel: client.Fuel{
+				Current:  150,
+				Capacity: 150,
+			},
 		},
 	}
 
 	mockResponse := struct {
 		Data []client.Ship `json:"data"`
+		Meta struct {
+			Total int `json:"total"`
+			Page  int `json:"page"`
+			Limit int `json:"limit"`
+		} `json:"meta"`
 	}{
 		Data: mockShips,
+		Meta: struct {
+			Total int `json:"total"`
+			Page  int `json:"page"`
+			Limit int `json:"limit"`
+		}{
+			Total: 2,
+			Page:  1,
+			Limit: 20,
+		},
 	}
 
 	responseJSON, err := json.Marshal(mockResponse)

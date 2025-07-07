@@ -80,7 +80,23 @@ func TestFindWaypointsTool_Handler_Success(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(struct {
 			Data []client.SystemWaypoint `json:"data"`
-		}{Data: mockWaypoints})
+			Meta struct {
+				Total int `json:"total"`
+				Page  int `json:"page"`
+				Limit int `json:"limit"`
+			} `json:"meta"`
+		}{
+			Data: mockWaypoints,
+			Meta: struct {
+				Total int `json:"total"`
+				Page  int `json:"page"`
+				Limit int `json:"limit"`
+			}{
+				Total: 2,
+				Page:  1,
+				Limit: 20,
+			},
+		})
 	}))
 	defer server.Close()
 
@@ -131,6 +147,11 @@ func TestFindWaypointsTool_Handler_NoResults(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		mockResponse := struct {
 			Data []client.SystemWaypoint `json:"data"`
+			Meta struct {
+				Total int `json:"total"`
+				Page  int `json:"page"`
+				Limit int `json:"limit"`
+			} `json:"meta"`
 		}{
 			Data: []client.SystemWaypoint{
 				{
@@ -140,12 +161,21 @@ func TestFindWaypointsTool_Handler_NoResults(t *testing.T) {
 					Y:      20,
 					Traits: []client.WaypointTrait{
 						{
-							Symbol:      "ASTEROID_FIELD",
-							Name:        "Asteroid Field",
-							Description: "A field of asteroids",
+							Symbol:      "MARKETPLACE",
+							Name:        "Marketplace",
+							Description: "A trading facility",
 						},
 					},
 				},
+			},
+			Meta: struct {
+				Total int `json:"total"`
+				Page  int `json:"page"`
+				Limit int `json:"limit"`
+			}{
+				Total: 1,
+				Page:  1,
+				Limit: 20,
 			},
 		}
 
@@ -274,9 +304,50 @@ func TestCurrentLocationTool_Tool(t *testing.T) {
 
 func TestCurrentLocationTool_Handler_Success(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.Contains(r.URL.Path, "/my/ships") {
+		if strings.Contains(r.URL.Path, "/systems/X1-TEST/waypoints") {
+			mockWaypoints := struct {
+				Data []client.SystemWaypoint `json:"data"`
+				Meta struct {
+					Total int `json:"total"`
+					Page  int `json:"page"`
+					Limit int `json:"limit"`
+				} `json:"meta"`
+			}{
+				Data: []client.SystemWaypoint{
+					{
+						Symbol: "X1-TEST-A1",
+						Type:   "PLANET",
+						X:      10,
+						Y:      20,
+						Traits: []client.WaypointTrait{
+							{
+								Symbol:      "MARKETPLACE",
+								Name:        "Marketplace",
+								Description: "A trading facility",
+							},
+						},
+					},
+				},
+				Meta: struct {
+					Total int `json:"total"`
+					Page  int `json:"page"`
+					Limit int `json:"limit"`
+				}{
+					Total: 1,
+					Page:  1,
+					Limit: 20,
+				},
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(mockWaypoints)
+		} else if strings.Contains(r.URL.Path, "/my/ships") {
 			mockResponse := struct {
 				Data []client.Ship `json:"data"`
+				Meta struct {
+					Total int `json:"total"`
+					Page  int `json:"page"`
+					Limit int `json:"limit"`
+				} `json:"meta"`
 			}{
 				Data: []client.Ship{
 					{
@@ -289,18 +360,100 @@ func TestCurrentLocationTool_Handler_Success(t *testing.T) {
 						Nav: client.Navigation{
 							SystemSymbol:   "X1-TEST",
 							WaypointSymbol: "X1-TEST-A1",
-							Status:         "DOCKED",
-							FlightMode:     "CRUISE",
+							Route: client.Route{
+								Destination: client.Waypoint{
+									Symbol: "X1-TEST-A1",
+									Type:   "PLANET",
+									X:      10,
+									Y:      20,
+								},
+								Origin: client.Waypoint{
+									Symbol: "X1-TEST-A1",
+									Type:   "PLANET",
+									X:      10,
+									Y:      20,
+								},
+								DepartureTime: "2024-01-01T00:00:00.000Z",
+								Arrival:       "2024-01-01T00:00:00.000Z",
+							},
+							Status:     "DOCKED",
+							FlightMode: "CRUISE",
 						},
+						Crew: client.Crew{
+							Current:  3,
+							Required: 3,
+							Capacity: 5,
+							Rotation: "STRICT",
+							Morale:   100,
+							Wages:    0,
+						},
+						Frame: client.Frame{
+							Symbol:         "FRAME_PROBE",
+							Name:           "Probe Frame",
+							Description:    "Small frame for probe ships",
+							ModuleSlots:    2,
+							MountingPoints: 1,
+							FuelCapacity:   400,
+							Condition:      1.0,
+							Integrity:      1.0,
+							Requirements: client.ShipRequirements{
+								Power: 1,
+								Crew:  1,
+								Slots: 1,
+							},
+						},
+						Reactor: client.Reactor{
+							Symbol:      "REACTOR_SOLAR_I",
+							Name:        "Solar Reactor I",
+							Description: "Basic solar reactor",
+							Condition:   1.0,
+							Integrity:   1.0,
+							PowerOutput: 40,
+							Requirements: client.ShipRequirements{
+								Power: 0,
+								Crew:  0,
+								Slots: 1,
+							},
+						},
+						Engine: client.Engine{
+							Symbol:      "ENGINE_IMPULSE_DRIVE_I",
+							Name:        "Impulse Drive I",
+							Description: "Basic impulse drive",
+							Condition:   1.0,
+							Integrity:   1.0,
+							Speed:       30,
+							Requirements: client.ShipRequirements{
+								Power: 1,
+								Crew:  0,
+								Slots: 1,
+							},
+						},
+						Cooldown: client.Cooldown{
+							ShipSymbol:       "SHIP_1234",
+							TotalSeconds:     0,
+							RemainingSeconds: 0,
+						},
+						Modules: []client.Module{},
+						Mounts:  []client.Mount{},
 						Fuel: client.Fuel{
 							Current:  80,
 							Capacity: 100,
 						},
 						Cargo: client.Cargo{
-							Capacity: 40,
-							Units:    10,
+							Capacity:  40,
+							Units:     10,
+							Inventory: []client.CargoItem{},
 						},
 					},
+				},
+				Meta: struct {
+					Total int `json:"total"`
+					Page  int `json:"page"`
+					Limit int `json:"limit"`
+				}{
+					Total: 1,
+					Page:  1,
+					Limit: 20,
 				},
 			}
 			w.Header().Set("Content-Type", "application/json")

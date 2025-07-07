@@ -61,14 +61,15 @@ func TestAcceptContractTool_Tool(t *testing.T) {
 func TestAcceptContractTool_Handler_Success(t *testing.T) {
 	// Mock successful contract acceptance
 	mockContract := client.Contract{
-		ID:            "test-contract-123",
-		FactionSymbol: "COSMIC",
-		Type:          "PROCUREMENT",
-		Accepted:      true,
-		Fulfilled:     false,
-		Expiration:    "2024-12-31T23:59:59Z",
+		ID:               "test-contract-123",
+		FactionSymbol:    "COSMIC",
+		Type:             "PROCUREMENT",
+		Accepted:         true,
+		Fulfilled:        false,
+		Expiration:       "2024-12-31T23:59:59.000Z",
+		DeadlineToAccept: "2024-12-29T23:59:59.000Z",
 		Terms: client.ContractTerms{
-			Deadline: "2024-12-30T23:59:59Z",
+			Deadline: "2024-12-30T23:59:59.000Z",
 			Payment: client.ContractPayment{
 				OnAccepted:  10000,
 				OnFulfilled: 50000,

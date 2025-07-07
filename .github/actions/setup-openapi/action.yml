@@ -86,24 +86,6 @@ runs:
 
         echo "path=./generated/spacetraders" >> $GITHUB_OUTPUT
 
-    - name: Fix generated client issues
-      shell: bash
-      run: |
-        echo "Fixing generated client validation issues..."
-        # Remove validator calls that cause compilation errors
-        if [ -f "./generated/spacetraders/model_get_system_waypoints_traits_parameter.go" ]; then
-          sed -i 's/if err = validator\.Validate([^)]*); err != nil {[^}]*} else {//' ./generated/spacetraders/model_get_system_waypoints_traits_parameter.go || true
-          sed -i 's/validator\.Validate([^)]*); err != nil {[^}]*}//' ./generated/spacetraders/model_get_system_waypoints_traits_parameter.go || true
-        fi
-
-        echo "Installing goimports..."
-        go install golang.org/x/tools/cmd/goimports@latest
-
-        echo "Cleaning up imports..."
-        ~/go/bin/goimports -w ./generated/spacetraders/ || goimports -w ./generated/spacetraders/
-
-        echo "Generated client fixes complete"
-
     - name: Verify generated client
       shell: bash
       run: |

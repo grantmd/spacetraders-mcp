@@ -13,7 +13,7 @@ This document explains how to integrate the SpaceTraders MCP Server with Claude 
 ### 1. Clone and Build
 
 ```bash
-git clone https://github.com/your-username/spacetraders-mcp.git
+git clone https://github.com/grantmd/spacetraders-mcp.git
 cd spacetraders-mcp
 go build -o spacetraders-mcp
 ```

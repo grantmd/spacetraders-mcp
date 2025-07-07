@@ -3,8 +3,8 @@ outputDir: ./generated
 inputSpec: https://spacetraders.io/SpaceTraders.json
 packageName: spacetraders
 packageVersion: 1.0.0
-packageUrl: github.com/your-username/spacetraders-mcp/generated
-gitUserId: your-username
+packageUrl: github.com/grantmd/spacetraders-mcp/generated/spacetraders
+gitUserId: grantmd
 gitRepoId: spacetraders-mcp
 additionalProperties:
   packageName: spacetraders

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/your-username/spacetraders-mcp/generated/spacetraders"
+	spacetraders "github.com/grantmd/spacetraders-mcp/spacetraders"
 )
 
 // Client wraps the generated OpenAPI client to provide a compatible interface

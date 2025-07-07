@@ -172,7 +172,7 @@ Intelligent prompts for common tasks:
 
 1. **Clone the repository:**
 ```bash
-git clone https://github.com/your-username/spacetraders-mcp.git
+git clone https://github.com/grantmd/spacetraders-mcp.git
 cd spacetraders-mcp
 ```
 
@@ -221,9 +221,9 @@ import (
     "encoding/json"
     "fmt"
     "net/url"
-    
-    "github.com/your-username/spacetraders-mcp/pkg/client"
-    "github.com/your-username/spacetraders-mcp/pkg/mcp"
+
+    "github.com/grantmd/spacetraders-mcp/pkg/client"
+    "github.com/grantmd/spacetraders-mcp/pkg/mcp"
 )
 
 type ExampleResource struct {
@@ -250,13 +250,13 @@ func (r *ExampleResource) Resource() mcp.Resource {
 func (r *ExampleResource) Handler(ctx context.Context, uri *url.URL) ([]byte, error) {
     // Extract parameters from URI
     param := extractParam(uri.Path)
-    
+
     // Fetch data from SpaceTraders API
     data, err := r.client.GetExampleData(ctx, param)
     if err != nil {
         return nil, fmt.Errorf("failed to fetch example data: %w", err)
     }
-    
+
     // Return JSON response
     return json.Marshal(data)
 }
@@ -269,7 +269,7 @@ Add the resource to the server in `pkg/mcp/server.go`:
 ```go
 func (s *Server) registerResources() {
     // ... existing resources ...
-    
+
     exampleResource := resources.NewExampleResource(s.client, s.logger)
     s.resources["example"] = exampleResource
 }
@@ -289,9 +289,9 @@ package tools
 import (
     "context"
     "encoding/json"
-    
-    "github.com/your-username/spacetraders-mcp/pkg/client"
-    "github.com/your-username/spacetraders-mcp/pkg/mcp"
+
+    "github.com/grantmd/spacetraders-mcp/pkg/client"
+    "github.com/grantmd/spacetraders-mcp/pkg/mcp"
 )
 
 type ExampleTool struct {
@@ -334,15 +334,15 @@ func (t *ExampleTool) Handler(ctx context.Context, arguments map[string]interfac
     if !ok {
         return nil, fmt.Errorf("param1 is required and must be a string")
     }
-    
+
     param2, _ := arguments["param2"].(float64)
-    
+
     // Perform action via SpaceTraders API
     result, err := t.client.ExampleAction(ctx, param1, int(param2))
     if err != nil {
         return nil, fmt.Errorf("failed to perform example action: %w", err)
     }
-    
+
     return json.Marshal(result)
 }
 ```
@@ -354,7 +354,7 @@ Add the tool to the server in `pkg/mcp/server.go`:
 ```go
 func (s *Server) registerTools() {
     // ... existing tools ...
-    
+
     exampleTool := tools.NewExampleTool(s.client, s.logger)
     s.tools["example_action"] = exampleTool
 }

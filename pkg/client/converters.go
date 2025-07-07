@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/your-username/spacetraders-mcp/generated/spacetraders"
+	spacetraders "github.com/grantmd/spacetraders-mcp/spacetraders"
 )
 
 // convertRegistration converts generated ShipRegistration to wrapper Registration

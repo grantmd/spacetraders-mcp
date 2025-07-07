@@ -3,9 +3,9 @@ module spacetraders-mcp
 go 1.24.4
 
 require (
+	github.com/grantmd/spacetraders-mcp/spacetraders v0.0.0-00010101000000-000000000000
 	github.com/mark3labs/mcp-go v0.32.0
 	github.com/spf13/viper v1.20.1
-	github.com/your-username/spacetraders-mcp/generated/spacetraders v0.0.0-00010101000000-000000000000
 )
 
 require (
@@ -23,7 +23,8 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
+	gopkg.in/validator.v2 v2.0.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/your-username/spacetraders-mcp/generated/spacetraders => ./generated/spacetraders
+replace github.com/grantmd/spacetraders-mcp/spacetraders => ./generated/spacetraders

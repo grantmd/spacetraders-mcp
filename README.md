@@ -27,7 +27,7 @@ A Model Context Protocol (MCP) server that provides seamless integration between
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-username/spacetraders-mcp.git
+   git clone https://github.com/grantmd/spacetraders-mcp.git
    cd spacetraders-mcp
    ```
 
@@ -48,7 +48,7 @@ A Model Context Protocol (MCP) server that provides seamless integration between
    ```
 
 5. **Configure Claude Desktop (or other client):**
-   
+
    Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (Claude macOS):
    ```json
    {
@@ -68,7 +68,7 @@ A Model Context Protocol (MCP) server that provides seamless integration between
 Once configured, try these commands:
 
 - **"Show me my current SpaceTraders status"** - Get a complete overview
-- **"What systems should I explore next?"** - Get strategic recommendations  
+- **"What systems should I explore next?"** - Get strategic recommendations
 - **"Help me optimize my fleet"** - Analyze and improve your ships
 - **"Find the best trading opportunities"** - Discover profitable routes
 
@@ -163,7 +163,7 @@ Detailed documentation is available in the `docs/` folder:
 - **First time setup?** Check the [Integration Guide](docs/integration.md)
 - **Having issues?** See the [Troubleshooting Guide](docs/troubleshooting.md)
 - **Want to contribute?** Read the [Development Guide](docs/development.md)
-- **Found a bug?** [Open an issue](https://github.com/your-username/spacetraders-mcp/issues)
+- **Found a bug?** [Open an issue](https://github.com/grantmd/spacetraders-mcp/issues)
 
 ## 📜 License
 

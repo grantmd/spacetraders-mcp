@@ -724,8 +724,7 @@ func convertScannedShips(gen []spacetraders.ScannedShip) []ScannedShip {
 			reactor = &ScannedShipReactor{Symbol: s.Reactor.Symbol}
 		}
 
-		var engine *ScannedShipEngine
-		engine = &ScannedShipEngine{Symbol: s.Engine.Symbol}
+		engine := &ScannedShipEngine{Symbol: s.Engine.Symbol}
 
 		mounts := make([]ScannedShipMount, len(s.Mounts))
 		for j, m := range s.Mounts {

@@ -65,7 +65,7 @@ func TestBasic_ServerHelp(t *testing.T) {
 
 	// Don't wait for it to complete, just verify it started
 	if cmd.Process != nil {
-		cmd.Process.Kill()
+		_ = cmd.Process.Kill()
 	}
 
 	t.Log("Server starts without errors")

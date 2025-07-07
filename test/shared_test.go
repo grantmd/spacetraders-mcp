@@ -121,7 +121,7 @@ func callMCPServer(t *testing.T, request string) []byte {
 	}
 
 	// Close stdin to signal end of input
-	stdin.Close()
+	_ = stdin.Close()
 
 	// Read the response with a buffer
 	var response []byte
@@ -137,8 +137,8 @@ func callMCPServer(t *testing.T, request string) []byte {
 	}
 
 	// Clean up
-	serverCmd.Process.Kill()
-	serverCmd.Wait()
+	_ = serverCmd.Process.Kill()
+	_ = serverCmd.Wait()
 
 	// Trim any trailing whitespace or null bytes
 	return []byte(string(response))

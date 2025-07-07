@@ -278,11 +278,12 @@ func (r *ShipResource) analyzeShipStatus(ship *client.Ship, cooldownStatus map[s
 		conditions = append(conditions, "cooling_down")
 	}
 
-	if ship.Nav.Status == "DOCKED" {
+	switch ship.Nav.Status {
+	case "DOCKED":
 		conditions = append(conditions, "docked")
-	} else if ship.Nav.Status == "IN_ORBIT" {
+	case "IN_ORBIT":
 		conditions = append(conditions, "in_orbit")
-	} else if ship.Nav.Status == "IN_TRANSIT" {
+	case "IN_TRANSIT":
 		conditions = append(conditions, "in_transit")
 		status = "traveling"
 		message = "Ship is currently traveling"
@@ -430,9 +431,10 @@ func (r *ShipResource) generateRecommendations(ship *client.Ship, cooldownStatus
 	}
 
 	// Location-based recommendations
-	if ship.Nav.Status == "DOCKED" {
+	switch ship.Nav.Status {
+	case "DOCKED":
 		recommendations = append(recommendations, "Ship is docked - can access market, shipyard, and refueling")
-	} else if ship.Nav.Status == "IN_ORBIT" {
+	case "IN_ORBIT":
 		if r.hasExtractionCapability(ship) && !cooldownStatus["active"].(bool) {
 			recommendations = append(recommendations, "Ship in orbit with extraction capability - ready for mining operations")
 		}

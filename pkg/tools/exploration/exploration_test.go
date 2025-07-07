@@ -78,7 +78,7 @@ func TestFindWaypointsTool_Handler_Success(t *testing.T) {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(struct {
+		_ = json.NewEncoder(w).Encode(struct {
 			Data []client.SystemWaypoint `json:"data"`
 		}{Data: mockWaypoints})
 	}))

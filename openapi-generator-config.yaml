@@ -20,6 +20,7 @@ additionalProperties:
   prependFormOrBodyParameters: false
   generateMarshalJSON: false
   generateUnmarshalJSON: false
+  disableValidation: true
 globalProperties:
   models: ""
   apis: ""

@@ -109,7 +109,7 @@ quick-test: build
 # Generate OpenAPI client from remote spec
 generate-client:
 	@echo "Generating OpenAPI client..."
-	openapi-generator generate -g go -o ./generated/spacetraders --additional-properties=packageName=spacetraders,clientPackage=spacetraders,modelPackage=spacetraders,generateInterfaces=true,structPrefix=true,enumClassPrefix=true,hideGenerationTimestamp=true,withGoCodegenComment=true,isGoSubmodule=true,withXml=false,prependFormOrBodyParameters=false,generateMarshalJSON=false,generateUnmarshalJSON=false,gitUserId=grantmd,gitRepoId=spacetraders-mcp --global-property apiTests=false,modelTests=false -c openapi-generator-config.yaml && goimports -w ./generated/spacetraders && gofmt -w ./generated/spacetraders
+	openapi-generator generate -g go -o ./generated/spacetraders --additional-properties=packageName=spacetraders,clientPackage=spacetraders,modelPackage=spacetraders,generateInterfaces=true,structPrefix=true,enumClassPrefix=true,hideGenerationTimestamp=true,withGoCodegenComment=true,isGoSubmodule=true,withXml=false,prependFormOrBodyParameters=false,generateMarshalJSON=false,generateUnmarshalJSON=false,disableValidation=true,gitUserId=grantmd,gitRepoId=spacetraders-mcp --global-property apiTests=false,modelTests=false -c openapi-generator-config.yaml && goimports -w ./generated/spacetraders && gofmt -w ./generated/spacetraders
 	@echo "Generated client available in ./generated/spacetraders"
 
 # Clean generated files

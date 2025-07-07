@@ -81,12 +81,7 @@ runs:
             exit 1
           fi
 
-          echo "Generated client files:"
-          file_count=$(find ./generated -name "*.go" | wc -l)
-          echo "Found $file_count Go files"
-          if [ "$file_count" -gt 0 ]; then
-            find ./generated -name "*.go" | sed 10q
-          fi
+          echo "Generated client files."
         fi
 
         echo "path=./generated/spacetraders" >> $GITHUB_OUTPUT

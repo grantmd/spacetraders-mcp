@@ -10,10 +10,18 @@ build:
 	@echo "Building SpaceTraders MCP Server..."
 	go build -o spacetraders-mcp .
 
-# Run all tests using the Go test runner
+# Run all tests using standard Go test
 test:
-	@echo "Running all tests with Go test runner..."
-	go run ./cmd/test_runner.go
+	@echo "Running unit tests..."
+	go test -v ./pkg/...
+	@echo "Running basic tests..."
+	go test -v ./test/...
+	@echo "Running integration tests..."
+	@if [ -z "$(SPACETRADERS_API_TOKEN)" ]; then \
+		echo "SPACETRADERS_API_TOKEN not set, skipping integration tests"; \
+	else \
+		go test -v -tags=integration ./test/...; \
+	fi
 
 # Run unit tests only
 test-unit:
@@ -24,14 +32,10 @@ test-unit:
 test-integration:
 	@echo "Running integration tests..."
 	@if [ -z "$(SPACETRADERS_API_TOKEN)" ]; then \
-		echo "Warning: SPACETRADERS_API_TOKEN not set, integration tests will be skipped"; \
+		echo "Error: SPACETRADERS_API_TOKEN not set, integration tests require an API token"; \
+		exit 1; \
 	fi
-	go test -v ./test/...
-
-# Run full integration tests with real API calls
-test-full:
-	@echo "Running full integration tests (including real API calls)..."
-	go run ./cmd/test_runner.go --integration
+	go test -v -tags=integration ./test/...
 
 # Run tests with coverage
 test-coverage:
@@ -116,10 +120,9 @@ help:
 	@echo "SpaceTraders MCP Server - Available targets:"
 	@echo ""
 	@echo "  build              Build the server binary"
-	@echo "  test               Run all tests using Go test runner"
+	@echo "  test               Run all tests using standard Go test"
 	@echo "  test-unit          Run unit tests only"
 	@echo "  test-integration   Run integration tests (requires SPACETRADERS_API_TOKEN)"
-	@echo "  test-full          Run full integration tests with real API calls"
 	@echo "  test-coverage      Run tests with coverage report"
 	@echo "  test-short         Run short tests only"
 	@echo "  clean              Clean build artifacts"
@@ -136,12 +139,12 @@ help:
 	@echo "  help               Show this help message"
 	@echo ""
 	@echo "Environment variables:"
-	@echo "  SPACETRADERS_API_TOKEN   Required for test-full and quick-test"
+	@echo "  SPACETRADERS_API_TOKEN   Required for test-integration and quick-test"
 	@echo ""
 	@echo "Examples:"
 	@echo "  make build                           # Build the server"
-	@echo "  make test                            # Run all tests with Go test runner"
+	@echo "  make test                            # Run all tests with standard Go test"
 	@echo "  make test-unit                       # Run unit tests only"
-	@echo "  SPACETRADERS_API_TOKEN=xyz make test-full # Run tests with real API"
+	@echo "  SPACETRADERS_API_TOKEN=xyz make test-integration # Run integration tests"
 	@echo "  make quick-test                      # Quick API test"
 	@echo "  make generate-client                 # Generate OpenAPI client"

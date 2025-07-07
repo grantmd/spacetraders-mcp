@@ -58,11 +58,8 @@ jobs:
       - name: Run unit tests
         run: go test -v -race -coverprofile=coverage.out ./pkg/...
 
-      - name: Run integration tests (without API)
+      - name: Run basic tests (without API)
         run: go test -v ./test/...
-
-      - name: Run comprehensive test suite
-        run: go run ./cmd/test_runner.go
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5

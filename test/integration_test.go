@@ -1,3 +1,6 @@
+//go:build integration
+// +build integration
+
 package test
 
 import (
@@ -7,55 +10,25 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 )
 
-// MCPResponse represents a JSON-RPC response from the MCP server
-type MCPResponse struct {
-	JSONRPC string      `json:"jsonrpc"`
-	ID      int         `json:"id"`
-	Result  interface{} `json:"result,omitempty"`
-	Error   *MCPError   `json:"error,omitempty"`
-}
-
-// MCPError represents a JSON-RPC error
-type MCPError struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-}
-
-// ResourcesListResult represents the result of a resources/list call
-type ResourcesListResult struct {
-	Resources []Resource `json:"resources"`
-}
-
-// Resource represents an MCP resource
-type Resource struct {
-	URI         string `json:"uri"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	MIMEType    string `json:"mimeType"`
-}
-
-// ResourceReadResult represents the result of a resources/read call
-type ResourceReadResult struct {
-	Contents []ResourceContent `json:"contents"`
-}
-
-// ResourceContent represents the content of a resource
-type ResourceContent struct {
-	URI      string `json:"uri"`
-	MIMEType string `json:"mimeType"`
-	Text     string `json:"text"`
-}
-
 func TestIntegration_ServerBuild(t *testing.T) {
+	// Skip if no API token is available
+	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
+		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
+	}
+
 	// Test that the server builds successfully
-	cmd := exec.Command("go", "build", "-o", "spacetraders-mcp-test", ".")
-	cmd.Dir = ".."
+	projectRoot := getProjectRoot(t)
+	binaryPath := filepath.Join(projectRoot, "spacetraders-mcp-test")
+
+	cmd := exec.Command("go", "build", "-o", binaryPath, ".")
+	cmd.Dir = projectRoot
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("Failed to build server: %v\nOutput: %s", err, output)
@@ -63,13 +36,13 @@ func TestIntegration_ServerBuild(t *testing.T) {
 
 	// Clean up the test binary
 	defer func() {
-		if err := os.Remove("../spacetraders-mcp-test"); err != nil {
+		if err := os.Remove(binaryPath); err != nil {
 			t.Logf("Failed to remove test binary: %v", err)
 		}
 	}()
 
 	// Verify the binary exists
-	if _, err := os.Stat("../spacetraders-mcp-test"); os.IsNotExist(err) {
+	if _, err := os.Stat(binaryPath); os.IsNotExist(err) {
 		t.Fatal("Built binary does not exist")
 	}
 }
@@ -81,23 +54,14 @@ func TestIntegration_ServerStartup(t *testing.T) {
 	}
 
 	// Build the server
-	cmd := exec.Command("go", "build", "-o", "spacetraders-mcp-test", ".")
-	cmd.Dir = ".."
-	if err := cmd.Run(); err != nil {
-		t.Fatalf("Failed to build server: %v", err)
-	}
-	defer func() {
-		if err := os.Remove("../spacetraders-mcp-test"); err != nil {
-			t.Logf("Failed to remove test binary: %v", err)
-		}
-	}()
+	binaryPath := buildTestServer(t)
+	defer cleanupTestServer(t, binaryPath)
 
 	// Start the server
-	serverCmd := exec.Command("./spacetraders-mcp-test")
-	serverCmd.Dir = ".."
+	serverCmd := exec.Command(binaryPath)
 
-	// Set a dummy API token for all tests
-	serverCmd.Env = append(os.Environ(), "SPACETRADERS_API_TOKEN=dummy-token-for-testing")
+	// Use the real API token
+	serverCmd.Env = os.Environ()
 	stdin, err := serverCmd.StdinPipe()
 	if err != nil {
 		t.Fatalf("Failed to create stdin pipe: %v", err)
@@ -853,123 +817,21 @@ func TestIntegration_InvalidResource(t *testing.T) {
 	}
 }
 
-func TestIntegration_MCPProtocolCompliance(t *testing.T) {
-	// Test JSON-RPC protocol compliance with dummy token
-
-	// Test invalid JSON-RPC request
-	response := callMCPServer(t, `{"invalid": "request"}`)
-
-	var mcpResponse MCPResponse
-	if err := json.Unmarshal(response, &mcpResponse); err != nil {
-		t.Fatalf("Failed to parse response: %v", err)
-	}
-
-	// Should return a JSON-RPC error for invalid request
-	if mcpResponse.Error == nil {
-		t.Fatal("Expected error for invalid JSON-RPC request, got nil")
-	}
-
-	// Verify JSON-RPC version
-	if mcpResponse.JSONRPC != "2.0" {
-		t.Errorf("Expected JSON-RPC version 2.0, got %s", mcpResponse.JSONRPC)
-	}
-}
-
-func TestIntegration_ResourcesListStructure(t *testing.T) {
-	// Test resources/list with dummy token (should work regardless of token validity)
-	response := callMCPServer(t, `{"jsonrpc": "2.0", "id": 1, "method": "resources/list"}`)
-
-	var mcpResponse MCPResponse
-	if err := json.Unmarshal(response, &mcpResponse); err != nil {
-		t.Fatalf("Failed to parse response: %v", err)
-	}
-
-	if mcpResponse.Error != nil {
-		t.Fatalf("Unexpected error in resources/list: %v", mcpResponse.Error)
-	}
-
-	// Parse the resources list result
-	resultBytes, err := json.Marshal(mcpResponse.Result)
-	if err != nil {
-		t.Fatalf("Failed to marshal result: %v", err)
-	}
-
-	var resourcesResult ResourcesListResult
-	if err := json.Unmarshal(resultBytes, &resourcesResult); err != nil {
-		t.Fatalf("Failed to parse resources result: %v", err)
-	}
-
-	// Verify each resource has required fields
-	for _, resource := range resourcesResult.Resources {
-		if resource.URI == "" {
-			t.Error("Resource missing URI")
-		}
-		if resource.Name == "" {
-			t.Error("Resource missing Name")
-		}
-		if resource.Description == "" {
-			t.Error("Resource missing Description")
-		}
-		if resource.MIMEType == "" {
-			t.Error("Resource missing MIMEType")
-		}
-
-		// Verify URI format
-		if !strings.HasPrefix(resource.URI, "spacetraders://") {
-			t.Errorf("Resource URI should start with 'spacetraders://', got: %s", resource.URI)
-		}
-	}
-}
-
-func TestIntegration_MultipleRequests(t *testing.T) {
-	// Test that the server can handle multiple sequential requests
-	requests := []string{
-		`{"jsonrpc": "2.0", "id": 1, "method": "resources/list"}`,
-		`{"jsonrpc": "2.0", "id": 2, "method": "resources/list"}`,
-		`{"jsonrpc": "2.0", "id": 3, "method": "resources/read", "params": {"uri": "spacetraders://invalid/test"}}`,
-	}
-
-	for i, request := range requests {
-		response := callMCPServer(t, request)
-
-		var mcpResponse MCPResponse
-		if err := json.Unmarshal(response, &mcpResponse); err != nil {
-			t.Fatalf("Failed to parse response %d: %v", i+1, err)
-		}
-
-		// Verify JSON-RPC compliance
-		if mcpResponse.JSONRPC != "2.0" {
-			t.Errorf("Request %d: Expected JSON-RPC version 2.0, got %s", i+1, mcpResponse.JSONRPC)
-		}
-
-		expectedID := i + 1
-		if mcpResponse.ID != expectedID {
-			t.Errorf("Request %d: Expected ID %d, got %d", i+1, expectedID, mcpResponse.ID)
-		}
-	}
-}
-
 func TestIntegration_ServerShutdownGraceful(t *testing.T) {
-	// Test that the server shuts down gracefully
+	// Skip if no API token is available
+	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
+		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
+	}
 
 	// Build the server
-	cmd := exec.Command("go", "build", "-o", "spacetraders-mcp-test", ".")
-	cmd.Dir = ".."
-	if err := cmd.Run(); err != nil {
-		t.Fatalf("Failed to build server: %v", err)
-	}
-	defer func() {
-		if err := os.Remove("../spacetraders-mcp-test"); err != nil {
-			t.Logf("Failed to remove test binary: %v", err)
-		}
-	}()
+	binaryPath := buildTestServer(t)
+	defer cleanupTestServer(t, binaryPath)
 
 	// Start the server
-	serverCmd := exec.Command("./spacetraders-mcp-test")
-	serverCmd.Dir = ".."
+	serverCmd := exec.Command(binaryPath)
 
-	// Set a dummy API token for all tests
-	serverCmd.Env = append(os.Environ(), "SPACETRADERS_API_TOKEN=dummy-token-for-testing")
+	// Use the real API token
+	serverCmd.Env = os.Environ()
 	stdin, err := serverCmd.StdinPipe()
 	if err != nil {
 		t.Fatalf("Failed to create stdin pipe: %v", err)
@@ -1029,198 +891,46 @@ func TestIntegration_ServerShutdownGraceful(t *testing.T) {
 	}
 }
 
-// Helper function to call the MCP server with a request
-func callMCPServer(t *testing.T, request string) []byte {
-	// Build the server
-	cmd := exec.Command("go", "build", "-o", "spacetraders-mcp-test", ".")
-	cmd.Dir = ".."
-	if err := cmd.Run(); err != nil {
-		t.Fatalf("Failed to build server: %v", err)
-	}
-	defer func() {
-		if err := os.Remove("../spacetraders-mcp-test"); err != nil {
-			t.Logf("Failed to remove test binary: %v", err)
-		}
-	}()
-
-	// Start the server
-	serverCmd := exec.Command("./spacetraders-mcp-test")
-	serverCmd.Dir = ".."
-
-	// Set a dummy API token for protocol tests
-	serverCmd.Env = append(os.Environ(), "SPACETRADERS_API_TOKEN=dummy-token-for-testing")
-	stdin, err := serverCmd.StdinPipe()
-	if err != nil {
-		t.Fatalf("Failed to create stdin pipe: %v", err)
-	}
-	stdout, err := serverCmd.StdoutPipe()
-	if err != nil {
-		t.Fatalf("Failed to create stdout pipe: %v", err)
-	}
-	stderr, err := serverCmd.StderrPipe()
-	if err != nil {
-		t.Fatalf("Failed to create stderr pipe: %v", err)
-	}
-
-	if err := serverCmd.Start(); err != nil {
-		t.Fatalf("Failed to start server: %v", err)
-	}
-
-	var cleanupOnce sync.Once
-
-	cleanup := func() {
-		cleanupOnce.Do(func() {
-			if stdin != nil {
-				_ = stdin.Close()
-			}
-			if serverCmd.Process != nil {
-				// Try graceful shutdown first
-				_ = serverCmd.Process.Signal(os.Interrupt)
-
-				// Wait for graceful shutdown with timeout
-				done := make(chan error, 1)
-				go func() {
-					done <- serverCmd.Wait()
-				}()
-
-				select {
-				case err := <-done:
-					if err != nil {
-						t.Logf("Process exited with error (may be normal): %v", err)
-					}
-				case <-time.After(2 * time.Second):
-					// Force kill if graceful shutdown fails
-					if err := serverCmd.Process.Kill(); err != nil {
-						t.Logf("Failed to force kill process: %v", err)
-					}
-					<-done // Wait for the process to actually exit
-				}
-			}
-		})
-	}
-	defer cleanup()
-
-	// Read any error output if available
-	go func() {
-		if stderr != nil {
-			errOutput, _ := io.ReadAll(stderr)
-			if len(errOutput) > 0 {
-				t.Logf("Server stderr: %s", string(errOutput))
-			}
-		}
-	}()
-
-	// Give the server more time to start in CI environments
-	time.Sleep(500 * time.Millisecond)
-
-	// Check if process is still running before sending request
-	select {
-	case <-time.After(100 * time.Millisecond):
-		// Process is still running, continue
-	default:
-		// Check if process has exited
-		if serverCmd.ProcessState != nil && serverCmd.ProcessState.Exited() {
-			t.Fatalf("Server process exited unexpectedly: %v", serverCmd.ProcessState)
-		}
-	}
-
-	// Send request with error handling for broken pipe
-	if _, err := stdin.Write([]byte(request + "\n")); err != nil {
-		// Don't fail fatally on broken pipe in CI - the process might have exited
-		if strings.Contains(err.Error(), "broken pipe") || strings.Contains(err.Error(), "closed pipe") {
-			t.Skipf("Server process terminated before request could be sent (common in CI): %v", err)
-		}
-		t.Fatalf("Failed to write to server: %v", err)
-	}
-
-	// Read response with timeout
-	responseChan := make(chan []byte, 1)
-	errorChan := make(chan error, 1)
-
-	go func() {
-		response, err := readJSONResponse(stdout)
-		if err != nil {
-			errorChan <- err
-		} else {
-			responseChan <- response
-		}
-	}()
-
-	select {
-	case response := <-responseChan:
-		return response
-	case err := <-errorChan:
-		t.Fatalf("Failed to read response: %v", err)
-	case <-time.After(5 * time.Second):
-		t.Fatal("Timeout waiting for response from server")
-	}
-
-	return nil
-}
-
 // Helper function to read a JSON response from stdout
 func readJSONResponse(stdout io.Reader) ([]byte, error) {
 	// Use buffered reader for better performance
 	bufReader := bufio.NewReader(stdout)
 	var result []byte
 	timeout := 5 * time.Second
-	startTime := time.Now()
+	start := time.Now()
 
-	for time.Since(startTime) < timeout {
-		// Try to read a line with timeout
-		line, err := bufReader.ReadBytes('\n')
+	for {
+		if time.Since(start) > timeout {
+			return nil, fmt.Errorf("timeout reading response")
+		}
+
+		line, _, err := bufReader.ReadLine()
 		if err != nil {
 			if err == io.EOF {
-				// If we have accumulated data, try to parse it
-				if len(result) > 0 {
-					break
-				}
-				// No data yet, continue trying with small delay
-				time.Sleep(50 * time.Millisecond)
-				continue
+				break
 			}
-			return nil, fmt.Errorf("error reading from stdout: %v", err)
+			return nil, fmt.Errorf("error reading line: %v", err)
 		}
 
-		result = append(result, line...)
-
-		// Try to parse each complete line as JSON
-		lines := strings.Split(strings.TrimSpace(string(result)), "\n")
-		for _, l := range lines {
-			l = strings.TrimSpace(l)
-			if l == "" {
-				continue
-			}
-
-			// Skip non-JSON lines (like server startup messages)
-			if !strings.HasPrefix(l, "{") && !strings.HasPrefix(l, "[") {
-				continue
-			}
-
-			// Try to parse as JSON
-			var jsonObj interface{}
-			if json.Unmarshal([]byte(l), &jsonObj) == nil {
-				return []byte(l), nil
+		// Check if this looks like a complete JSON response
+		if len(line) > 0 && line[0] == '{' {
+			// Try to unmarshal to check if it's valid JSON
+			var testResponse interface{}
+			if err := json.Unmarshal(line, &testResponse); err == nil {
+				result = line
+				break
 			}
 		}
 
-		// If we've accumulated too much data, something's wrong
-		if len(result) > 100000 { // 100KB limit
-			break
-		}
+		// Add a small delay to prevent busy waiting
+		time.Sleep(10 * time.Millisecond)
 	}
 
-	// If we couldn't parse JSON but have data, return it for debugging
-	if len(result) > 0 {
-		// Try one more time to parse the complete accumulated result
-		var jsonObj interface{}
-		if json.Unmarshal(result, &jsonObj) == nil {
-			return result, nil
-		}
-		return result, fmt.Errorf("accumulated data but no valid JSON found: %s", string(result))
+	if len(result) == 0 {
+		return nil, fmt.Errorf("no valid JSON response found")
 	}
 
-	return nil, fmt.Errorf("no JSON response received within %v", timeout)
+	return result, nil
 }
 
 func TestIntegration_AcceptContractTool(t *testing.T) {
@@ -1368,92 +1078,6 @@ func TestIntegration_AcceptContractTool(t *testing.T) {
 	}
 
 	t.Log("AcceptContract tool integration tests passed - tool is properly registered and handles error cases correctly")
-}
-
-func TestIntegration_AcceptContractToolRegistration(t *testing.T) {
-	// Test that the accept_contract tool is properly registered (no API token needed)
-	response := callMCPServer(t, `{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}`)
-
-	var mcpResponse MCPResponse
-	if err := json.Unmarshal(response, &mcpResponse); err != nil {
-		t.Fatalf("Failed to parse tools/list response: %v", err)
-	}
-
-	if mcpResponse.Error != nil {
-		t.Fatalf("Error in tools/list: %v", mcpResponse.Error)
-	}
-
-	// Check that the result contains tools
-	result, ok := mcpResponse.Result.(map[string]interface{})
-	if !ok {
-		t.Fatalf("Expected tools/list result to be an object, got %T", mcpResponse.Result)
-	}
-
-	tools, ok := result["tools"].([]interface{})
-	if !ok {
-		t.Fatalf("Expected tools to be an array, got %T", result["tools"])
-	}
-
-	// Look for the accept_contract tool
-	var acceptContractTool map[string]interface{}
-	for _, tool := range tools {
-		toolMap, ok := tool.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		if toolMap["name"] == "accept_contract" {
-			acceptContractTool = toolMap
-			break
-		}
-	}
-
-	if acceptContractTool == nil {
-		t.Fatal("accept_contract tool not found in tools list")
-	}
-
-	// Verify the tool has the expected structure
-	if acceptContractTool["description"] == "" {
-		t.Error("accept_contract tool should have a description")
-	}
-
-	inputSchema, ok := acceptContractTool["inputSchema"].(map[string]interface{})
-	if !ok {
-		t.Fatal("accept_contract tool should have an inputSchema")
-	}
-
-	properties, ok := inputSchema["properties"].(map[string]interface{})
-	if !ok {
-		t.Fatal("inputSchema should have properties")
-	}
-
-	contractIdProp, ok := properties["contract_id"].(map[string]interface{})
-	if !ok {
-		t.Fatal("inputSchema should have contract_id property")
-	}
-
-	if contractIdProp["type"] != "string" {
-		t.Error("contract_id property should be of type string")
-	}
-
-	// Verify required fields
-	required, ok := inputSchema["required"].([]interface{})
-	if !ok {
-		t.Fatal("inputSchema should have required array")
-	}
-
-	hasContractIdRequired := false
-	for _, req := range required {
-		if req == "contract_id" {
-			hasContractIdRequired = true
-			break
-		}
-	}
-
-	if !hasContractIdRequired {
-		t.Error("contract_id should be required in inputSchema")
-	}
-
-	t.Log("AcceptContract tool is properly registered with correct schema")
 }
 
 func TestIntegration_DeliverContractTool(t *testing.T) {

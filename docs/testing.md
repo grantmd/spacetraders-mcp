@@ -96,6 +96,7 @@ Integration tests verify interactions with the actual SpaceTraders API.
 - System exploration
 - Navigation operations
 - Contract management
+- Tool registration and execution
 
 **Running integration tests:**
 ```bash

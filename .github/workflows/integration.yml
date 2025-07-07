@@ -50,7 +50,7 @@ jobs:
           SPACETRADERS_API_TOKEN: ${{ secrets.SPACETRADERS_API_TOKEN }}
         run: |
           echo "Running integration tests with real SpaceTraders API..."
-          go run ./cmd/test_runner.go --integration
+          go test -v -tags=integration ./test/...
 
       - name: Run manual API validation
         env:

@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strings"
 
-	"spacetraders-mcp/pkg/logging"
 	"spacetraders-mcp/pkg/client"
+	"spacetraders-mcp/pkg/logging"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"spacetraders-mcp/pkg/logging"
 	"spacetraders-mcp/pkg/client"
+	"spacetraders-mcp/pkg/logging"
 	"spacetraders-mcp/pkg/tools/utils"
 
 	"github.com/mark3labs/mcp-go/mcp"

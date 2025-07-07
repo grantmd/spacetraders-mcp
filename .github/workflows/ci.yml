@@ -49,9 +49,9 @@ jobs:
 
       - name: Run go fmt check
         run: |
-          if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+          if [ "$(gofmt -s -l . | grep -v '^generated/' | wc -l)" -gt 0 ]; then
             echo "The following files are not formatted:"
-            gofmt -s -l .
+            gofmt -s -l . | grep -v '^generated/'
             exit 1
           fi
 

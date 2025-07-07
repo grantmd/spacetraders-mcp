@@ -67,7 +67,9 @@ dev: build
 # Format code
 fmt:
 	@echo "Formatting code..."
-	go fmt ./...
+	go fmt ./pkg/...
+	go fmt ./test/...
+	go fmt ./main.go
 
 # Lint code
 lint:

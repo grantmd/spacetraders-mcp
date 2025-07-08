@@ -15,13 +15,36 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"spacetraders-mcp/pkg/config"
 )
 
-func TestIntegration_ServerBuild(t *testing.T) {
-	// Skip if no API token is available
-	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
-		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
+// Helper function to check if API token is available using config package
+func checkAPITokenAvailable(t *testing.T) {
+	// Get project root and change to it for config loading
+	projectRoot := getProjectRoot(t)
+	originalWd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Failed to get working directory: %v", err)
 	}
+	defer func() {
+		if err := os.Chdir(originalWd); err != nil {
+			t.Errorf("Failed to restore working directory: %v", err)
+		}
+	}()
+
+	if err := os.Chdir(projectRoot); err != nil {
+		t.Fatalf("Failed to change to project root: %v", err)
+	}
+
+	// Skip if no API token is available
+	if _, err := config.Load(); err != nil {
+		t.Skip("SPACETRADERS_API_TOKEN not available, skipping integration test")
+	}
+}
+
+func TestIntegration_ServerBuild(t *testing.T) {
+	checkAPITokenAvailable(t)
 
 	// Test that the server builds successfully
 	projectRoot := getProjectRoot(t)
@@ -48,10 +71,7 @@ func TestIntegration_ServerBuild(t *testing.T) {
 }
 
 func TestIntegration_ServerStartup(t *testing.T) {
-	// Skip if no API token is available
-	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
-		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
-	}
+	checkAPITokenAvailable(t)
 
 	// Build the server
 	binaryPath := buildTestServer(t)
@@ -181,10 +201,7 @@ func TestIntegration_ServerStartup(t *testing.T) {
 }
 
 func TestIntegration_AgentResource(t *testing.T) {
-	// Skip if no API token is available
-	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
-		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
-	}
+	checkAPITokenAvailable(t)
 
 	response := callMCPServer(t, `{"jsonrpc": "2.0", "id": 1, "method": "resources/read", "params": {"uri": "spacetraders://agent/info"}}`)
 
@@ -251,10 +268,7 @@ func TestIntegration_AgentResource(t *testing.T) {
 }
 
 func TestIntegration_ShipsResource(t *testing.T) {
-	// Skip if no API token is available
-	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
-		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
-	}
+	checkAPITokenAvailable(t)
 
 	response := callMCPServer(t, `{"jsonrpc": "2.0", "id": 1, "method": "resources/read", "params": {"uri": "spacetraders://ships/list"}}`)
 
@@ -324,10 +338,7 @@ func TestIntegration_ShipsResource(t *testing.T) {
 }
 
 func TestIntegration_IndividualShipResource(t *testing.T) {
-	// Skip if no API token is available
-	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
-		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
-	}
+	checkAPITokenAvailable(t)
 
 	// First get the ships list to get a valid ship symbol
 	shipsResponse := callMCPServer(t, `{"jsonrpc": "2.0", "id": 1, "method": "resources/read", "params": {"uri": "spacetraders://ships/list"}}`)
@@ -471,10 +482,7 @@ func TestIntegration_IndividualShipResource(t *testing.T) {
 }
 
 func TestIntegration_ShipCooldownResource(t *testing.T) {
-	// Skip if no API token is available
-	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
-		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
-	}
+	checkAPITokenAvailable(t)
 
 	// First get the ships list to get a valid ship symbol
 	shipsResponse := callMCPServer(t, `{"jsonrpc": "2.0", "id": 1, "method": "resources/read", "params": {"uri": "spacetraders://ships/list"}}`)
@@ -630,10 +638,7 @@ func TestIntegration_ShipCooldownResource(t *testing.T) {
 }
 
 func TestIntegration_ShipResourceInvalidShip(t *testing.T) {
-	// Skip if no API token is available
-	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
-		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
-	}
+	checkAPITokenAvailable(t)
 
 	// Test with invalid ship symbol
 	invalidShipURI := "spacetraders://ships/INVALID-SHIP-SYMBOL"
@@ -676,10 +681,7 @@ func TestIntegration_ShipResourceInvalidShip(t *testing.T) {
 }
 
 func TestIntegration_ShipResourceInvalidURI(t *testing.T) {
-	// Skip if no API token is available
-	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
-		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
-	}
+	checkAPITokenAvailable(t)
 
 	// Test with malformed URI
 	invalidURI := "spacetraders://ships/"
@@ -722,10 +724,7 @@ func TestIntegration_ShipResourceInvalidURI(t *testing.T) {
 }
 
 func TestIntegration_ContractsResource(t *testing.T) {
-	// Skip if no API token is available
-	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
-		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
-	}
+	checkAPITokenAvailable(t)
 
 	response := callMCPServer(t, `{"jsonrpc": "2.0", "id": 1, "method": "resources/read", "params": {"uri": "spacetraders://contracts/list"}}`)
 
@@ -795,10 +794,7 @@ func TestIntegration_ContractsResource(t *testing.T) {
 }
 
 func TestIntegration_InvalidResource(t *testing.T) {
-	// Skip if no API token is available
-	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
-		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
-	}
+	checkAPITokenAvailable(t)
 
 	response := callMCPServer(t, `{"jsonrpc": "2.0", "id": 1, "method": "resources/read", "params": {"uri": "spacetraders://invalid/resource"}}`)
 
@@ -818,10 +814,7 @@ func TestIntegration_InvalidResource(t *testing.T) {
 }
 
 func TestIntegration_ServerShutdownGraceful(t *testing.T) {
-	// Skip if no API token is available
-	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
-		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
-	}
+	checkAPITokenAvailable(t)
 
 	// Build the server
 	binaryPath := buildTestServer(t)
@@ -934,10 +927,7 @@ func readJSONResponse(stdout io.Reader) ([]byte, error) {
 }
 
 func TestIntegration_AcceptContractTool(t *testing.T) {
-	// Skip if no API token is available
-	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
-		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
-	}
+	checkAPITokenAvailable(t)
 
 	// First, let's list the tools to make sure accept_contract is available
 	response := callMCPServer(t, `{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}`)
@@ -1081,10 +1071,7 @@ func TestIntegration_AcceptContractTool(t *testing.T) {
 }
 
 func TestIntegration_DeliverContractTool(t *testing.T) {
-	// Skip if no API token is available
-	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
-		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
-	}
+	checkAPITokenAvailable(t)
 
 	// Test calling the deliver_contract tool with dummy parameters
 	toolRequest := `{
@@ -1139,10 +1126,7 @@ func TestIntegration_DeliverContractTool(t *testing.T) {
 }
 
 func TestIntegration_DeliverContractToolRegistration(t *testing.T) {
-	// Skip if no API token is available
-	if os.Getenv("SPACETRADERS_API_TOKEN") == "" {
-		t.Skip("SPACETRADERS_API_TOKEN not set, skipping integration test")
-	}
+	checkAPITokenAvailable(t)
 
 	// Test that the deliver_contract tool is properly registered
 	toolsResponse := callMCPServer(t, `{"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}`)

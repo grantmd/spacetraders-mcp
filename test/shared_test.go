@@ -5,6 +5,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"testing"
+
+	"spacetraders-mcp/pkg/config"
 )
 
 // MCPResponse represents a JSON-RPC response from the MCP server
@@ -95,9 +97,28 @@ func callMCPServer(t *testing.T, request string) []byte {
 	serverCmd := exec.Command(binaryPath)
 
 	// Use the real API token if available, otherwise dummy token for basic tests
-	if os.Getenv("SPACETRADERS_API_TOKEN") != "" {
-		serverCmd.Env = os.Environ()
+	// Try to load config from project root to check for .env file
+	projectRoot := getProjectRoot(t)
+	originalWd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Failed to get working directory: %v", err)
+	}
+	defer func() {
+		if err := os.Chdir(originalWd); err != nil {
+			t.Errorf("Failed to restore working directory: %v", err)
+		}
+	}()
+
+	if err := os.Chdir(projectRoot); err != nil {
+		t.Fatalf("Failed to change to project root: %v", err)
+	}
+
+	// Check if we can load a valid config (which means token is available)
+	if cfg, err := config.Load(); err == nil && cfg.SpaceTradersAPIToken != "" {
+		// Token is available via config system, set it as environment variable for subprocess
+		serverCmd.Env = append(os.Environ(), "SPACETRADERS_API_TOKEN="+cfg.SpaceTradersAPIToken)
 	} else {
+		// No valid token, use dummy token for basic tests
 		serverCmd.Env = append(os.Environ(), "SPACETRADERS_API_TOKEN=dummy-token-for-basic-tests")
 	}
 

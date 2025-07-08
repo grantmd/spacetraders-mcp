@@ -21,6 +21,7 @@ additionalProperties:
   generateMarshalJSON: false
   generateUnmarshalJSON: false
   importValidator: true
+  useOneOfDiscriminatorLookup: true
 globalProperties:
   models: ""
   apis: ""

@@ -4,7 +4,7 @@ go 1.24.4
 
 require (
 	github.com/grantmd/spacetraders-mcp/spacetraders v0.0.0-00010101000000-000000000000
-	github.com/mark3labs/mcp-go v0.32.0
+	github.com/mark3labs/mcp-go v0.35.0
 	github.com/spf13/viper v1.20.1
 )
 

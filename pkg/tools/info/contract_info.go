@@ -125,7 +125,7 @@ func (t *ContractInfoTool) Handler() func(ctx context.Context, request mcp.CallT
 		if contractID != "" {
 			// Detailed view for specific contract
 			contract := filteredContracts[0]
-			response.WriteString(fmt.Sprintf("📋 **Contract Details: %s**\n\n", contract.ID))
+			fmt.Fprintf(&response, "📋 **Contract Details: %s**\n\n", contract.ID)
 			response.WriteString(t.formatContractDetails(contract))
 		} else {
 			// Overview of all contracts
@@ -156,7 +156,7 @@ func (t *ContractInfoTool) Handler() func(ctx context.Context, request mcp.CallT
 		hasMiningContract := false
 		for _, contract := range filteredContracts {
 			if !contract.Accepted {
-				response.WriteString(fmt.Sprintf("• Use `accept_contract` with contract_id=%s to accept this contract\n", contract.ID))
+				fmt.Fprintf(&response, "• Use `accept_contract` with contract_id=%s to accept this contract\n", contract.ID)
 			}
 
 			// Check if any contract requires mining
@@ -200,23 +200,23 @@ func (t *ContractInfoTool) formatContractDetails(contract client.Contract) strin
 		}
 	}
 
-	details.WriteString(fmt.Sprintf("**ID:** %s\n", contract.ID))
-	details.WriteString(fmt.Sprintf("**Status:** %s\n", status))
-	details.WriteString(fmt.Sprintf("**Type:** %s\n", contract.Type))
-	details.WriteString(fmt.Sprintf("**Faction:** %s\n", contract.FactionSymbol))
+	fmt.Fprintf(&details, "**ID:** %s\n", contract.ID)
+	fmt.Fprintf(&details, "**Status:** %s\n", status)
+	fmt.Fprintf(&details, "**Type:** %s\n", contract.Type)
+	fmt.Fprintf(&details, "**Faction:** %s\n", contract.FactionSymbol)
 
 	// Payment information
 	totalPayment := contract.Terms.Payment.OnAccepted + contract.Terms.Payment.OnFulfilled
-	details.WriteString(fmt.Sprintf("**Payment:** %d credits total\n", totalPayment))
-	details.WriteString(fmt.Sprintf("  • On Accept: %d credits\n", contract.Terms.Payment.OnAccepted))
-	details.WriteString(fmt.Sprintf("  • On Fulfill: %d credits\n", contract.Terms.Payment.OnFulfilled))
+	fmt.Fprintf(&details, "**Payment:** %d credits total\n", totalPayment)
+	fmt.Fprintf(&details, "  • On Accept: %d credits\n", contract.Terms.Payment.OnAccepted)
+	fmt.Fprintf(&details, "  • On Fulfill: %d credits\n", contract.Terms.Payment.OnFulfilled)
 
 	// Deadlines
 	if !contract.Accepted {
-		details.WriteString(fmt.Sprintf("**Accept By:** %s\n", contract.DeadlineToAccept))
+		fmt.Fprintf(&details, "**Accept By:** %s\n", contract.DeadlineToAccept)
 	}
-	details.WriteString(fmt.Sprintf("**Complete By:** %s\n", contract.Terms.Deadline))
-	details.WriteString(fmt.Sprintf("**Expires:** %s\n", contract.Expiration))
+	fmt.Fprintf(&details, "**Complete By:** %s\n", contract.Terms.Deadline)
+	fmt.Fprintf(&details, "**Expires:** %s\n", contract.Expiration)
 
 	// Delivery requirements
 	requiresMining := false
@@ -232,13 +232,13 @@ func (t *ContractInfoTool) formatContractDetails(contract client.Contract) strin
 				progress = "🟡"
 			}
 
-			details.WriteString(fmt.Sprintf("%d. %s **%s** (%d/%d units) → %s\n",
+			fmt.Fprintf(&details, "%d. %s **%s** (%d/%d units) → %s\n",
 				i+1, progress, delivery.TradeSymbol,
 				delivery.UnitsFulfilled, delivery.UnitsRequired,
-				delivery.DestinationSymbol))
+				delivery.DestinationSymbol)
 
 			if remaining > 0 {
-				details.WriteString(fmt.Sprintf("   *Need %d more units*\n", remaining))
+				fmt.Fprintf(&details, "   *Need %d more units*\n", remaining)
 			}
 
 			// Check if this is a mining material
@@ -253,8 +253,8 @@ func (t *ContractInfoTool) formatContractDetails(contract client.Contract) strin
 	details.WriteString("\n**Analysis:**\n")
 	if !contract.Accepted {
 		profitMargin := float64(contract.Terms.Payment.OnFulfilled) / float64(totalPayment) * 100
-		details.WriteString(fmt.Sprintf("• Profit margin: %.1f%% (%d of %d credits on completion)\n",
-			profitMargin, contract.Terms.Payment.OnFulfilled, totalPayment))
+		fmt.Fprintf(&details, "• Profit margin: %.1f%% (%d of %d credits on completion)\n",
+			profitMargin, contract.Terms.Payment.OnFulfilled, totalPayment)
 
 		if len(contract.Terms.Deliver) > 0 {
 			details.WriteString("• Requires cargo space and delivery logistics\n")
@@ -262,7 +262,7 @@ func (t *ContractInfoTool) formatContractDetails(contract client.Contract) strin
 
 		// Mining requirements analysis
 		if requiresMining {
-			details.WriteString(fmt.Sprintf("• ⛏️ **MINING REQUIRED** for: %s\n", strings.Join(miningMaterials, ", ")))
+			fmt.Fprintf(&details, "• ⛏️ **MINING REQUIRED** for: %s\n", strings.Join(miningMaterials, ", "))
 			details.WriteString("• You will need a SHIP_MINING_DRONE to extract these materials\n")
 			details.WriteString("• Find asteroids or mining sites in systems to extract resources\n")
 		}
@@ -277,12 +277,12 @@ func (t *ContractInfoTool) formatContractDetails(contract client.Contract) strin
 
 		if total > 0 {
 			completionPercent := float64(completed) / float64(total) * 100
-			details.WriteString(fmt.Sprintf("• Progress: %.1f%% complete (%d/%d deliveries)\n",
-				completionPercent, completed, total))
+			fmt.Fprintf(&details, "• Progress: %.1f%% complete (%d/%d deliveries)\n",
+				completionPercent, completed, total)
 		}
 
 		if requiresMining {
-			details.WriteString(fmt.Sprintf("• ⛏️ Mining needed for: %s\n", strings.Join(miningMaterials, ", ")))
+			fmt.Fprintf(&details, "• ⛏️ Mining needed for: %s\n", strings.Join(miningMaterials, ", "))
 		}
 	}
 

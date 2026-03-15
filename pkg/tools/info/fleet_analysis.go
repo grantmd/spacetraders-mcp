@@ -98,17 +98,17 @@ func (t *FleetAnalysisTool) Handler() func(ctx context.Context, request mcp.Call
 
 		// Current fleet summary
 		response.WriteString("**Current Fleet:**\n")
-		response.WriteString(fmt.Sprintf("• Total Ships: %d\n", len(ships)))
-		response.WriteString(fmt.Sprintf("• Total Cargo Capacity: %d units\n", fleetAnalysis.TotalCargo))
-		response.WriteString(fmt.Sprintf("• Mining Capable Ships: %d\n", fleetAnalysis.MiningShips))
-		response.WriteString(fmt.Sprintf("• Hauling Capable Ships: %d\n", fleetAnalysis.HaulingShips))
-		response.WriteString(fmt.Sprintf("• Combat Capable Ships: %d\n", fleetAnalysis.CombatShips))
+		fmt.Fprintf(&response, "• Total Ships: %d\n", len(ships))
+		fmt.Fprintf(&response, "• Total Cargo Capacity: %d units\n", fleetAnalysis.TotalCargo)
+		fmt.Fprintf(&response, "• Mining Capable Ships: %d\n", fleetAnalysis.MiningShips)
+		fmt.Fprintf(&response, "• Hauling Capable Ships: %d\n", fleetAnalysis.HaulingShips)
+		fmt.Fprintf(&response, "• Combat Capable Ships: %d\n", fleetAnalysis.CombatShips)
 
 		if len(fleetAnalysis.ShipsByType) > 0 {
 			response.WriteString("\n**Fleet Composition:**\n")
 			for shipType, count := range fleetAnalysis.ShipsByType {
 				capability := t.getShipCapabilityDescription(shipType)
-				response.WriteString(fmt.Sprintf("• %s: %d ship(s) - %s\n", shipType, count, capability))
+				fmt.Fprintf(&response, "• %s: %d ship(s) - %s\n", shipType, count, capability)
 			}
 		}
 
@@ -117,20 +117,20 @@ func (t *FleetAnalysisTool) Handler() func(ctx context.Context, request mcp.Call
 			response.WriteString("\n**Contract Requirements Analysis:**\n")
 
 			for _, req := range contractRequirements.ActiveContracts {
-				response.WriteString(fmt.Sprintf("\n📋 **Contract %s:**\n", req.ContractID))
-				response.WriteString(fmt.Sprintf("• Status: %s\n", req.Status))
+				fmt.Fprintf(&response, "\n📋 **Contract %s:**\n", req.ContractID)
+				fmt.Fprintf(&response, "• Status: %s\n", req.Status)
 
 				if len(req.RequiredMaterials) > 0 {
 					response.WriteString("• Required Materials:\n")
 					for _, material := range req.RequiredMaterials {
-						response.WriteString(fmt.Sprintf("  - %s: %d units\n", material.Symbol, material.UnitsNeeded))
+						fmt.Fprintf(&response, "  - %s: %d units\n", material.Symbol, material.UnitsNeeded)
 						if material.RequiresMining {
 							response.WriteString("    *Requires mining*\n")
 						}
 					}
 				}
 
-				response.WriteString(fmt.Sprintf("• Required Cargo Space: %d units\n", req.TotalCargoNeeded))
+				fmt.Fprintf(&response, "• Required Cargo Space: %d units\n", req.TotalCargoNeeded)
 			}
 
 			// Gap analysis
@@ -282,7 +282,7 @@ func (t *FleetAnalysisTool) performGapAnalysis(fleet FleetAnalysis, requirements
 	// Check cargo capacity
 	if requirements.TotalCargoNeeded > fleet.TotalCargo {
 		shortage := requirements.TotalCargoNeeded - fleet.TotalCargo
-		analysis.WriteString(fmt.Sprintf("⚠️ **CARGO SHORTAGE:** Need %d more cargo capacity\n", shortage))
+		fmt.Fprintf(&analysis, "⚠️ **CARGO SHORTAGE:** Need %d more cargo capacity\n", shortage)
 		analysis.WriteString("   *Consider buying hauler ships or ships with larger cargo holds*\n")
 	} else if requirements.TotalCargoNeeded > 0 {
 		analysis.WriteString("✅ Sufficient cargo capacity available\n")

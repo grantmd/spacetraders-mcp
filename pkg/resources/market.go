@@ -194,15 +194,15 @@ func (r *MarketResource) analyzeMarket(market *client.Market) map[string]interfa
 func (r *MarketResource) formatMarketAsText(market *client.Market, systemSymbol, waypointSymbol string) string {
 	var text strings.Builder
 
-	text.WriteString(fmt.Sprintf("# Market Data: %s\n\n", waypointSymbol))
-	text.WriteString(fmt.Sprintf("**System:** %s\n", systemSymbol))
-	text.WriteString(fmt.Sprintf("**Waypoint:** %s\n\n", waypointSymbol))
+	fmt.Fprintf(&text, "# Market Data: %s\n\n", waypointSymbol)
+	fmt.Fprintf(&text, "**System:** %s\n", systemSymbol)
+	fmt.Fprintf(&text, "**Waypoint:** %s\n\n", waypointSymbol)
 
 	// Exports
 	if len(market.Exports) > 0 {
 		text.WriteString("## 📦 Exports (What this market sells)\n")
 		for _, export := range market.Exports {
-			text.WriteString(fmt.Sprintf("- **%s** - %s\n", export.Name, export.Description))
+			fmt.Fprintf(&text, "- **%s** - %s\n", export.Name, export.Description)
 		}
 		text.WriteString("\n")
 	}
@@ -211,7 +211,7 @@ func (r *MarketResource) formatMarketAsText(market *client.Market, systemSymbol,
 	if len(market.Imports) > 0 {
 		text.WriteString("## 📥 Imports (What this market buys)\n")
 		for _, import_ := range market.Imports {
-			text.WriteString(fmt.Sprintf("- **%s** - %s\n", import_.Name, import_.Description))
+			fmt.Fprintf(&text, "- **%s** - %s\n", import_.Name, import_.Description)
 		}
 		text.WriteString("\n")
 	}
@@ -220,7 +220,7 @@ func (r *MarketResource) formatMarketAsText(market *client.Market, systemSymbol,
 	if len(market.Exchange) > 0 {
 		text.WriteString("## 🔄 Exchange (Goods traded here)\n")
 		for _, exchange := range market.Exchange {
-			text.WriteString(fmt.Sprintf("- **%s** - %s\n", exchange.Name, exchange.Description))
+			fmt.Fprintf(&text, "- **%s** - %s\n", exchange.Name, exchange.Description)
 		}
 		text.WriteString("\n")
 	}
@@ -243,14 +243,14 @@ func (r *MarketResource) formatMarketAsText(market *client.Market, systemSymbol,
 			supplyIcon := r.getSupplyIcon(good.Supply)
 			activityIcon := r.getActivityIcon(good.Activity)
 
-			text.WriteString(fmt.Sprintf("| %s | %d | %d | %s %s | %s %s |\n",
+			fmt.Fprintf(&text, "| %s | %d | %d | %s %s | %s %s |\n",
 				good.Symbol,
 				good.PurchasePrice,
 				good.SellPrice,
 				supplyIcon,
 				good.Supply,
 				activityIcon,
-				good.Activity))
+				good.Activity)
 		}
 		text.WriteString("\n")
 	}
@@ -269,13 +269,13 @@ func (r *MarketResource) formatMarketAsText(market *client.Market, systemSymbol,
 
 		for i := 0; i < transactionCount; i++ {
 			transaction := market.Transactions[i]
-			text.WriteString(fmt.Sprintf("| %s | %s | %s | %d | %d | %d |\n",
+			fmt.Fprintf(&text, "| %s | %s | %s | %d | %d | %d |\n",
 				transaction.ShipSymbol,
 				transaction.TradeSymbol,
 				transaction.Type,
 				transaction.Units,
 				transaction.PricePerUnit,
-				transaction.TotalPrice))
+				transaction.TotalPrice)
 		}
 		text.WriteString("\n")
 	}
@@ -296,7 +296,7 @@ func (r *MarketResource) formatMarketAsText(market *client.Market, systemSymbol,
 
 	if len(opportunities) > 0 {
 		for _, opportunity := range opportunities {
-			text.WriteString(fmt.Sprintf("- %s\n", opportunity))
+			fmt.Fprintf(&text, "- %s\n", opportunity)
 		}
 	} else {
 		text.WriteString("- No significant trading opportunities identified at this time\n")
@@ -306,10 +306,10 @@ func (r *MarketResource) formatMarketAsText(market *client.Market, systemSymbol,
 
 	// Market Summary
 	text.WriteString("## 📋 Market Summary\n\n")
-	text.WriteString(fmt.Sprintf("- **Total Goods Available:** %d\n", len(market.TradeGoods)))
-	text.WriteString(fmt.Sprintf("- **Exports:** %d goods\n", len(market.Exports)))
-	text.WriteString(fmt.Sprintf("- **Imports:** %d goods\n", len(market.Imports)))
-	text.WriteString(fmt.Sprintf("- **Recent Transactions:** %d\n", len(market.Transactions)))
+	fmt.Fprintf(&text, "- **Total Goods Available:** %d\n", len(market.TradeGoods))
+	fmt.Fprintf(&text, "- **Exports:** %d goods\n", len(market.Exports))
+	fmt.Fprintf(&text, "- **Imports:** %d goods\n", len(market.Imports))
+	fmt.Fprintf(&text, "- **Recent Transactions:** %d\n", len(market.Transactions))
 
 	return text.String()
 }

@@ -23,26 +23,33 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: "temurin"
+        java-version: "17"
+
     - name: Cache OpenAPI Generator JAR
       id: cache-jar
       uses: actions/cache@v4
       with:
-        path: /tmp/openapi-generator-cli.jar
+        path: /tmp/openapi-generator
         key: openapi-generator-${{ inputs.openapi-version }}
 
     - name: Download OpenAPI Generator
       if: steps.cache-jar.outputs.cache-hit != 'true'
       shell: bash
       run: |
+        mkdir -p /tmp/openapi-generator
         echo "Downloading OpenAPI Generator CLI v${{ inputs.openapi-version }}..."
-        wget -q https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/${{ inputs.openapi-version }}/openapi-generator-cli-${{ inputs.openapi-version }}.jar -O /tmp/openapi-generator-cli.jar
+        wget -q https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/${{ inputs.openapi-version }}/openapi-generator-cli-${{ inputs.openapi-version }}.jar -O /tmp/openapi-generator/openapi-generator-cli.jar
 
     - name: Install OpenAPI Generator
       shell: bash
       run: |
         echo "Installing OpenAPI Generator CLI..."
         sudo mkdir -p /opt/openapi-generator
-        sudo cp /tmp/openapi-generator-cli.jar /opt/openapi-generator/
+        sudo cp /tmp/openapi-generator/openapi-generator-cli.jar /opt/openapi-generator/
 
         # Create wrapper script
         cat << 'EOF' | sudo tee /usr/local/bin/openapi-generator > /dev/null
@@ -60,7 +67,8 @@ runs:
       uses: actions/cache@v4
       with:
         path: ./generated
-        key: ${{ inputs.cache-key-prefix }}-${{ hashFiles('openapi-generator-config.yaml', 'Makefile') }}-${{ hashFiles('**/go.mod') }}
+        # Use go.mod (root only) - hashFiles('**/go.mod') differs before/after generation
+        key: ${{ inputs.cache-key-prefix }}-${{ hashFiles('openapi-generator-config.yaml', 'Makefile') }}-${{ hashFiles('go.mod') }}
         restore-keys: |
           ${{ inputs.cache-key-prefix }}-${{ hashFiles('openapi-generator-config.yaml', 'Makefile') }}-
           ${{ inputs.cache-key-prefix }}-
@@ -70,6 +78,7 @@ runs:
       run: |
         echo "Installing Goimports..."
         go install golang.org/x/tools/cmd/goimports@latest
+        echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
     - name: Generate OpenAPI client
       id: generate

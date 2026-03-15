@@ -1,5 +1,7 @@
 # SpaceTraders MCP Server
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/grantmd/spacetraders-mcp.svg)](https://pkg.go.dev/github.com/grantmd/spacetraders-mcp)
+
 A Model Context Protocol (MCP) server that provides seamless integration between any MCP client and the SpaceTraders API, enabling automation, analysis, and discussion about the current state of your SpaceTraders game state.
 
 **Most of this is being "written" via LLM tools as a personal experiment, which is probably unsurprising given the target audience, but I wanted to make that clear upfront.**

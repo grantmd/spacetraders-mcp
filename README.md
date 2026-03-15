@@ -19,7 +19,7 @@ A Model Context Protocol (MCP) server that provides seamless integration between
 ### Prerequisites
 
 - Go 1.21 or higher
-- Java 8+ (for OpenAPI code generation)
+- Java 8+ and [OpenAPI Generator](https://openapi-generator.tech/docs/installation) (for `make build` on fresh clone; `brew install openapi-generator` on macOS)
 - Any MCP Client
 - SpaceTraders API token ([Get one here](https://spacetraders.io))
 
@@ -31,23 +31,17 @@ A Model Context Protocol (MCP) server that provides seamless integration between
    cd spacetraders-mcp
    ```
 
-2. **Generate the SpaceTraders API client:**
+2. **Build the server** (auto-generates the SpaceTraders API client if needed):
    ```bash
-   # This downloads the latest SpaceTraders OpenAPI spec and generates the Go client
-   make generate-client
+   make build
    ```
 
-3. **Build the server:**
-   ```bash
-   go build -o spacetraders-mcp
-   ```
-
-4. **Set up your SpaceTraders credentials:**
+3. **Set up your SpaceTraders credentials:**
    ```bash
    export SPACETRADERS_TOKEN=your_token_here
    ```
 
-5. **Configure Claude Desktop (or other client):**
+4. **Configure Claude Desktop (or other client):**
 
    Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (Claude macOS):
    ```json
@@ -61,7 +55,7 @@ A Model Context Protocol (MCP) server that provides seamless integration between
    }
    ```
 
-4. **Restart your client** and start exploring!
+5. **Restart your client** and start exploring!
 
 ### First Steps
 

@@ -5,10 +5,17 @@
 # Default target
 all: build test
 
-# Build the server binary
-build:
+# Build the server binary (generates client first if needed)
+build: ensure-generated
 	@echo "Building SpaceTraders MCP Server..."
 	go build -o spacetraders-mcp .
+
+# Ensure generated client exists; run generate-client if not
+ensure-generated:
+	@if [ ! -d "./generated/spacetraders" ]; then \
+		echo "Generated client not found. Running make generate-client..."; \
+		$(MAKE) generate-client; \
+	fi
 
 # Run all tests using standard Go test
 test:

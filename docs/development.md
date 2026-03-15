@@ -55,7 +55,7 @@ MCP tool handlers for performing actions:
 #### `generated/`
 Auto-generated SpaceTraders API client code:
 - Generated from the official SpaceTraders OpenAPI specification
-- Not checked into version control (regenerated during builds)
+- Committed to version control; regenerate with `make generate-client` when the API spec changes
 - Contains Go client code for all API endpoints
 
 ## Code Generation

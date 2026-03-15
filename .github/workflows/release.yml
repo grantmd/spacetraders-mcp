@@ -35,11 +35,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-1.24-
 
-      - name: Setup OpenAPI Generator and Generate Client
-        uses: ./.github/actions/setup-openapi
-        with:
-          cache-key-prefix: openapi-release-test
-
       - name: Download dependencies
         run: go mod download
 
@@ -100,11 +95,6 @@ jobs:
           key: ${{ runner.os }}-go-1.24-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-1.24-
-
-      - name: Setup OpenAPI Generator and Generate Client
-        uses: ./.github/actions/setup-openapi
-        with:
-          cache-key-prefix: openapi-release-${{ matrix.goos }}-${{ matrix.goarch }}
 
       - name: Get version
         id: version
@@ -250,11 +240,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Setup OpenAPI Generator and Generate Client
-        uses: ./.github/actions/setup-openapi
-        with:
-          cache-key-prefix: openapi-docker
 
       - name: Log in to Docker Hub
         if: secrets.DOCKER_USERNAME != ''

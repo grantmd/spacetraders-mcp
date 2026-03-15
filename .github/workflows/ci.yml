@@ -37,11 +37,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-${{ matrix.go-version }}-
 
-      - name: Setup OpenAPI Generator and Generate Client
-        uses: ./.github/actions/setup-openapi
-        with:
-          cache-key-prefix: openapi-test-${{ matrix.go-version }}
-
       - name: Download dependencies
         run: go mod download
 
@@ -96,11 +91,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-1.24-
 
-      - name: Setup OpenAPI Generator and Generate Client
-        uses: ./.github/actions/setup-openapi
-        with:
-          cache-key-prefix: openapi-build
-
       - name: Build binary
         run: go build -v -o spacetraders-mcp .
 
@@ -129,11 +119,6 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version: 1.24
-
-      - name: Setup OpenAPI Generator and Generate Client
-        uses: ./.github/actions/setup-openapi
-        with:
-          cache-key-prefix: openapi-lint
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v8
@@ -172,11 +157,6 @@ jobs:
           key: ${{ runner.os }}-go-1.24-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-1.24-
-
-      - name: Setup OpenAPI Generator and Generate Client
-        uses: ./.github/actions/setup-openapi
-        with:
-          cache-key-prefix: openapi-cross-${{ matrix.goos }}-${{ matrix.goarch }}
 
       - name: Build cross-platform binary
         env:

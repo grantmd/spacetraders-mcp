@@ -34,5 +34,4 @@ go.work.sum
 # go build artifact
 spacetraders-mcp*
 
-# Generated OpenAPI client (regenerate with `make generate-client`)
-generated/
+# Generated OpenAPI client is committed; regenerate with `make generate-client` when API spec changes
